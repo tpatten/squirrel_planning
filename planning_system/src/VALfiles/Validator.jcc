@@ -1,0 +1,521 @@
+jx_browser_data 84
+# project tree
+0 "root"
+T
+1 "Parsing"
+T
+2 "macros.h"
+F
+"./macros.h"
+T
+2 "WriteController.h"
+F
+"./WriteController.h"
+T
+2 "VisitController.h"
+F
+"./VisitController.h"
+T
+2 "DebugWriteController.h"
+F
+"./DebugWriteController.h"
+T
+2 "DebugWriteController.cpp"
+F
+"./DebugWriteController.cpp"
+T
+2 "PrettyPrinter.cpp"
+F
+"./PrettyPrinter.cpp"
+T
+2 "PrettyPrinter.h"
+F
+"./PrettyPrinter.h"
+T
+2 "Exceptions.h"
+F
+"./Exceptions.h"
+T
+2 "pddl+.lex"
+F
+"./pddl+.lex"
+T
+2 "pddl+.yacc"
+F
+"./pddl+.yacc"
+T
+2 "sStack.h"
+F
+"./sStack.h"
+T
+2 "ptree.h"
+F
+"./ptree.h"
+T
+2 "ptree.cpp"
+F
+"./ptree.cpp"
+T
+2 "parse_error.h"
+F
+"./parse_error.h"
+T
+2 "typecheck.h"
+F
+"./typecheck.h"
+T
+2 "typecheck.cpp"
+F
+"./typecheck.cpp"
+F
+T
+1 "Support"
+T
+2 "Ownership.h"
+F
+"./Ownership.h"
+T
+2 "Ownership.cpp"
+F
+"./Ownership.cpp"
+T
+2 "Environment.h"
+F
+"./Environment.h"
+T
+2 "Polynomial.h"
+F
+"./Polynomial.h"
+T
+2 "Polynomial.cpp"
+F
+"./Polynomial.cpp"
+T
+2 "Utils.h"
+F
+"./Utils.h"
+T
+2 "Utils.cpp"
+F
+"./Utils.cpp"
+T
+2 "LaTeXSupport.cpp"
+F
+"./LaTeXSupport.cpp"
+T
+2 "LaTeXSupport.h"
+F
+"./LaTeXSupport.h"
+T
+2 "random.h"
+F
+"./random.h"
+T
+2 "random.cpp"
+F
+"./random.cpp"
+T
+2 "tDistribution.h"
+F
+"./tDistribution.h"
+F
+T
+1 "Simulation"
+T
+2 "State.h"
+F
+"./State.h"
+T
+2 "State.cpp"
+F
+"./State.cpp"
+T
+2 "StateObserver.h"
+F
+"./StateObserver.h"
+T
+2 "Proposition.h"
+F
+"./Proposition.h"
+T
+2 "Proposition.cpp"
+F
+"./Proposition.cpp"
+T
+2 "FuncExp.h"
+F
+"./FuncExp.h"
+T
+2 "FuncExp.cpp"
+F
+"./FuncExp.cpp"
+T
+2 "Action.h"
+F
+"./Action.h"
+T
+2 "Action.cpp"
+F
+"./Action.cpp"
+T
+2 "Events.h"
+F
+"./Events.h"
+T
+2 "Events.cpp"
+F
+"./Events.cpp"
+T
+2 "Plan.h"
+F
+"./Plan.h"
+T
+2 "Plan.cpp"
+F
+"./Plan.cpp"
+T
+2 "Validator.h"
+F
+"./Validator.h"
+T
+2 "Validator.cpp"
+F
+"./Validator.cpp"
+T
+2 "TrajectoryConstraints.h"
+F
+"./TrajectoryConstraints.h"
+T
+2 "TrajectoryConstraints.cpp"
+F
+"./TrajectoryConstraints.cpp"
+T
+2 "RepairAdvice.h"
+F
+"./RepairAdvice.h"
+T
+2 "RepairAdvice.cpp"
+F
+"./RepairAdvice.cpp"
+T
+2 "RobustAnalyse.h"
+F
+"./RobustAnalyse.h"
+T
+2 "RobustAnalyse.cpp"
+F
+"./RobustAnalyse.cpp"
+F
+T
+1 "Control"
+T
+2 "parse.cpp"
+F
+"./parse.cpp"
+T
+2 "TypeStrip.cpp"
+F
+"./TypeStrip.cpp"
+T
+2 "TypeStripWC.h"
+F
+"./TypeStripWC.h"
+T
+2 "TypeStripWC.cpp"
+F
+"./TypeStripWC.cpp"
+T
+2 "main.h"
+F
+"./main.h"
+T
+2 "main.cpp"
+F
+"./main.cpp"
+F
+T
+1 "LPGP Translator"
+T
+2 "LPGPTranslator.h"
+F
+"./LPGPTranslator.h"
+T
+2 "LPGPTranslator.cpp"
+F
+"./LPGPTranslator.cpp"
+T
+2 "LPGP.cpp"
+F
+"./LPGP.cpp"
+F
+T
+1 "Analyser"
+T
+2 "Analyser.h"
+F
+"./Analyser.h"
+T
+2 "Analysis.cpp"
+F
+"./Analysis.cpp"
+T
+2 "TypedAnalysis.cpp"
+F
+"./TypedAnalysis.cpp"
+T
+2 "TypedAnalyser.h"
+F
+"./TypedAnalyser.h"
+T
+2 "TypedAnalyser.cpp"
+F
+"./TypedAnalyser.cpp"
+T
+2 "Cascader.h"
+F
+"./Cascader.h"
+T
+2 "FuncAnalysis.cpp"
+F
+"./FuncAnalysis.cpp"
+T
+2 "FuncAnalysis.h"
+F
+"./FuncAnalysis.h"
+F
+T
+1 "TIM"
+T
+2 "Partitions.h"
+F
+"./Partitions.h"
+T
+2 "TIMUtilities.h"
+F
+"./TIMUtilities.h"
+T
+2 "TimSupport.h"
+F
+"./TimSupport.h"
+T
+2 "TimSupport.cpp"
+F
+"./TimSupport.cpp"
+T
+2 "TIM.cpp"
+F
+"./TIM.cpp"
+T
+2 "TIM.h"
+F
+"./TIM.h"
+T
+2 "TIMMain.cpp"
+F
+"./TIMMain.cpp"
+F
+T
+1 "Instantiation"
+T
+2 "SimpleEval.h"
+F
+"./SimpleEval.h"
+T
+2 "SimpleEval.cpp"
+F
+"./SimpleEval.cpp"
+T
+2 "instantiation.h"
+F
+"./instantiation.h"
+T
+2 "instantiation.cpp"
+F
+"./instantiation.cpp"
+T
+2 "instantiationMain.cpp"
+F
+"./instantiationMain.cpp"
+T
+2 "FastEnvironment.h"
+F
+"./FastEnvironment.h"
+T
+2 "FastEnvironment.cpp"
+F
+"./FastEnvironment.cpp"
+F
+T
+1 "Functionalisation"
+T
+2 "ToFunction.cpp"
+F
+"./ToFunction.cpp"
+T
+2 "ToFunction.h"
+F
+"./ToFunction.h"
+T
+2 "SASActions.h"
+F
+"./SASActions.h"
+T
+2 "SASActions.cpp"
+F
+"./SASActions.cpp"
+T
+2 "ToFnMain.cpp"
+F
+"./ToFnMain.cpp"
+T
+2 "CausalGraph.h"
+F
+"./CausalGraph.h"
+T
+2 "CausalGraph.cpp"
+F
+"./CausalGraph.cpp"
+F
+T
+1 "Graph Construction"
+T
+2 "graphconstruct.cpp"
+F
+"./graphconstruct.cpp"
+T
+2 "graphconstruct.h"
+F
+"./graphconstruct.h"
+F
+T
+1 "DYNA Translator"
+T
+2 "DYNA.cpp"
+F
+"./DYNA.cpp"
+T
+2 "DYNATranslator.cpp"
+F
+"./DYNATranslator.cpp"
+T
+2 "DYNATranslator.h"
+F
+"./DYNATranslator.h"
+F
+T
+1 "Relaxer"
+T
+2 "RelaxTranslator.h"
+F
+"./RelaxTranslator.h"
+T
+2 "RelaxTranslator.cpp"
+F
+"./RelaxTranslator.cpp"
+T
+2 "Relax.cpp"
+F
+"./Relax.cpp"
+F
+T
+1 "DYNAPlan Machinery"
+T
+2 "PartialPlan.h"
+F
+"./PartialPlan.h"
+T
+2 "PartialPlan.cpp"
+F
+"./PartialPlan.cpp"
+T
+2 "SearchSpace.h"
+F
+"./SearchSpace.h"
+T
+2 "SearchSpace.cpp"
+F
+"./SearchSpace.cpp"
+T
+2 "InstPropLinker.h"
+F
+"./InstPropLinker.h"
+T
+2 "InstPropLinker.cpp"
+F
+"./InstPropLinker.cpp"
+T
+2 "Evaluator.h"
+F
+"./Evaluator.h"
+T
+2 "Evaluator.cpp"
+F
+"./Evaluator.cpp"
+T
+2 "dynaMain.cpp"
+F
+"./dynaMain.cpp"
+F
+T
+1 "How, What, When"
+T
+2 "HowWhatWhenMain.cpp"
+F
+"./HowWhatWhenMain.cpp"
+T
+2 "HowAnalyser.h"
+F
+"./HowAnalyser.h"
+T
+2 "HowAnalyser.cpp"
+F
+"./HowAnalyser.cpp"
+T
+2 "AbstractGraph.h"
+F
+"./AbstractGraph.h"
+F
+T
+1 "Plan Analysis"
+T
+2 "PlanRec.cpp"
+F
+"./PlanRec.cpp"
+T
+2 "PlanExecutionTracker.h"
+F
+"./PlanExecutionTracker.h"
+T
+2 "GoalHypSpace.h"
+F
+"./GoalHypSpace.h"
+F
+F
+# tasks
+4
+"makemake"
+T "./" "make -k all" "" T F T F T F T "" "" "" F
+T "./" "make -k tim" "" T F T F T F T "" "" "" F
+T "./" "make -k validate" "" T F T F T F T "" "" "" F
+T "./" "make -k tofn" "" T F T F T F T "" "" "" F
+T "./" "make -k tan" "" T F T F T F T "" "" "" F
+T "./" "make -k lpgp" "" T F T F T F T "" "" "" F
+T "./" "make -k" "" T F T F T F T "" "" "" T
+T "./" "make $file_name_root" "" T F T T T T F "" "" "" F
+T "./" "make CHECKSTRING=$file_name checksyntax" "" T F T T T T F "" "" "" T
+T "./" "validate -v /home/derek/aircargodomain.pddl /home/derek/aircargoproblem.pddl /home/derek/aircargoplan.pddl" "" F F F F T T F "" "" "" F
+T "./" "validate -v /home/dcs0dpl/AIPS-2000DataFiles/2000-Tests/Elevator/m10-Full/domain.pddl /home/dcs0dpl/AIPS-2000DataFiles/2000-Tests/Elevator/m10-Full/f20-0.pddl /home/dcs0dpl/AIPS-2000DataFiles/2000-Tests/Elevator/m10-Full/ffresfile " "" F F F F T T F "" "" "" F
+T "./" "validate /home/dcs0dpl/AIPS-2000DataFiles/2000-Tests/Elevator/m10-Full/domain.pddl /home/dcs0dpl/AIPS-2000DataFiles/2000-Tests/Elevator/m10-Full/f20-0.pddl /home/dcs0dpl/AIPS-2000DataFiles/2000-Tests/Elevator/m10-Full/ffresfile " "" F F F F T T F "" "" "" F
+T "./" "a.out" "" F F F F T T F "" "" "" T
+T "./" "medic -f +$line $full_name" "" F F F T F F F "" "" "" T
+F
+# build settings
+0
+T
+"a.out"
+""
+"make -k all"
+# search paths
+F
+# C preprocessor
+F
