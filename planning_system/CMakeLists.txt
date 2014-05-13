@@ -43,30 +43,38 @@ include_directories(
   ${catkin_INCLUDE_DIRS}
 )
 
-## Declare a cpp library
-# add_library(planning_system
-#   src/${PROJECT_NAME}/planning_system.cpp
-# )
+# visualisation
+find_package(OpenGL REQUIRED)
+find_package(GLUT REQUIRED)
+include_directories(${OPENGL_INCLUDE_DIRS} ${GLUT_INCLUDE_DIRS})
 
 ## Declare a cpp executable
-#add_executable(planner
-#	src/PlanningLoop.cpp
-#	src/VALfiles/pddl+.lex
-#	src/VALfiles/pddl+.cpp
-#	src/VALfiles/ptree.cpp
-#	src/VALfiles/DebugWriteController.cpp)
+add_executable(planner
+	src/PlanningLoop.cpp
+	src/VALfiles/pddl+.lex
+	src/VALfiles/pddl+.cpp
+	src/VALfiles/ptree.cpp
+	src/VALfiles/DebugWriteController.cpp)
 
-#add_executable(listener src/util/Listener.cpp)
-#add_executable(testHarness src/util/TestHarness.cpp)
+add_executable(listener src/util/Listener.cpp)
+add_executable(testHarness src/util/TestHarness.cpp)
 
 ## Add cmake target dependencies of the executable/library
 ## as an example, message headers may need to be generated before nodes
 # add_dependencies(planning_system_node planning_system_generate_messages_cpp)
 
 ## Specify libraries to link a library or executable target against
-# target_link_libraries(planning_system_node
-#   ${catkin_LIBRARIES}
-# )
+target_link_libraries(planner
+  ${catkin_LIBRARIES}
+)
+
+target_link_libraries(listener
+  ${catkin_LIBRARIES}
+)
+
+target_link_libraries(testHarness
+  ${catkin_LIBRARIES}
+)
 
 #############
 ## Install ##

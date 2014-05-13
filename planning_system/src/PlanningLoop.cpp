@@ -19,7 +19,7 @@
 #include "PDDLProblemGenerator.cpp"
 #include "ActionFeedback.cpp"
 #include "PostProcess.cpp"
-#include "util/PlanVisualisation.cpp"
+// #include "util/PlanVisualisation.cpp"
 
 #include <fstream>
 #include <sstream>
@@ -178,11 +178,12 @@ namespace KCL_rosplan {
 		runPlanner(dataPath);
 
 		// setup graphics visualization
+/*
 		if(KCL_rosplan::use_plan_visualisation) {
 			KCL_rosplan::dispatchPaused = true;
 			KCL_rosplan::initVis();
 		}
-
+*/
 		// Loop through and publish planned actions
 		while (ros::ok() && KCL_rosplan::actionList.size() > KCL_rosplan::currentAction) {
 
@@ -194,8 +195,10 @@ namespace KCL_rosplan {
 			while(ros::ok() && KCL_rosplan::dispatchPaused) {
 				ros::spinOnce();
 				loop_rate.sleep();
+/*
 				if(KCL_rosplan::use_plan_visualisation)
 					KCL_rosplan::draw();
+*/
 			}
 
 			// dispatch action
@@ -206,8 +209,10 @@ namespace KCL_rosplan {
 			while (ros::ok() && !KCL_rosplan::actionCompleted[KCL_rosplan::currentAction]) {
 				ros::spinOnce();
 				loop_rate.sleep();
+/*
 				if(KCL_rosplan::use_plan_visualisation)
 					KCL_rosplan::draw();
+*/
 			}
 
 			// get ready for next action
@@ -222,9 +227,10 @@ namespace KCL_rosplan {
 			}
 		}
 		ROS_INFO("KCL: Planning Complete");
-
+/*
 		if(KCL_rosplan::use_plan_visualisation)
 			KCL_rosplan::shutDownVis();
+*/
 	}
 
 } // close namespace

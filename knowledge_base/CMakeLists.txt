@@ -55,9 +55,9 @@ include_directories(
 # add_dependencies(knowledge_base_node knowledge_base_generate_messages_cpp)
 
 ## Specify libraries to link a library or executable target against
-# target_link_libraries(knowledge_base_node
-#   ${catkin_LIBRARIES}
-# )
+#target_link_libraries(knowledge_base
+#  ${catkin_LIBRARIES}
+#)
 
 #############
 ## Install ##
