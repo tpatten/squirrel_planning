@@ -62,7 +62,7 @@ namespace KCL_rosplan {
 		char appname[] = "planner";
 		char *fake_argv[] = { appname, NULL };
 		int fake_argc = 1;
-		glutInit(&fake_argc, fake_argv);  
+		glutInit(&fake_argc, fake_argv);
 		glutInitDisplayMode(GLUT_RGBA | GLUT_DOUBLE | GLUT_ALPHA);  
 
 		glutInitWindowSize(WINDOW_WIDTH, WINDOW_HEIGHT);

@@ -332,7 +332,7 @@ bool Events::triggerEventsOnInterval(Validator * v,bool init)
   
   
   do
-  {    
+  {       
      isOK = triggerDiscreteEvents(v,init) && isOK; if(!isOK && !ContinueAnyway) return false;
            
      isOK = triggerContinuousEvents(v,init) && isOK; if(!isOK && !ContinueAnyway) return false;  
@@ -346,7 +346,6 @@ bool checkPreconditionsAreNotSatisfied(const State * s,const vector<const Action
 {
   for(vector<const Action *>::const_iterator i = events.begin(); i != events.end(); ++i)
   {
-//  cout << "Checking a precondition for "<< *i << "\n";
     if((*i)->getPrecondition()->evaluate(s))
     {
       if(LaTeX) *report << "\\> Event "<<*i<<" does not falsify its precondition!\\\\\n";
@@ -383,7 +382,7 @@ bool Events::triggerDiscreteEvents(Validator * v,bool init)
                              
               if(!init || (theCurrentTime != 0))
                {
-                   listOfParameters = getParametersDiscreteFinal((*e)->precondition,*e,v->getState());               
+                   listOfParameters = getParametersDiscreteFinal((*e)->precondition,*e,v->getState());                  
                 }
                else
                {                  
@@ -420,7 +419,7 @@ bool Events::triggerDiscreteEvents(Validator * v,bool init)
             {
                if(numberofEvents > 1)
                {
-                 *report << "Event cascades of this nature are not yet handled robustly!\n";
+                 *report << "Event cascades of this nature are not yet handled!\n";
                  if(!ContinueAnyway) return false;
                  isOK = false; 
                };
@@ -778,7 +777,6 @@ bool Events::triggerContinuousEvents(Validator * v,bool init)
       if(triggerEventsExist && isOK)
       {
         ctsEventTriggered = true;       
-
         ace->setTime(eventTriggerTime + currentTime); //same time as event trigger time
         ace->setLocalUpdateTime(eventTriggerTime);
            
@@ -1700,9 +1698,9 @@ const vector<const_symbol_list*> defineUndefinedParameters(const_symbol_list * c
    };
 
    //define the parameter for every possibility and add to list of definedLists
-  //cout << "Seeking range for " << **vs << "\n";
+  // cout << "Seeking range for " << **vs << "\n";
    vector<const_symbol *> vals = vld->range(*vs);
-  //cout << "Got\n";
+   //cout << "Got\n";
    for(vector<const_symbol *>::const_iterator obj = vals.begin(); obj != vals.end(); ++obj)
    {   
       const_symbol_list* parameters = new const_symbol_list(*considerList);

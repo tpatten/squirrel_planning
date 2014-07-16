@@ -318,12 +318,12 @@ c_pred_decl :
        {yyerrok; 
         // hope someone makes this error someday
         log_error(E_FATAL,"Syntax error in predicate declaration.");
-	$$= static_cast<pred_decl*>(NULL); }
+	$$= NULL; }
 ;
 
 c_new_pred_symbol :
      NAME 
-         { $$=current_analysis->pred_tab.new_symbol_put($1);
+         { $$=current_analysis->pred_tab.symbol_put($1);
            current_analysis->var_tab_stack.push(
            				current_analysis->buildPredTab());
            delete [] $1; }
@@ -356,15 +356,15 @@ c_func_decl :
 |   OPEN_BRAC error CLOSE_BRAC
 	{yyerrok; 
 	 log_error(E_FATAL,"Syntax error in functor declaration.");
-	 $$= (int) NULL; }
+	 $$= NULL; }
 ;
 
 c_ntype :
-    HYPHEN NUMBER {$$ = (int) NULL;}| /* empty */ {$$= (int) NULL;};
+    HYPHEN NUMBER {$$ = NULL;}| /* empty */ {$$=NULL;};
     
 c_new_func_symbol :
      NAME 
-         { $$=current_analysis->func_tab.new_symbol_put($1);
+         { $$=current_analysis->func_tab.symbol_put($1);
            current_analysis->var_tab_stack.push(
            		current_analysis->buildFuncTab()); 
            delete [] $1; }
@@ -499,7 +499,7 @@ c_const_symbol :
 ;
 
 c_new_const_symbol : 
-    NAME { $$= current_analysis->const_tab.new_symbol_put($1); delete [] $1;}
+    NAME { $$= current_analysis->const_tab.symbol_put($1); delete [] $1;}
 ;
 
 c_either_type :
@@ -1193,7 +1193,7 @@ c_action_def :
     PRE c_pre_goal_descriptor 
     EFFECTS c_effect
     CLOSE_BRAC
-    { $$= current_analysis->buildAction(current_analysis->op_tab.new_symbol_put($3),
+    { $$= current_analysis->buildAction(current_analysis->op_tab.symbol_put($3),
 			$6,$9,$11,
 			current_analysis->var_tab_stack.pop()); delete [] $3; }
 |   OPEN_BRAC ACTION error CLOSE_BRAC
@@ -1210,7 +1210,7 @@ c_event_def :
     PRE c_goal_descriptor /* $9 */
     EFFECTS c_effect /* $11 */
     CLOSE_BRAC
-    {$$= current_analysis->buildEvent(current_analysis->op_tab.new_symbol_put($3),
+    {$$= current_analysis->buildEvent(current_analysis->op_tab.symbol_put($3),
 		   $6,$9,$11,
 		   current_analysis->var_tab_stack.pop()); delete [] $3;}
 
@@ -1227,7 +1227,7 @@ c_process_def :
     PRE c_goal_descriptor 
     EFFECTS c_proc_effect
     CLOSE_BRAC
-    {$$= current_analysis->buildProcess(current_analysis->op_tab.new_symbol_put($3),
+    {$$= current_analysis->buildProcess(current_analysis->op_tab.symbol_put($3),
 		     $6,$9,$11,
                      current_analysis->var_tab_stack.pop()); delete [] $3;}
 |   OPEN_BRAC PROCESS error CLOSE_BRAC
@@ -1244,7 +1244,7 @@ c_durative_action_def :
     c_da_def_body
     CLOSE_BRAC
     { $$= $10;
-      $$->name= current_analysis->op_tab.new_symbol_put($3);
+      $$->name= current_analysis->op_tab.symbol_put($3);
       $$->symtab= current_analysis->var_tab_stack.pop();
       $$->parameters= $6;
       $$->dur_constraint= $9; 
@@ -1389,8 +1389,7 @@ c_problem_body :
 |    c_goal_spec c_problem_body     {$$=$2; $$->the_goal= $1;}
 |	 c_constraints_probdef c_problem_body 
 									{$$=$2; $$->constraints = $1;}
-|    c_metric_spec c_problem_body   {$$=$2; if($$->metric == 0) {$$->metric= $1;}
-											else {$$->metric->add($1);}}
+|    c_metric_spec c_problem_body   {$$=$2; $$->metric= $1;}
 |    c_length_spec c_problem_body   {$$=$2; $$->length= $1;}
 |   /* Empty */                     {$$=new problem;}
 ;

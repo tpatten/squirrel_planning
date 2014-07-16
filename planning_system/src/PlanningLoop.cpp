@@ -19,7 +19,6 @@
 #include "PDDLProblemGenerator.cpp"
 #include "ActionFeedback.cpp"
 #include "PostProcess.cpp"
-// #include "util/PlanVisualisation.cpp"
 
 #include <fstream>
 #include <sstream>
@@ -70,7 +69,7 @@ namespace KCL_rosplan {
 		// push the new filter
 		ROS_INFO("KCL: Clean and update knowledge filter");
 		filterMessage.function = planning_knowledge_msgs::Filter::ADD;
-		filterMessage.knowledge_items = knowledge_filter;
+		filterMessage.knowledge_items = knowledgeFilter;
 		filterPublisher.publish(filterMessage);
 	}
 
@@ -82,7 +81,7 @@ namespace KCL_rosplan {
 	 * passes the problem to the Planner; the plan to post-processing.
 	 * This method is popf-specific.
 	 */
-	bool runPlanner(std::string &dataPath)
+	bool runPlanner(std::string &dataPath, std::string &domainPath, std::string &problemPath)
 	{
 		// save previous plan
 		KCL_rosplan::planningAttempts = KCL_rosplan::planningAttempts + 1;
@@ -97,8 +96,7 @@ namespace KCL_rosplan {
 
 		// run the planner
 		std::string commandString = popfCommand + "-n "
-			 + dataPath + "domain.pddl "
-			 + dataPath + "problem.pddl > "
+			 + domainPath + " " + problemPath + " > "
 			 + dataPath + "plan.pddl";
 
 		ROS_INFO("KCL: Running: %s", commandString.c_str());
@@ -139,15 +137,15 @@ namespace KCL_rosplan {
 	/**
 	 * requests objects; generates the PDDL problem.
 	 */
-	bool generatePlanningProblem(ros::NodeHandle nh, std::string &dataPath)
+	bool generatePlanningProblem(ros::NodeHandle nh, std::string &problemPath)
 	{
 		// update the environment from the ontology
 		ROS_INFO("KCL: Fetching objects");
 		updateEnvironment(nh);
 
 		// generate PDDL problem
-		generatePDDLProblemFile(dataPath);
-		
+		generatePDDLProblemFile(problemPath);
+
 		return true;
 	}
 
@@ -160,9 +158,13 @@ namespace KCL_rosplan {
 
 		// setup environment
 		std::string dataPath;
+		std::string domainPath;
+		std::string problemPath;
 		nh.param("data_path", dataPath, std::string("data/"));
+		nh.param("domain_path", domainPath, std::string("data/domain.pddl"));
+		nh.param("problem_path", problemPath, std::string("data/problem.pddl"));
 		ROS_INFO("KCL: Using data path: %s", dataPath.c_str());
-		KCL_rosplan::parseDomain(dataPath);
+		KCL_rosplan::parseDomain(domainPath);
 
 		// publishing "action_dispatch"; listening "action_feedback"
 		actionPublisher = nh.advertise<planning_dispatch_msgs::ActionDispatch>("/kcl_rosplan/action_dispatch", 1000, true);
@@ -174,16 +176,9 @@ namespace KCL_rosplan {
 		notificationSub = nh.subscribe("/kcl_rosplan/notification", 100, KCL_rosplan::notificationCallBack);
 	
 		// generate PDDL problem and run planner
-		generatePlanningProblem(nh, dataPath);
-		runPlanner(dataPath);
+		generatePlanningProblem(nh, problemPath);
+		runPlanner(dataPath, domainPath, problemPath);
 
-		// setup graphics visualization
-/*
-		if(KCL_rosplan::use_plan_visualisation) {
-			KCL_rosplan::dispatchPaused = true;
-			KCL_rosplan::initVis();
-		}
-*/
 		// Loop through and publish planned actions
 		while (ros::ok() && KCL_rosplan::actionList.size() > KCL_rosplan::currentAction) {
 
@@ -195,10 +190,6 @@ namespace KCL_rosplan {
 			while(ros::ok() && KCL_rosplan::dispatchPaused) {
 				ros::spinOnce();
 				loop_rate.sleep();
-/*
-				if(KCL_rosplan::use_plan_visualisation)
-					KCL_rosplan::draw();
-*/
 			}
 
 			// dispatch action
@@ -206,13 +197,20 @@ namespace KCL_rosplan {
 			actionPublisher.publish(currentMessage);
 
 			// callback and sleep
+			bool sentCancel = false;
 			while (ros::ok() && !KCL_rosplan::actionCompleted[KCL_rosplan::currentAction]) {
 				ros::spinOnce();
 				loop_rate.sleep();
-/*
-				if(KCL_rosplan::use_plan_visualisation)
-					KCL_rosplan::draw();
-*/
+
+				if(replanRequested && !sentCancel) {
+					// cancel current action
+					ROS_INFO("KCL: Cancelling action: [%i, %s]", currentMessage.action_id, currentMessage.name.c_str());
+					planning_dispatch_msgs::ActionDispatch cancelMessage;
+					cancelMessage.action_id = KCL_rosplan::currentAction;
+					cancelMessage.name = "cancel_action";
+					actionPublisher.publish(currentMessage);
+					sentCancel = true;
+				}
 			}
 
 			// get ready for next action
@@ -222,15 +220,11 @@ namespace KCL_rosplan {
 
 			// generate PDDL problem and (re)run planner
 			if(replanRequested) {
-				generatePlanningProblem(nh, dataPath);
-				runPlanner(dataPath);
+				generatePlanningProblem(nh, problemPath);
+				runPlanner(dataPath, domainPath, problemPath);
 			}
 		}
 		ROS_INFO("KCL: Planning Complete");
-/*
-		if(KCL_rosplan::use_plan_visualisation)
-			KCL_rosplan::shutDownVis();
-*/
 	}
 
 } // close namespace

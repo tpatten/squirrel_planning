@@ -145,7 +145,7 @@ void performTIMAnalysis(char * argv[])
     current_analysis->the_domain->visit(&dapb);
 
 	theTC = new TypeChecker(current_analysis);
-    	if (!theTC->typecheckDomain()) {
+   	if (!theTC->typecheckDomain()) {
 		cerr << "Type Errors Encountered in Domain File\n";
 		cerr << "--------------------------------------\n\n";
 		cerr << "Due to type errors in the supplied domain file, the planner\n";
@@ -163,14 +163,10 @@ void performTIMAnalysis(char * argv[])
 		theTC->typecheckProblem();
 		exit(0);
 	}
-    TypePredSubstituter a;
-    current_analysis->the_problem->visit(&a);
-   	current_analysis->the_domain->visit(&a); 
 
    	Analyser aa(dapb.getIgnores());
    	current_analysis->the_problem->visit(&aa);
    	current_analysis->the_domain->visit(&aa);
-
 //    current_analysis->the_domain->predicates->visit(&aa);
 
 	if(FAverbose && current_analysis->the_domain->functions)

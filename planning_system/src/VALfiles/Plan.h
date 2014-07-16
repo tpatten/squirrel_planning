@@ -95,26 +95,21 @@ class EffectsRecord {
 private:
 	vector<const SimpleProposition *> adds;
 	vector<const SimpleProposition *> dels;
-	map<const SimpleProposition *,set<const Action *> > responsibleForProps;
 
 	vector<Update> updates;
-	map<const FuncExp *,set<const Action *> > responsibleForPNEs;
 
 public:
-	void pushAdd(const SimpleProposition * p,const Action * act)
+	void pushAdd(const SimpleProposition * p)
 	{
 		adds.push_back(p);
-		if(act) responsibleForProps[p].insert(act);
 	};
-	void pushDel(const SimpleProposition * p,const Action * act)
+	void pushDel(const SimpleProposition * p)
 	{
 		dels.push_back(p);
-		if(act) responsibleForProps[p].insert(act);
 	};
-	void addFEffect(const FuncExp * fe,assign_op aop,FEScalar value,const Action * act)
+	void addFEffect(const FuncExp * fe,assign_op aop,FEScalar value)
 	{
 		updates.push_back(Update(fe,aop,value));
-		if(act) responsibleForPNEs[fe].insert(act);
 
 	};
 
