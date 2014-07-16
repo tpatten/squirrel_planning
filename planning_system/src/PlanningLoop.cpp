@@ -9,6 +9,7 @@
 
 #include "ros/ros.h"
 
+#include "std_msgs/Empty.h"
 #include "planning_knowledge_msgs/Notification.h"
 #include "planning_knowledge_msgs/Filter.h"
 
@@ -40,6 +41,16 @@ namespace KCL_rosplan {
 			data.append(buffer);
 		pclose(stream);
 		return data;
+	}
+
+	void pauseDispatchCallback(const std_msgs::Empty::ConstPtr& msg) {
+		if(!KCL_rosplan::dispatchPaused) {
+			ROS_INFO("KCL: Pausing dispatch");
+			dispatchPaused = true;
+		} else {
+			ROS_INFO("KCL: Resuming dispatch");
+			dispatchPaused = false;
+		}
 	}
 
 	/*-----------*/
@@ -169,6 +180,7 @@ namespace KCL_rosplan {
 		// publishing "action_dispatch"; listening "action_feedback"
 		actionPublisher = nh.advertise<planning_dispatch_msgs::ActionDispatch>("/kcl_rosplan/action_dispatch", 1000, true);
 		feedbackSub = nh.subscribe("/kcl_rosplan/action_feedback", 1000, KCL_rosplan::feedbackCallback);
+		ros::Subscriber pauseDispatchSub = nh.subscribe("/kcl_rosplan/pause_dispatch", 1000, KCL_rosplan::pauseDispatchCallback);
 		ros::Rate loop_rate(10);
 
 		// publishing "/kcl_rosplan/filter"; listening "/kcl_rosplan/notification"
@@ -208,7 +220,7 @@ namespace KCL_rosplan {
 					planning_dispatch_msgs::ActionDispatch cancelMessage;
 					cancelMessage.action_id = KCL_rosplan::currentAction;
 					cancelMessage.name = "cancel_action";
-					actionPublisher.publish(currentMessage);
+					actionPublisher.publish(cancelMessage);
 					sentCancel = true;
 				}
 			}
