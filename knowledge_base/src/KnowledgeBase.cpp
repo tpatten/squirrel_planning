@@ -215,7 +215,7 @@ namespace KCL_rosplan {
 			if(iit->compare("unknown")==0) {
 				planning_knowledge_msgs::KnowledgeItem goal;
 				goal.knowledge_type = planning_knowledge_msgs::KnowledgeItem::DOMAIN_ATTRIBUTE;
-				goal.attribute_name = "categorised";
+				goal.attribute_name = "classified";
 				diagnostic_msgs::KeyValue pair;
 				pair.key = "o";
 				pair.value = *iit;
