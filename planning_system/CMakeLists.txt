@@ -72,7 +72,12 @@ set(VAL_SOURCES
 ## Declare cpp executables
 add_executable(planner src/PlanningLoop.cpp	${VAL_SOURCES})
 add_executable(listener src/util/Listener.cpp)
+
+# some squirrel executables
 add_executable(squirrelVis squirrel/PlanningVis.cpp)
+add_executable(exploreAction squirrel/ExploreAction.cpp)
+add_executable(perceptionInterface
+	squirrel/perceptionInterface.cpp)
 
 ## Specify libraries against which to link a library or executable target
 target_link_libraries(planner
@@ -87,4 +92,12 @@ target_link_libraries(squirrelVis
   ${catkin_LIBRARIES}
   ${GLUT_LIBRARIES}
   ${OPENGL_LIBRARIES}
+)
+
+target_link_libraries(perceptionInterface
+  ${catkin_LIBRARIES}
+)
+
+target_link_libraries(exploreAction
+  ${catkin_LIBRARIES}
 )

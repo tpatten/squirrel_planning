@@ -197,30 +197,34 @@ namespace KCL_rosplan {
 
 		// TESTING for SQUIRREL summer school 1/2
 		std::vector<std::string>::iterator iit;
-		for(iit = domainInstances["toy"].begin(); iit!=domainInstances["toy"].end(); iit++) {
-			planning_knowledge_msgs::KnowledgeItem goal;
-			goal.knowledge_type = planning_knowledge_msgs::KnowledgeItem::DOMAIN_ATTRIBUTE;
-			goal.attribute_name = "tidy";
-			diagnostic_msgs::KeyValue pair;
-			pair.key = "t";
-			pair.value = *iit;
-			goal.values.push_back(pair);
-			res.attributes.push_back(goal);
-			break;
+		for(iit = domainInstances["object"].begin(); iit!=domainInstances["object"].end(); iit++) {
+			if(iit->compare("unknown")!=0) {
+				planning_knowledge_msgs::KnowledgeItem goal;
+				goal.knowledge_type = planning_knowledge_msgs::KnowledgeItem::DOMAIN_ATTRIBUTE;
+				goal.attribute_name = "tidy";
+				diagnostic_msgs::KeyValue pair;
+				pair.key = "t";
+				pair.value = *iit;
+				goal.values.push_back(pair);
+				res.attributes.push_back(goal);
+				break;
+			}
 		}
 
 		for(iit = domainInstances["object"].begin(); iit!=domainInstances["object"].end(); iit++) {
-			planning_knowledge_msgs::KnowledgeItem goal;
-			goal.knowledge_type = planning_knowledge_msgs::KnowledgeItem::DOMAIN_ATTRIBUTE;
-			goal.attribute_name = "categorised";
-			diagnostic_msgs::KeyValue pair;
-			pair.key = "o";
-			pair.value = *iit;
-			goal.values.push_back(pair);
-			res.attributes.push_back(goal);
+			if(iit->compare("unknown")==0) {
+				planning_knowledge_msgs::KnowledgeItem goal;
+				goal.knowledge_type = planning_knowledge_msgs::KnowledgeItem::DOMAIN_ATTRIBUTE;
+				goal.attribute_name = "categorised";
+				diagnostic_msgs::KeyValue pair;
+				pair.key = "o";
+				pair.value = *iit;
+				goal.values.push_back(pair);
+				res.attributes.push_back(goal);
+			}
 		}
 
-		if(domainInstances["object"].size()<1 && domainInstances["toy"].size()<1) {
+		if(res.attributes.size()<1) {
 			planning_knowledge_msgs::KnowledgeItem goal;
 			goal.knowledge_type = planning_knowledge_msgs::KnowledgeItem::DOMAIN_ATTRIBUTE;
 			goal.attribute_name = "explored";
@@ -254,12 +258,6 @@ int main(int argc, char **argv)
 		kb.domainInstances["room"].push_back("room");
 
 		// mission filter
-		planning_knowledge_msgs::KnowledgeItem toyFilter;
-		toyFilter.knowledge_type = planning_knowledge_msgs::KnowledgeItem::INSTANCE;
-		toyFilter.instance_type = "toy";
-		toyFilter.instance_name = "";
-		kb.missionFilter.push_back(toyFilter);
-
 		planning_knowledge_msgs::KnowledgeItem objectFilter;
 		objectFilter.knowledge_type = planning_knowledge_msgs::KnowledgeItem::INSTANCE;
 		objectFilter.instance_type = "object";

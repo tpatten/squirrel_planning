@@ -18,4 +18,9 @@
 	    <param name="problem_path" value="$(find planning_system)/data/problem.pddl" />
 	</node>
 
+
+	<!-- action interface -->
+	<node name="action_interface" pkg="planning_system" type="perceptionInterface" respawn="false" output="screen">
+	</node>
+
 </launch>

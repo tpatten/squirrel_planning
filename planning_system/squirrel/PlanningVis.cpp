@@ -21,7 +21,7 @@ namespace KCL_rosplan {
 	unsigned int WINDOW_HEIGHT = 500;
 	unsigned int BOX_SIZE  = 50;
 
-	std::string actions[] = { "explore", "categorise", "push" };
+	std::string actions[] = { "explore", "classify", "push" };
 	std::map<int,std::string> currentActions;
 	std::map<int,bool> cancelledActions;
 
@@ -242,9 +242,11 @@ namespace KCL_rosplan {
 
 	void dispatchVisCallback(const planning_dispatch_msgs::ActionDispatch::ConstPtr& msg) {
 
-		if(msg->name.compare("cancel_action")==0)
+		std::cout << msg->name << std::endl;
+		if(msg->name.compare("cancel_action")==0) {
 			cancelledActions[msg->action_id] = true;
-		else {
+			std::cout << "cancelled " << msg->action_id << std::endl;
+		} else {
 			currentActions[msg->action_id] = msg->name;
 			cancelledActions[msg->action_id] = false;
 		}
