@@ -4,21 +4,22 @@
 
 (:types
 	object
-	toy - object
-	trash - object
 	room
 )
 
 (:predicates
-	(tidy ?t - toy)
 	(classified ?o - object)
+	(untidy ?o - object)
+	(tidy ?o - object)
 	(explored ?r - room)
 )
 
 (:durative-action push
-	:parameters (?t - toy)
+	:parameters (?o - object)
 	:duration ( = ?duration 10)
-	:effect (at end (tidy ?t))
+	:effect (at end (and
+		(tidy ?o)
+		(not (untidy ?o))))
 )
 
 (:durative-action classify
