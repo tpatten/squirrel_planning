@@ -32,7 +32,7 @@ namespace KCL_rosplan {
 		ros::NodeHandle nh("~");
 
 		KCL_rosplan::SceneDatabase sd;
-		ros::ServiceServer pointCloudServer = nh.advertiseService("/kcl_rosplan/get_current_goals",
+		ros::ServiceServer pointCloudServer = nh.advertiseService("/kcl_rosplan/get_point_cloud",
 			&KCL_rosplan::SceneDatabase::getPointCloud, &sd);
 		ros::Subscriber addSub = nh.subscribe("/kcl_rosplan/add_point_cloud", 1000,
 			&KCL_rosplan::SceneDatabase::addPointCloud, &sd);
