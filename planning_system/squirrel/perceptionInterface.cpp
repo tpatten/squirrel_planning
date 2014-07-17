@@ -19,8 +19,8 @@ namespace SQUIRREL_summerschool_perception {
 			actionCancelled[msg->action_id] = true;
 		else if(0 == msg->name.compare("explore"))
 			executeExplore(msg);
-		else if(0 == msg->name.compare("observe"))
-			executeObserve(msg);
+		else if(0 == msg->name.compare("push"))
+			executePush(msg);
 		else if(0 == msg->name.compare("classify"))
 			executeClassify(msg);
 	}
@@ -128,11 +128,6 @@ namespace SQUIRREL_summerschool_perception {
 
 	void PerceptionInterface::executeObserve(const planning_dispatch_msgs::ActionDispatch::ConstPtr& msg) {
 
-		planning_dispatch_msgs::ActionFeedback feedbackEnabled;
-		feedbackEnabled.action_id = msg->action_id;
-		feedbackEnabled.status = "action enabled";
-		feedbackPub.publish(feedbackEnabled);
-
 		if(havePointCloud)
 		{
 			/*std::vector<perception_msgs::SegmentedObject::Ptr> objects = segmentObjects(currentPointCloud);
@@ -159,11 +154,6 @@ namespace SQUIRREL_summerschool_perception {
 			objectKnowledge->instance_name = ss.str();
 			objectKnowledgePub.publish(objectKnowledge);
 		}
-
-		planning_dispatch_msgs::ActionFeedback feedbackAchieved;
-		feedbackAchieved.action_id = msg->action_id;
-		feedbackAchieved.status = "action achieved";
-		feedbackPub.publish(feedbackAchieved);
 	}
 
 	void PerceptionInterface::executeClassify(const planning_dispatch_msgs::ActionDispatch::ConstPtr& msg) {

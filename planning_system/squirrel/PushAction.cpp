@@ -1,12 +1,12 @@
 #include "perceptionInterface.h"
 
 /**
- * ROS node stub for SQUIRREL Summer School: EXPLORE
+ * ROS node stub for SQUIRREL Summer School: PUSH
  * (this code is just a suggestion)
  */
 namespace SQUIRREL_summerschool_perception {
 
-	void PerceptionInterface::executeExplore(const planning_dispatch_msgs::ActionDispatch::ConstPtr& msg) {
+	void PerceptionInterface::executePush(const planning_dispatch_msgs::ActionDispatch::ConstPtr& msg) {
 
 		// acknowledgement feedback
 		planning_dispatch_msgs::ActionFeedback feedbackEnabled;
@@ -14,16 +14,11 @@ namespace SQUIRREL_summerschool_perception {
 		feedbackEnabled.status = "action enabled";
 		feedbackPub.publish(feedbackEnabled);
 
-		// TODO: move around
-
-		// in some places:		
-		executeObserve(msg);
+		// TODO: push the object!
 
 		if(actionCancelled[msg->action_id]) {
-			// TODO: explore is cancelled; finish immediately.
+			// TODO: push is cancelled; finish immediately.
 		}
-
-		// after about "msg->duration" seconds of exploration:
 
 		// completion feedback
 		planning_dispatch_msgs::ActionFeedback feedbackAchieved;
