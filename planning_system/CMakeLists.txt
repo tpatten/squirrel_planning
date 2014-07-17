@@ -79,13 +79,17 @@ set(VAL_SOURCES
 	src/VALfiles/LaTeXSupport.cpp
 	src/VALfiles/Utils.cpp)
 
+## squirrel interface sources
+set(SQUIRREL_SOURCES
+	squirrel/PerceptionInterface.cpp
+	squirrel/ExploreAction.cpp)
+
 ## Declare cpp executables
 add_executable(planner src/PlanningLoop.cpp	${VAL_SOURCES})
 
 # some squirrel executables
 add_executable(squirrelVis squirrel/PlanningVis.cpp)
-add_executable(exploreAction squirrel/ExploreAction.cpp)
-add_executable(perceptionInterface squirrel/perceptionInterface.cpp)
+add_executable(perceptionInterface ${SQUIRREL_SOURCES})
 
 ## Specify libraries against which to link a library or executable target
 target_link_libraries(planner

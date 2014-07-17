@@ -227,6 +227,7 @@ namespace KCL_rosplan {
 			res.attributes.push_back(goal);
 		}
 
+		// explore room
 		if(res.attributes.size()<1) {
 			planning_knowledge_msgs::KnowledgeItem goal;
 			goal.knowledge_type = planning_knowledge_msgs::KnowledgeItem::DOMAIN_ATTRIBUTE;

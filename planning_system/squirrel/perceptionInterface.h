@@ -33,6 +33,7 @@ namespace SQUIRREL_summerschool_perception {
 		int objectCnt;
 
 		// action execution methods
+		void executeExplore(const planning_dispatch_msgs::ActionDispatch::ConstPtr& msg);
 		void executeObserve(const planning_dispatch_msgs::ActionDispatch::ConstPtr& msg);
 		void executeClassify(const planning_dispatch_msgs::ActionDispatch::ConstPtr& msg);
 		std::vector<perception_msgs::SegmentedObject::Ptr> segmentObjects (const sensor_msgs::PointCloud2::ConstPtr& pointCloud);

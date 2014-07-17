@@ -17,6 +17,8 @@ namespace SQUIRREL_summerschool_perception {
 	void PerceptionInterface::dispatchCallback(const planning_dispatch_msgs::ActionDispatch::ConstPtr& msg) {
 		if(0 == msg->name.compare("cancel_action"))
 			actionCancelled[msg->action_id] = true;
+		else if(0 == msg->name.compare("explore"))
+			executeExplore(msg);
 		else if(0 == msg->name.compare("observe"))
 			executeObserve(msg);
 		else if(0 == msg->name.compare("classify"))
