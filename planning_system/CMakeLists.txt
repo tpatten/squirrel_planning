@@ -81,7 +81,7 @@ set(VAL_SOURCES
 
 ## squirrel interface sources
 set(SQUIRREL_SOURCES
-	squirrel/PerceptionInterface.cpp
+	squirrel/perceptionInterface.cpp
 	squirrel/ExploreAction.cpp)
 
 ## Declare cpp executables
@@ -107,6 +107,3 @@ target_link_libraries(perceptionInterface
   ${PCL_LIBRARIES}
 )
 
-target_link_libraries(exploreAction
-  ${catkin_LIBRARIES}
-)

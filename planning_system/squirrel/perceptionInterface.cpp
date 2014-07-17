@@ -27,8 +27,9 @@ namespace SQUIRREL_summerschool_perception {
 
 	void PerceptionInterface::pointCloudCallback(const sensor_msgs::PointCloud2::ConstPtr& msg)
 	{
-		ROS_INFO("Have new point cloud\n");
+		ROS_INFO("Have new point cloud: w/h: %d/%d\n", msg->width, msg->height);
 		*currentPointCloud = *msg;
+		havePointCloud = true;
 	}
 
 	/**
@@ -49,7 +50,11 @@ namespace SQUIRREL_summerschool_perception {
 		srv.request.cloud = *pointCloudMsg;
 
 		std::vector<sensor_msgs::PointCloud2::Ptr> objects;
-		if (client.call(srv))
+		if(true)
+		{
+			ROS_INFO("happy happy\n");
+		}
+		/*if (client.call(srv))
 		{
 			pcl::PointCloud<pcl::PointXYZ>::Ptr scene(new pcl::PointCloud<pcl::PointXYZ>);
 			pcl::fromROSMsg (*pointCloudMsg, *scene);
@@ -74,7 +79,7 @@ namespace SQUIRREL_summerschool_perception {
 				objectMsg->segment = *segmentMsg;
 				objectMsgs.push_back(objectMsg);
 			}
-		}
+		}*/
 		else
 		{
 			ROS_ERROR("Call did not succeed\n");
@@ -88,6 +93,7 @@ namespace SQUIRREL_summerschool_perception {
 		ros::ServiceClient pointCloudClient = nh.serviceClient<planning_knowledge_msgs::PointCloudService>("/kcl_rosplan/get_point_cloud");
 		planning_knowledge_msgs::PointCloudService pointCloudSrv;
 		pointCloudSrv.request.name = objectID;
+		ROS_INFO("Getting object point cloud.");
 		if (pointCloudClient.call(pointCloudSrv))
 		{
 			ros::ServiceClient classifierClient = nh.serviceClient<perception_srv_definitions::classify>("/classifier_service/classify");
@@ -116,7 +122,7 @@ namespace SQUIRREL_summerschool_perception {
 		}
 		else
 		{
-			ROS_ERROR("Failed to call p service.");
+			ROS_ERROR("Failed to call point cloud service.");
 		}
 	}
 
@@ -127,9 +133,9 @@ namespace SQUIRREL_summerschool_perception {
 		feedbackEnabled.status = "action enabled";
 		feedbackPub.publish(feedbackEnabled);
 
-		if(!(currentPointCloud == NULL))
+		if(havePointCloud)
 		{
-			std::vector<perception_msgs::SegmentedObject::Ptr> objects = segmentObjects(currentPointCloud);
+			/*std::vector<perception_msgs::SegmentedObject::Ptr> objects = segmentObjects(currentPointCloud);
 			for(size_t i = 0; i < objects.size(); i++)
 			{
 				// now we have to publish two things:
@@ -139,8 +145,19 @@ namespace SQUIRREL_summerschool_perception {
 				objectKnowledge->knowledge_type = planning_knowledge_msgs::KnowledgeItem::INSTANCE;
 				objectKnowledge->instance_type = "object";
 				objectKnowledge->instance_name = objects[i]->name;
+				objectKnowledgePub.publish(objectKnowledge);
 				objectPointCloudPub.publish(objects[i]);
-			}
+			}*/
+
+			std::stringstream ss;
+			// add a unique object name = number
+			ss << "object" << objectCnt;
+			objectCnt++;
+			planning_knowledge_msgs::KnowledgeItem::Ptr objectKnowledge(new planning_knowledge_msgs::KnowledgeItem());
+			objectKnowledge->knowledge_type = planning_knowledge_msgs::KnowledgeItem::INSTANCE;
+			objectKnowledge->instance_type = "object";
+			objectKnowledge->instance_name = ss.str();
+			objectKnowledgePub.publish(objectKnowledge);
 		}
 
 		planning_dispatch_msgs::ActionFeedback feedbackAchieved;
@@ -160,7 +177,29 @@ namespace SQUIRREL_summerschool_perception {
 		{
 			std::string objectID = msg->parameters[0].value;
 			float confidence;
-			classifyObject(objectID, confidence);
+			//classifyObject(objectID, confidence);
+			// HACK
+			planning_knowledge_msgs::KnowledgeItem::Ptr know1(new planning_knowledge_msgs::KnowledgeItem());
+			know1->knowledge_type = planning_knowledge_msgs::KnowledgeItem::DOMAIN_ATTRIBUTE;
+			know1->attribute_name = "classified";
+			diagnostic_msgs::KeyValue classpair;
+			classpair.key = "o";
+			classpair.value = msg->parameters[0].value;
+			know1->values.push_back(classpair);
+			objectKnowledgePub.publish(know1);
+			
+			planning_knowledge_msgs::KnowledgeItem::Ptr know2(new planning_knowledge_msgs::KnowledgeItem());
+			know2->knowledge_type = planning_knowledge_msgs::KnowledgeItem::DOMAIN_ATTRIBUTE;
+			know2->attribute_name = "untidy";
+			diagnostic_msgs::KeyValue tidypair;
+			tidypair.key = "o";
+			tidypair.value = msg->parameters[0].value;
+			know2->values.push_back(tidypair);
+			objectKnowledgePub.publish(know2);
+			// HACK END
+			/*publich classified
+			if(is toy)
+				publish untidy*/
 		}
 
 		planning_dispatch_msgs::ActionFeedback feedbackAchieved;

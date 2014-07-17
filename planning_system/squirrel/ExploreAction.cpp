@@ -8,6 +8,7 @@ namespace SQUIRREL_summerschool_perception {
 
 	void PerceptionInterface::executeExplore(const planning_dispatch_msgs::ActionDispatch::ConstPtr& msg) {
 
+		usleep(1000000);
 		executeObserve(msg);
 
 	}

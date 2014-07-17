@@ -30,6 +30,7 @@ namespace SQUIRREL_summerschool_perception {
 		// action_id -> cancelled
 		std::map<int,bool> actionCancelled;
 		sensor_msgs::PointCloud2::Ptr currentPointCloud;
+		bool havePointCloud;
 		int objectCnt;
 
 		// action execution methods
@@ -41,7 +42,7 @@ namespace SQUIRREL_summerschool_perception {
 
 		public:
 
-		PerceptionInterface() : objectCnt(0)
+		PerceptionInterface() : objectCnt(0), havePointCloud(false)
 		{
 			currentPointCloud.reset(new sensor_msgs::PointCloud2());
 		}
