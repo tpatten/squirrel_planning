@@ -1,4 +1,7 @@
 #include "ros/ros.h"
+#include "sensor_msgs/PointCloud2.h"
+
+#include "perception_msgs/SegmentedObject.h"
 
 #include "planning_dispatch_msgs/ActionDispatch.h"
 #include "planning_dispatch_msgs/ActionFeedback.h"
@@ -23,18 +26,27 @@ namespace SQUIRREL_summerschool_perception {
 	{
 		private:
 
+		ros::NodeHandle nh;
 		// action_id -> cancelled
 		std::map<int,bool> actionCancelled;
+		sensor_msgs::PointCloud2::Ptr currentPointCloud;
+		int objectCnt;
 
 		// action execution methods
 		void executeObserve(const planning_dispatch_msgs::ActionDispatch::ConstPtr& msg);
 		void executeClassify(const planning_dispatch_msgs::ActionDispatch::ConstPtr& msg);
+		std::vector<perception_msgs::SegmentedObject::Ptr> segmentObjects (const sensor_msgs::PointCloud2::ConstPtr& pointCloud);
+		void classifyObject(const std::string &objectID, float &confidence);
 
 		public:
 
+		PerceptionInterface() : objectCnt(0) {}
 		// ROS publisher and subscriber
 		void dispatchCallback(const planning_dispatch_msgs::ActionDispatch::ConstPtr& msg);
+		void pointCloudCallback(const sensor_msgs::PointCloud2::ConstPtr& msg);
 		ros::Publisher feedbackPub;
+		ros::Publisher objectPointCloudPub;
+		ros::Publisher objectKnowledgePub;
 	};
 } // close namespace
 

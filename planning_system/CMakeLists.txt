@@ -6,9 +6,14 @@ find_package(catkin REQUIRED COMPONENTS
   roscpp
   rospy
   std_msgs
+  sensor_msgs
   planning_dispatch_msgs
   planning_knowledge_msgs
+  perception_srv_definitions
 )
+
+## needed for perception interface, should eventually go
+find_package(PCL REQUIRED)
 
 ###################################
 ## catkin specific configuration ##
@@ -17,7 +22,7 @@ find_package(catkin REQUIRED COMPONENTS
 ## Declare things to be passed to dependent projects
 catkin_package(
   LIBRARIES planning_system
-  CATKIN_DEPENDS roscpp rospy std_msgs planning_dispatch_msgs planning_knowledge_msgs
+  CATKIN_DEPENDS roscpp rospy std_msgs sensor_msgs planning_dispatch_msgs planning_knowledge_msgs perception_srv_definitions perception_msgs
   DEPENDS system_lib
 )
 
@@ -30,6 +35,11 @@ include_directories(
   ${catkin_INCLUDE_DIRS}
 )
 
+## needed for perception interface, should eventually go
+include_directories(include
+  ${PCL_INCLUDE_DIRS}
+)
+  
 ## visualisation
 find_package(OpenGL REQUIRED)
 find_package(GLUT REQUIRED)
@@ -96,6 +106,7 @@ target_link_libraries(squirrelVis
 
 target_link_libraries(perceptionInterface
   ${catkin_LIBRARIES}
+  ${PCL_LIBRARIES}
 )
 
 target_link_libraries(exploreAction
