@@ -25,6 +25,7 @@ namespace SQUIRREL_summerschool_perception {
 
 	void PerceptionInterface::pointCloudCallback(const sensor_msgs::PointCloud2::ConstPtr& msg)
 	{
+		ROS_INFO("Have new point cloud\n");
 		*currentPointCloud = *msg;
 	}
 
@@ -74,7 +75,7 @@ namespace SQUIRREL_summerschool_perception {
 		}
 		else
 		{
-			ROS_INFO("Call did not succeed\n");
+			ROS_ERROR("Call did not succeed\n");
 		}
 
         	return objectMsgs;
@@ -182,7 +183,7 @@ namespace SQUIRREL_summerschool_perception {
 		pi.objectKnowledgePub = nh.advertise<planning_knowledge_msgs::KnowledgeItem>("/kcl_rosplan/add_knowledge", 100, true);
 		ros::Subscriber dispatchSub = nh.subscribe("/kcl_rosplan/action_dispatch", 1000,
 			&SQUIRREL_summerschool_perception::PerceptionInterface::dispatchCallback, &pi);
-		ros::Subscriber pointCloudSub = nh.subscribe("/camera/depth_registered/points", 1,
+		ros::Subscriber pointCloudSub = nh.subscribe("/cloud_pcd", 1, //("/camera/depth_registered/points", 1,
 			&SQUIRREL_summerschool_perception::PerceptionInterface::pointCloudCallback, &pi);
 
 		ros::spin();

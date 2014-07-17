@@ -40,7 +40,10 @@ namespace SQUIRREL_summerschool_perception {
 
 		public:
 
-		PerceptionInterface() : objectCnt(0) {}
+		PerceptionInterface() : objectCnt(0)
+		{
+			currentPointCloud.reset(new sensor_msgs::PointCloud2());
+		}
 		// ROS publisher and subscriber
 		void dispatchCallback(const planning_dispatch_msgs::ActionDispatch::ConstPtr& msg);
 		void pointCloudCallback(const sensor_msgs::PointCloud2::ConstPtr& msg);
