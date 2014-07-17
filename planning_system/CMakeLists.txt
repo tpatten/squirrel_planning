@@ -8,7 +8,6 @@ find_package(catkin REQUIRED COMPONENTS
   std_msgs
   planning_dispatch_msgs
   planning_knowledge_msgs
-  perception_msgs
 )
 
 ###################################
@@ -18,7 +17,7 @@ find_package(catkin REQUIRED COMPONENTS
 ## Declare things to be passed to dependent projects
 catkin_package(
   LIBRARIES planning_system
-  CATKIN_DEPENDS roscpp rospy std_msgs planning_dispatch_msgs planning_knowledge_msgs perception_msgs
+  CATKIN_DEPENDS roscpp rospy std_msgs planning_dispatch_msgs planning_knowledge_msgs
   DEPENDS system_lib
 )
 
@@ -77,7 +76,6 @@ add_executable(planner src/PlanningLoop.cpp	${VAL_SOURCES})
 add_executable(squirrelVis squirrel/PlanningVis.cpp)
 add_executable(exploreAction squirrel/ExploreAction.cpp)
 add_executable(perceptionInterface squirrel/perceptionInterface.cpp)
-add_executable(sceneDatabase squirrel/SceneDatabase.cpp)
 
 ## Specify libraries against which to link a library or executable target
 target_link_libraries(planner
@@ -88,10 +86,6 @@ target_link_libraries(squirrelVis
   ${catkin_LIBRARIES}
   ${GLUT_LIBRARIES}
   ${OPENGL_LIBRARIES}
-)
-
-target_link_libraries(sceneDatabase
-  ${catkin_LIBRARIES}
 )
 
 target_link_libraries(perceptionInterface
