@@ -209,14 +209,14 @@ namespace KCL_rosplan {
 					goal.knowledge_type = planning_knowledge_msgs::KnowledgeItem::DOMAIN_ATTRIBUTE;
 					goal.attribute_name = "tidy";
 					diagnostic_msgs::KeyValue pair;
-					pair.key = "t";
+					pair.key = "o";
 					pair.value = *iit;
 					goal.values.push_back(pair);
 					res.attributes.push_back(goal);
 					return true;
 				}
 
-				if(pit->attribute_name.compare("untidy")==0 && containsInstance(*pit, *iit)) {
+				if(pit->attribute_name.compare("classified")==0 && containsInstance(*pit, *iit)) {
 					classified = true;
 				}
 			}
