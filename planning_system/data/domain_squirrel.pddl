@@ -11,7 +11,7 @@
 
 (:predicates
 	(tidy ?t - toy)
-	(categorised ?o - object)
+	(classified ?o - object)
 	(explored ?r - room)
 )
 
@@ -24,7 +24,7 @@
 (:durative-action classify
 	:parameters (?o - object)
 	:duration ( = ?duration 1)
-	:effect (at end (categorised ?o))
+	:effect (at end (classified ?o))
 )
 
 (:durative-action explore

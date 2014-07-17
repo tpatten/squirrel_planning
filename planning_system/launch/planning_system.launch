@@ -5,6 +5,11 @@
 	</node>
 
 
+	<!-- scene database -->
+	<node name="scene_database" pkg="knowledge_base" type="sceneDatabase" respawn="false" output="screen">
+	</node>
+
+
 	<!-- planning system -->
 	<node name="planning_system" pkg="planning_system" type="planner" respawn="false" output="screen">
 
