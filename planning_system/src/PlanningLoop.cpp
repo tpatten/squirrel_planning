@@ -231,7 +231,7 @@ namespace KCL_rosplan {
 			KCL_rosplan::actionCompleted[KCL_rosplan::currentAction] = false;
 
 			// generate PDDL problem and (re)run planner
-			if(replanRequested) {
+			if(replanRequested || KCL_rosplan::actionList.size() <= KCL_rosplan::currentAction) {
 				generatePlanningProblem(nh, problemPath);
 				runPlanner(dataPath, domainPath, problemPath);
 			}
