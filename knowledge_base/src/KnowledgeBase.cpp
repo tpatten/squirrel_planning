@@ -199,10 +199,11 @@ namespace KCL_rosplan {
 		std::vector<std::string>::iterator iit;
 		for(iit = domainInstances["object"].begin(); iit!=domainInstances["object"].end(); iit++) {
 
-			// if classified add push and return
+			// if untidy add push and return
+			bool classified = false;
 			std::vector<planning_knowledge_msgs::KnowledgeItem>::iterator pit;
 			for(pit=domainAttributes.begin(); pit!=domainAttributes.end(); pit++) {
-				if(pit->attribute_name.compare("classified")==0 && containsInstance(*pit, *iit)) {
+				if(pit->attribute_name.compare("untidy")==0 && containsInstance(*pit, *iit)) {
 					res.attributes.clear();
 					planning_knowledge_msgs::KnowledgeItem goal;
 					goal.knowledge_type = planning_knowledge_msgs::KnowledgeItem::DOMAIN_ATTRIBUTE;
@@ -214,17 +215,23 @@ namespace KCL_rosplan {
 					res.attributes.push_back(goal);
 					return true;
 				}
+
+				if(pit->attribute_name.compare("untidy")==0 && containsInstance(*pit, *iit)) {
+					classified = true;
+				}
 			}
 
 			// not classified: add classify
-			planning_knowledge_msgs::KnowledgeItem goal;
-			goal.knowledge_type = planning_knowledge_msgs::KnowledgeItem::DOMAIN_ATTRIBUTE;
-			goal.attribute_name = "classified";
-			diagnostic_msgs::KeyValue pair;
-			pair.key = "o";
-			pair.value = *iit;
-			goal.values.push_back(pair);
-			res.attributes.push_back(goal);
+			if(!classified) {
+				planning_knowledge_msgs::KnowledgeItem goal;
+				goal.knowledge_type = planning_knowledge_msgs::KnowledgeItem::DOMAIN_ATTRIBUTE;
+				goal.attribute_name = "classified";
+				diagnostic_msgs::KeyValue pair;
+				pair.key = "o";
+				pair.value = *iit;
+				goal.values.push_back(pair);
+				res.attributes.push_back(goal);
+			}
 		}
 
 		// explore room
