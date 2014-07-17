@@ -198,30 +198,33 @@ namespace KCL_rosplan {
 		// TESTING for SQUIRREL summer school 1/2
 		std::vector<std::string>::iterator iit;
 		for(iit = domainInstances["object"].begin(); iit!=domainInstances["object"].end(); iit++) {
-			if(iit->compare("unknown")!=0) {
-				planning_knowledge_msgs::KnowledgeItem goal;
-				goal.knowledge_type = planning_knowledge_msgs::KnowledgeItem::DOMAIN_ATTRIBUTE;
-				goal.attribute_name = "tidy";
-				diagnostic_msgs::KeyValue pair;
-				pair.key = "t";
-				pair.value = *iit;
-				goal.values.push_back(pair);
-				res.attributes.push_back(goal);
-				break;
-			}
-		}
 
-		for(iit = domainInstances["object"].begin(); iit!=domainInstances["object"].end(); iit++) {
-			if(iit->compare("unknown")==0) {
-				planning_knowledge_msgs::KnowledgeItem goal;
-				goal.knowledge_type = planning_knowledge_msgs::KnowledgeItem::DOMAIN_ATTRIBUTE;
-				goal.attribute_name = "classified";
-				diagnostic_msgs::KeyValue pair;
-				pair.key = "o";
-				pair.value = *iit;
-				goal.values.push_back(pair);
-				res.attributes.push_back(goal);
+			// if classified add push and return
+			std::vector<planning_knowledge_msgs::KnowledgeItem>::iterator pit;
+			for(pit=domainAttributes.begin(); pit!=domainAttributes.end(); pit++) {
+				if(pit->attribute_name.compare("classified")==0 && containsInstance(*pit, *iit)) {
+					res.attributes.clear();
+					planning_knowledge_msgs::KnowledgeItem goal;
+					goal.knowledge_type = planning_knowledge_msgs::KnowledgeItem::DOMAIN_ATTRIBUTE;
+					goal.attribute_name = "tidy";
+					diagnostic_msgs::KeyValue pair;
+					pair.key = "t";
+					pair.value = *iit;
+					goal.values.push_back(pair);
+					res.attributes.push_back(goal);
+					return true;
+				}
 			}
+
+			// not classified: add classify
+			planning_knowledge_msgs::KnowledgeItem goal;
+			goal.knowledge_type = planning_knowledge_msgs::KnowledgeItem::DOMAIN_ATTRIBUTE;
+			goal.attribute_name = "classified";
+			diagnostic_msgs::KeyValue pair;
+			pair.key = "o";
+			pair.value = *iit;
+			goal.values.push_back(pair);
+			res.attributes.push_back(goal);
 		}
 
 		if(res.attributes.size()<1) {
