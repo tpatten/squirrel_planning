@@ -50,11 +50,7 @@ namespace SQUIRREL_summerschool_perception {
 		srv.request.cloud = *pointCloudMsg;
 
 		std::vector<sensor_msgs::PointCloud2::Ptr> objects;
-		if(true)
-		{
-			ROS_INFO("happy happy\n");
-		}
-		/*if (client.call(srv))
+		if (client.call(srv))
 		{
 			pcl::PointCloud<pcl::PointXYZ>::Ptr scene(new pcl::PointCloud<pcl::PointXYZ>);
 			pcl::fromROSMsg (*pointCloudMsg, *scene);
@@ -79,7 +75,7 @@ namespace SQUIRREL_summerschool_perception {
 				objectMsg->segment = *segmentMsg;
 				objectMsgs.push_back(objectMsg);
 			}
-		}*/
+		}
 		else
 		{
 			ROS_ERROR("Call did not succeed\n");
@@ -93,7 +89,7 @@ namespace SQUIRREL_summerschool_perception {
 		ros::ServiceClient pointCloudClient = nh.serviceClient<planning_knowledge_msgs::PointCloudService>("/kcl_rosplan/get_point_cloud");
 		planning_knowledge_msgs::PointCloudService pointCloudSrv;
 		pointCloudSrv.request.name = objectID;
-		ROS_INFO("Getting object point cloud.");
+		ROS_INFO("Classify: getting object point cloud.");
 		if (pointCloudClient.call(pointCloudSrv))
 		{
 			ros::ServiceClient classifierClient = nh.serviceClient<perception_srv_definitions::classify>("/classifier_service/classify");
@@ -109,10 +105,11 @@ namespace SQUIRREL_summerschool_perception {
 
 			classifySrv.request.cloud = pointCloudSrv.response.cloud;
 			classifySrv.request.clusters_indices = clusterIndices;
+			ROS_INFO("Calling classsifier service.");
 			if (classifierClient.call(classifySrv))
 			{
 				//class_results_ros_ = srv.response.class_results;
-				clusterIndices = classifySrv.response.clusters_indices;
+				//clusterIndices = classifySrv.response.clusters_indices;
 				//cluster_centroids_ros_ = srv.response.centroid;
 			}
 			else
@@ -135,7 +132,7 @@ namespace SQUIRREL_summerschool_perception {
 
 		if(havePointCloud)
 		{
-			/*std::vector<perception_msgs::SegmentedObject::Ptr> objects = segmentObjects(currentPointCloud);
+			std::vector<perception_msgs::SegmentedObject::Ptr> objects = segmentObjects(currentPointCloud);
 			for(size_t i = 0; i < objects.size(); i++)
 			{
 				// now we have to publish two things:
@@ -147,17 +144,7 @@ namespace SQUIRREL_summerschool_perception {
 				objectKnowledge->instance_name = objects[i]->name;
 				objectKnowledgePub.publish(objectKnowledge);
 				objectPointCloudPub.publish(objects[i]);
-			}*/
-
-			std::stringstream ss;
-			// add a unique object name = number
-			ss << "object" << objectCnt;
-			objectCnt++;
-			planning_knowledge_msgs::KnowledgeItem::Ptr objectKnowledge(new planning_knowledge_msgs::KnowledgeItem());
-			objectKnowledge->knowledge_type = planning_knowledge_msgs::KnowledgeItem::INSTANCE;
-			objectKnowledge->instance_type = "object";
-			objectKnowledge->instance_name = ss.str();
-			objectKnowledgePub.publish(objectKnowledge);
+			}
 		}
 
 		planning_dispatch_msgs::ActionFeedback feedbackAchieved;
@@ -177,9 +164,9 @@ namespace SQUIRREL_summerschool_perception {
 		{
 			std::string objectID = msg->parameters[0].value;
 			float confidence;
-			//classifyObject(objectID, confidence);
+			classifyObject(objectID, confidence);
 			// HACK
-			planning_knowledge_msgs::KnowledgeItem::Ptr know1(new planning_knowledge_msgs::KnowledgeItem());
+			/*planning_knowledge_msgs::KnowledgeItem::Ptr know1(new planning_knowledge_msgs::KnowledgeItem());
 			know1->knowledge_type = planning_knowledge_msgs::KnowledgeItem::DOMAIN_ATTRIBUTE;
 			know1->attribute_name = "classified";
 			diagnostic_msgs::KeyValue classpair;
@@ -195,7 +182,7 @@ namespace SQUIRREL_summerschool_perception {
 			tidypair.key = "o";
 			tidypair.value = msg->parameters[0].value;
 			know2->values.push_back(tidypair);
-			objectKnowledgePub.publish(know2);
+			objectKnowledgePub.publish(know2);*/
 			// HACK END
 			/*publich classified
 			if(is toy)
