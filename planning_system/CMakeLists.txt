@@ -82,7 +82,8 @@ set(VAL_SOURCES
 ## squirrel interface sources
 set(SQUIRREL_SOURCES
 	squirrel/perceptionInterface.cpp
-	squirrel/ExploreAction.cpp)
+	squirrel/ExploreAction.cpp
+	squirrel/PushAction.cpp)
 
 ## Declare cpp executables
 add_executable(planner src/PlanningLoop.cpp	${VAL_SOURCES})
