@@ -15,6 +15,10 @@
 	(empty ?g - gripper)
 )
 
+(:functions
+	(weight ?b - block) 
+)
+
 (:durative-action pick_up
 	:parameters (?b - block ?g - gripper)
 	:duration ( = ?duration 30)

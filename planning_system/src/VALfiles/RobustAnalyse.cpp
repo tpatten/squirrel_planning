@@ -549,13 +549,7 @@ void RobustPlanAnalyser::runAnalysis(double & variation,int & numberTestPlans,bo
        if(planExecuted)
        {
          *report << "Plan executed successfully - checking goal\\\\\n";
-         if(goalSatisfied)
-         {
-          	*report << "Goal satisfied\\\\\n" << "Final value: ";
-          	vector<double> vs(testPlanValidator->finalValue());
-          	copy(vs.begin(),vs.end(),ostream_iterator<double>(*report," "));
-          	*report <<"\n";
-         }
+         if(goalSatisfied) *report << "Goal satisfied\\\\\n" << "Final value: " << testPlanValidator->finalValue() <<"\n";
          else *report << "Goal not satisfied\n";
        }
        else

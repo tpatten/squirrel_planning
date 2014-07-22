@@ -703,16 +703,8 @@ void violation_term::write(ostream & o) const
 void metric_spec::display(int ind) const
 {
     TITLE(metric_spec);
-    pc_list<expression*>::const_iterator j = expr->begin();
-    for(list<optimization>::const_iterator i = opt.begin();
-    	i != opt.end();++i,++j)
-    {
-    	indent(ind);
-    	cout << "opt: " << *i;
-    	LABEL(expr);
-    	indent(ind);
-    	(*j)->display(ind+1);
-    }
+    LEAF(opt);
+    FIELD(expr);
 }
 
 void metric_spec::write(ostream & o) const
@@ -858,17 +850,6 @@ var_symbol* var_symbol_table_stack::symbol_get(const string& name)
 
 var_symbol* var_symbol_table_stack::symbol_put(const string& name)
 {
-    return top()->symbol_put(name);
-};
-
-var_symbol* var_symbol_table_stack::new_symbol_put(const string& name)
-{
-    var_symbol* sym = top()->symbol_probe(name);
-    if(sym==NULL)
-    {
-        
-    }
-
     return top()->symbol_put(name);
 };
 

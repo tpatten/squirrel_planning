@@ -14,21 +14,80 @@
 
 namespace KCL_rosplan
 {
+
 	/**
-	 * processes the parameters of a single PDDL action into an ActionDispatch message.
+	 * populates the knowledge filter messages
+	 */
+	void processFilter() {
+
+		KCL_rosplan::knowledgeFilter.clear();
+
+		// populate filter message with objects
+		for(size_t i=0; i<KCL_rosplan::filterObjects.size(); i++) {
+			planning_knowledge_msgs::KnowledgeItem filterItem;
+			filterItem.knowledge_type = planning_knowledge_msgs::KnowledgeItem::INSTANCE;
+			filterItem.instance_type = KCL_rosplan::objectTypeMap[KCL_rosplan::filterObjects[i]];
+			filterItem.instance_name = KCL_rosplan::filterObjects[i];
+			KCL_rosplan::knowledgeFilter.push_back(filterItem);
+		}
+
+		// populate filter message with attributes
+		// TODO ONLY STATICS! Not all preconditions.
+		for(size_t i=0; i<KCL_rosplan::filterAttributes.size(); i++) {
+			planning_knowledge_msgs::KnowledgeItem filterItem;
+			filterItem.knowledge_type = planning_knowledge_msgs::KnowledgeItem::DOMAIN_ATTRIBUTE;
+			filterItem.attribute_name = KCL_rosplan::filterAttributes[i][0];
+			filterItem.instance_type = KCL_rosplan::objectTypeMap[KCL_rosplan::filterAttributes[i][1]];
+			filterItem.instance_name = KCL_rosplan::filterAttributes[i][1];
+			for(size_t j=2; j<KCL_rosplan::filterAttributes[i].size()-1; j+=2) {
+				diagnostic_msgs::KeyValue pair;
+				pair.key = KCL_rosplan::filterAttributes[i][j];
+				pair.value = KCL_rosplan::filterAttributes[i][j+1];
+				filterItem.values.push_back(pair);
+			}
+			KCL_rosplan::knowledgeFilter.push_back(filterItem);
+		}
+	}
+
+	/**
+	 * processes the parameters of a single PDDL action into an ActionDispatch message
 	 */
 	void processParameters(planning_dispatch_msgs::ActionDispatch &msg, std::vector<std::string> &params) {
 
+		// find the correct PDDL operator definition
 		std::map<std::string,std::vector<std::string> >::iterator ait;
 		ait = domainOperators.find(msg.name);
 		if(ait != domainOperators.end()) {
 
-			// Parse the PDDL parameters back into the object attributes stored in the PDDL_knowledge map.
+			// add the PDDL parameters to the action dispatch
 			for(size_t i=0; i<ait->second.size(); i++) {
 				diagnostic_msgs::KeyValue pair;
 				pair.key = ait->second[i];
 				pair.value = params[i];
 				msg.parameters.push_back(pair);
+
+				// prepare object existence for the knowledge filter
+				bool add = true;
+				for(size_t j=0; j<filterObjects.size(); j++)
+					if(0==KCL_rosplan::filterObjects[j].compare(params[i])) add = false;
+				if(add) KCL_rosplan::filterObjects.push_back(params[i]);
+			}
+
+			// prepare object attributes for the knowledge filter
+			for(size_t i=0; i<KCL_rosplan::domainOeratorPreconditionMap[msg.name].size(); i++) {
+				std::vector<std::string> filterAttribute;
+				std::vector<std::string> precondition = KCL_rosplan::domainOeratorPreconditionMap[msg.name][i];
+				filterAttribute.push_back(precondition[0]);
+				for(size_t j=1; j<precondition.size(); j++) {
+					// label
+					if(j>1) filterAttribute.push_back(precondition[j]);
+					// instance name
+					for(size_t k=0;k<ait->second.size();k++) {
+						if(0==ait->second[k].compare(precondition[j]))
+							filterAttribute.push_back(params[k]);
+					}
+				}
+				KCL_rosplan::filterAttributes.push_back(filterAttribute);
 			}
 
 			// add non-PDDL knowledge items to action dispatch
@@ -36,10 +95,8 @@ namespace KCL_rosplan
 			for(size_t i=0; i<params.size(); i++) {
 				pit = domainPredicates.find(ait->second[i]);
 				for(size_t j=0; j<KCL_rosplan::instanceAttributes.size(); j++) {
-					// TODO hava knowledge items be passed nicer in dispatch
-					if(0==KCL_rosplan::instanceAttributes[j].instance_name.compare(params[i])
-							&& KCL_rosplan::instanceAttributes[j].knowledge_type == planning_knowledge_msgs::KnowledgeItem::ATTRIBUTE
-							&& std::find(pit->second.begin(),pit->second.end(),KCL_rosplan::instanceAttributes[j].attribute_name)==pit->second.end()) {
+					// TODO have knowledge items be passed more cleanly in dispatch
+					if(0==KCL_rosplan::instanceAttributes[j].instance_name.compare(params[i])) {
 						for(size_t k=0; k<instanceAttributes[j].values.size(); k++) {
 							diagnostic_msgs::KeyValue pair;
 							pair.key = instanceAttributes[j].instance_name + "_" + instanceAttributes[j].attribute_name + "_" + instanceAttributes[j].values[k].key;
@@ -49,14 +106,7 @@ namespace KCL_rosplan
 					}
 				}
 			}
-		}
-		
-		// TODO: store what we care about for the filter
-		planning_knowledge_msgs::KnowledgeItem itemMessage;
-		itemMessage.knowledge_type = planning_knowledge_msgs::KnowledgeItem::INSTANCE;
-		itemMessage.instance_type = "TYPENAME";
-		// itemMessage.instance_name = params[0];
-		knowledge_filter.push_back(itemMessage);
+		} // end of operator
 	}
 
 	/**
@@ -144,6 +194,7 @@ namespace KCL_rosplan
 					// save better optimised plan
 					for(size_t i=0;i<potentialPlan.size();i++) {
 						KCL_rosplan::actionList.push_back(potentialPlan[i]);
+						KCL_rosplan::processFilter();
 					}
 
 					KCL_rosplan::totalPlanDuration = planDuration;

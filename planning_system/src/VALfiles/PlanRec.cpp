@@ -78,12 +78,13 @@ bool LaTeX;
 
 extern ostream * report;
 
+bool makespanDefault;
 
 };
 
 
 
-typedef map<double,vector<pair<string,vector<double> > > > Ranking;
+typedef map<double,vector<string> > Ranking;
 
 using namespace VAL;
 
@@ -232,37 +233,17 @@ void executePlans(int & argc,char * argv[],int & argcount,TypeChecker & tc,const
 		    	{
 		    		if(!(pr.getValidator().hasInvariantWarnings()))
 		    		{
-		    			vector<double> vs(pr.getValidator().finalValue());
-		    			rnk[vs[0]].push_back(make_pair(name,vs));
+		    			rnk[pr.getValidator().finalValue()].push_back(name);
 		    			if(!Silent && !LaTeX) *report << "Plan valid\n";
 		    			if(LaTeX) *report << "\\\\\n";
-		    			if(!Silent && !LaTeX) *report << "Final value: "; 
-		    			if(Silent > 1 || (!Silent && !LaTeX)) 
-		    			{
-		    				vector<double> vs(pr.getValidator().finalValue());
-		    				for(unsigned int i = 0;i < vs.size();++i)
-		    					*report << vs[i] << " ";
-		    				*report << "\n";
-		    			}
+		    			if(!Silent && !LaTeX) *report << "Final value: " << pr.getValidator().finalValue() << "\n";
 		    		}
 		    		else
 		    		{
-		    			vector<double> vs(pr.getValidator().finalValue());
-						rnkInv[vs[0]].push_back(make_pair(name,vs));
+						rnkInv[pr.getValidator().finalValue()].push_back(name);
 		    			if(!Silent && !LaTeX) *report << "Plan valid (subject to further invariant checks)\n";
 		    			if(LaTeX) *report << "\\\\\n";
-		    			if(!Silent && !LaTeX) 
-		    			{
-		    				*report << "Final value: ";
-		    				vector<double> vs(pr.getValidator().finalValue());
-		    				for(unsigned int i = 0;i < vs.size();++i)
-		    					*report << vs[i] << " ";
-		    				*report << "\n";
-		    			};
-						if(Silent > 1)
-						{
-							*report << "failed\n";
-						}
+		    			if(!Silent && !LaTeX) *report << "Final value: " << pr.getValidator().finalValue();
 		          };
 		          	if(Verbose)
 		          	{
@@ -272,11 +253,10 @@ void executePlans(int & argc,char * argv[],int & argcount,TypeChecker & tc,const
 		    	else
 		    	{
 		    		failed.push_back(name);
-		    		if(Silent < 2) *report << "Goal not satisfied\n";
-		    		if(Silent > 1) *report << "failed\n";
+		    		*report << "Goal not satisfied\n";
 
 		    		if(LaTeX) *report << "\\\\\n";
-		    		if(Silent < 2) *report << "Plan invalid\n";
+		    		*report << "Plan invalid\n";
 				++errorCount;
 			};
 
@@ -288,19 +268,14 @@ void executePlans(int & argc,char * argv[],int & argcount,TypeChecker & tc,const
          		    	if(ContinueAnyway)
                   {
                      if(LaTeX) *report << "\nPlan failed to execute - checking goal\\\\\n";
-                     else 
-                     {
-                     	if(Silent < 2) *report << "\nPlan failed to execute - checking goal\n";
-						if(Silent > 1) *report << "failed\n";
-					}
+                     else cout << "\nPlan failed to execute - checking goal\n";
+
                      if(!pr.getValidator().checkGoal(current_analysis->the_problem->the_goal)) *report << "\nGoal not satisfied\n";
 
          		    }
 
-                 else {
-                 	if(Silent < 2) *report << "\nPlan failed to execute\n";
-					if(Silent > 1) *report << "failed\n";
-				}
+                 else *report << "\nPlan failed to execute\n";
+
 
         };
 
@@ -309,7 +284,7 @@ void executePlans(int & argc,char * argv[],int & argcount,TypeChecker & tc,const
 						if(LaTeX)
 							*report << "\\\\\n\\\\\n";
 						else
-							if(Silent < 2) *report << "\n\n";
+							cout << "\n\n";
 
 
 		    			*report << "This plan has the following further condition(s) to check:";
@@ -317,12 +292,13 @@ void executePlans(int & argc,char * argv[],int & argcount,TypeChecker & tc,const
 						if(LaTeX)
 							*report << "\\\\\n\\\\\n";
 						else
-							if(Silent < 2) *report << "\n\n";
+							cout << "\n\n";
 
 						pr.getValidator().displayInvariantWarnings();
 		    		};
 
 		    if(pr.getValidator().graphsToShow()) showGraphs = true;
+		    cout << pet;
 		}
 		catch(exception & e)
 		{
@@ -333,7 +309,7 @@ void executePlans(int & argc,char * argv[],int & argcount,TypeChecker & tc,const
 				*report << "Error occurred in validation attempt:\\\\\n  " << e.what() << "\n";
 			}
 			else
-				if(Silent < 2) *report << "Error occurred in validation attempt:\n  " << e.what() << "\n";
+				cout << "Error occurred in validation attempt:\n  " << e.what() << "\n";
 
 			queries.push_back(name);
 
@@ -375,7 +351,7 @@ void executePlans(int & argc,char * argv[],int & argcount,TypeChecker & tc,const
 
 
 		if(current_analysis->the_problem->metric &&
-				current_analysis->the_problem->metric->opt.front() == E_MINIMIZE)
+				current_analysis->the_problem->metric->opt == E_MINIMIZE)
 		{
 			if(LaTeX)
 			{
@@ -423,7 +399,7 @@ void executePlans(int & argc,char * argv[],int & argcount,TypeChecker & tc,const
 
 
 		if(current_analysis->the_problem->metric &&
-				current_analysis->the_problem->metric->opt.front() == E_MINIMIZE)
+				current_analysis->the_problem->metric->opt == E_MINIMIZE)
 		{
 			if(LaTeX)
 			{
@@ -501,7 +477,7 @@ int main(int argc,char * argv[])
 
    bool giveAdvice = true;
 
-	double tolerance = 0.0001;
+	double tolerance = 0.01;
 	bool lengthDefault = true;
 	FAverbose = false;
 	performTIMAnalysis(&argv[1]);
