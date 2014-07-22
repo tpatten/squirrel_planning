@@ -16,6 +16,10 @@
  */
 namespace SQUIRREL_summerschool_perception {
 
+	/**
+	 * Callback method for action_dispatch; farms the action out to the correct controller.
+	 * In this case all the actions are implemented in this class. (Not ideal)
+	 */
 	void PerceptionInterface::dispatchCallback(const planning_dispatch_msgs::ActionDispatch::ConstPtr& msg) {
 		if(0 == msg->name.compare("cancel_action"))
 			actionCancelled[msg->action_id] = true;
@@ -141,6 +145,10 @@ namespace SQUIRREL_summerschool_perception {
 		}
 	}
 
+	/**
+	 * Performs an observation.
+	 * This method is part o the explore action.
+	 */
 	void PerceptionInterface::executeObserve(const planning_dispatch_msgs::ActionDispatch::ConstPtr& msg) {
 		ROS_INFO("Execute observe\n");
 
@@ -162,6 +170,9 @@ namespace SQUIRREL_summerschool_perception {
 		}
 	}
 
+	/**
+	 * Performs a classify action
+	 */
 	void PerceptionInterface::executeClassify(const planning_dispatch_msgs::ActionDispatch::ConstPtr& msg) {
 		ROS_INFO("Execute classify\n");
 
