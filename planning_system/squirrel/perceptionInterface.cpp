@@ -2,6 +2,7 @@
 #include <pcl_conversions/pcl_conversions.h>
 #include "perception_msgs/SegmentedObject.h"
 #include "perception_msgs/classification.h"
+#include "perception_msgs/ObjectPosition.h"
 #include "perception_srv_definitions/segment.h"
 #include "perception_srv_definitions/classify.h"
 #include "planning_knowledge_msgs/KnowledgeItem.h"
@@ -122,12 +123,11 @@ namespace SQUIRREL_summerschool_perception {
 				if(classifySrv.response.class_results.size() == 1)
 				{
 					// the classifier returns all classes with confidences, take the one with the highest
-					float maxConf = 0;
 					for(size_t i = 0; i < classifySrv.response.class_results[0].class_type.size(); i++)
 					{
-						if(classifySrv.response.class_results[0].confidence[i] > maxConf)
+						if(classifySrv.response.class_results[0].confidence[i] > classConfidence)
 						{
-							maxConf = classifySrv.response.class_results[0].confidence[i];
+							classConfidence = classifySrv.response.class_results[0].confidence[i];
 							objectClass = classifySrv.response.class_results[0].class_type[i].data;
 							position = classifySrv.response.centroid[0];
 						}
@@ -192,8 +192,13 @@ namespace SQUIRREL_summerschool_perception {
 			ROS_INFO("found object of class '%s' with confidence %.3f at [%.3f %.3f %.3f]\n",
 				objectClass.c_str(), classConfidence, position.x, position.y, position.z);
 
-			//objectPositionPub.publish(position ..);
-			
+			perception_msgs::ObjectPosition posMsg;
+			posMsg.name = objectID;
+			posMsg.position.x = position.x;
+			posMsg.position.y = position.y;
+			posMsg.position.z = position.z;
+			objectPositionPub.publish(posMsg);
+
 			// tell planning that we have classified the object
 			planning_knowledge_msgs::KnowledgeItem::Ptr know1(new planning_knowledge_msgs::KnowledgeItem());
 			know1->knowledge_type = planning_knowledge_msgs::KnowledgeItem::DOMAIN_ATTRIBUTE;
@@ -204,9 +209,13 @@ namespace SQUIRREL_summerschool_perception {
 			know1->values.push_back(classpair);
 			objectKnowledgePub.publish(know1);
 
+
+			ROS_INFO("the class is still '%s'\n", objectClass.c_str());
+
 			// Now depemnding on which class we found we decide what to do: clean away toys (i.e. set them untidy), ignore other stuff
-			if(objectClass == "car") // or any other toy
+			if(objectClass == "car/") // or any other toy
 			{
+				ROS_INFO("Found an untidy object!\n");
 				planning_knowledge_msgs::KnowledgeItem::Ptr know2(new planning_knowledge_msgs::KnowledgeItem());
 				know2->knowledge_type = planning_knowledge_msgs::KnowledgeItem::DOMAIN_ATTRIBUTE;
 				know2->attribute_name = "untidy";
@@ -237,7 +246,7 @@ namespace SQUIRREL_summerschool_perception {
 		SQUIRREL_summerschool_perception::PerceptionInterface pi;
 		pi.feedbackPub = nh.advertise<planning_dispatch_msgs::ActionFeedback>("/kcl_rosplan/action_feedback", 1000, true);
 		pi.objectPointCloudPub = nh.advertise<perception_msgs::SegmentedObject>("/kcl_rosplan/add_point_cloud", 100, true);
-		//pi.objectPositionPub = nh.advertise<perception_msgs::SegmentedObject>("/kcl_rosplan/add_position", 100, true);
+		pi.objectPositionPub = nh.advertise<perception_msgs::ObjectPosition>("/kcl_rosplan/add_object_position", 100, true);
 		pi.objectKnowledgePub = nh.advertise<planning_knowledge_msgs::KnowledgeItem>("/kcl_rosplan/add_knowledge", 100, true);
 		ros::Subscriber dispatchSub = nh.subscribe("/kcl_rosplan/action_dispatch", 1000,
 			&SQUIRREL_summerschool_perception::PerceptionInterface::dispatchCallback, &pi);

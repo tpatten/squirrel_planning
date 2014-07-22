@@ -23,18 +23,12 @@ namespace SQUIRREL_summerschool_perception {
 		ROS_INFO("Push: getting object position.");
 		if (positionClient.call(positionSrv))
 		{
-			// TODO
 			geometry_msgs::Point pos = positionSrv.response.position;
-			ROS_INFO("pushing object at [%.3f %.3f %.3f]\n",
-				(float)pos.x, (float)pos.y, (float)pos.z);
+			ROS_INFO("pushing object ID '%s' at [%.3f %.3f %.3f]\n",
+				objectID.c_str(), (float)pos.x, (float)pos.y, (float)pos.z);
 
-			// TODO: push the object!
+			// TODO: push the object, and then retreat
 			// <your code here>
-		}
-
-
-		if(actionCancelled[msg->action_id]) {
-			// TODO: push is cancelled; finish immediately.
 		}
 
 		// completion feedback
