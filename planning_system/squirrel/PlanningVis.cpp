@@ -2,6 +2,7 @@
 
 #include "planning_dispatch_msgs/ActionDispatch.h"
 #include "planning_dispatch_msgs/ActionFeedback.h"
+#include "std_msgs/Empty.h"
 
 #include <GL/freeglut.h>
 #include <GL/gl.h>
