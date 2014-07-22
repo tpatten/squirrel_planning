@@ -8,6 +8,7 @@ find_package(catkin REQUIRED COMPONENTS
   std_msgs
   planning_knowledge_msgs
   perception_msgs
+  geometry_msgs
 )
 
 ###################################
@@ -17,7 +18,7 @@ find_package(catkin REQUIRED COMPONENTS
 ## Declare things to be passed to dependent projects
 catkin_package(
   LIBRARIES knowledge_base
-  CATKIN_DEPENDS roscpp rospy std_msgs planning_knowledge_msgs perception_msgs
+  CATKIN_DEPENDS roscpp rospy std_msgs planning_knowledge_msgs perception_msgs geometry_msgs perception_msgs
   DEPENDS system_lib
 )
 

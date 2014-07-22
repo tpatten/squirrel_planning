@@ -1,5 +1,7 @@
 #include <pcl/common/common.h>
 #include <pcl_conversions/pcl_conversions.h>
+#include "perception_msgs/SegmentedObject.h"
+#include "perception_msgs/classification.h"
 #include "perception_srv_definitions/segment.h"
 #include "perception_srv_definitions/classify.h"
 #include "planning_knowledge_msgs/KnowledgeItem.h"
@@ -66,10 +68,10 @@ namespace SQUIRREL_summerschool_perception {
 				perception_msgs::SegmentedObject::Ptr objectMsg(new perception_msgs::SegmentedObject());
 				sensor_msgs::PointCloud2::Ptr segmentMsg(new sensor_msgs::PointCloud2());
 				pcl::toROSMsg (*object, *segmentMsg);
-				// The defined name for anything not yet classified
+				
+				// add a unique object ID
 				std::stringstream ss;
-				// add a unique object name = number
-				ss << objectCnt;
+				ss << "object" << objectCnt;
 				objectCnt++;
 				objectMsg->name = ss.str();
 				objectMsg->segment = *segmentMsg;
@@ -84,8 +86,12 @@ namespace SQUIRREL_summerschool_perception {
         	return objectMsgs;
 	}
 
-	void PerceptionInterface::classifyObject(const std::string &objectID, float &confidence)
+	void PerceptionInterface::classifyObject(const std::string &objectID, std::string &objectClass, float &classConfidence, geometry_msgs::Point32 &position)
 	{
+		objectClass = "";
+		classConfidence = 0.;
+		position.x = position.y = position.z = 0.;
+
 		ros::ServiceClient pointCloudClient = nh.serviceClient<planning_knowledge_msgs::PointCloudService>("/kcl_rosplan/get_point_cloud");
 		planning_knowledge_msgs::PointCloudService pointCloudSrv;
 		pointCloudSrv.request.name = objectID;
@@ -108,9 +114,21 @@ namespace SQUIRREL_summerschool_perception {
 			ROS_INFO("Calling classsifier service.");
 			if (classifierClient.call(classifySrv))
 			{
-				//class_results_ros_ = srv.response.class_results;
-				//clusterIndices = classifySrv.response.clusters_indices;
-				//cluster_centroids_ros_ = srv.response.centroid;
+				// se sent one object for classification, so we expect one answer
+				if(classifySrv.response.class_results.size() == 1)
+				{
+					// the classifier returns all classes with confidences, take the one with the highest
+					float maxConf = 0;
+					for(size_t i = 0; i < classifySrv.response.class_results[0].class_type.size(); i++)
+					{
+						if(classifySrv.response.class_results[0].confidence[i] > maxConf)
+						{
+							maxConf = classifySrv.response.class_results[0].confidence[i];
+							objectClass = classifySrv.response.class_results[0].class_type[i].data;
+							position = classifySrv.response.centroid[0];
+						}
+					}
+				}
 			}
 			else
 			{
@@ -124,6 +142,7 @@ namespace SQUIRREL_summerschool_perception {
 	}
 
 	void PerceptionInterface::executeObserve(const planning_dispatch_msgs::ActionDispatch::ConstPtr& msg) {
+		ROS_INFO("Execute observe\n");
 
 		if(havePointCloud)
 		{
@@ -144,6 +163,7 @@ namespace SQUIRREL_summerschool_perception {
 	}
 
 	void PerceptionInterface::executeClassify(const planning_dispatch_msgs::ActionDispatch::ConstPtr& msg) {
+		ROS_INFO("Execute classify\n");
 
 		planning_dispatch_msgs::ActionFeedback feedbackEnabled;
 		feedbackEnabled.action_id = msg->action_id;
@@ -153,10 +173,18 @@ namespace SQUIRREL_summerschool_perception {
 		if(msg->parameters.size() == 1 && msg->parameters[0].key == "o")
 		{
 			std::string objectID = msg->parameters[0].value;
-			float confidence;
-			classifyObject(objectID, confidence);
-			// HACK
-			/*planning_knowledge_msgs::KnowledgeItem::Ptr know1(new planning_knowledge_msgs::KnowledgeItem());
+			std::string objectClass;
+			float classConfidence;
+			geometry_msgs::Point32 position;
+			classifyObject(objectID, objectClass, classConfidence, position);
+
+			ROS_INFO("found object of class '%s' with confidence %.3f at [%.3f %.3f %.3f]\n",
+				objectClass.c_str(), classConfidence, position.x, position.y, position.z);
+
+			//objectPositionPub.publish(position ..);
+			
+			// tell planning that we have classified the object
+			planning_knowledge_msgs::KnowledgeItem::Ptr know1(new planning_knowledge_msgs::KnowledgeItem());
 			know1->knowledge_type = planning_knowledge_msgs::KnowledgeItem::DOMAIN_ATTRIBUTE;
 			know1->attribute_name = "classified";
 			diagnostic_msgs::KeyValue classpair;
@@ -164,19 +192,19 @@ namespace SQUIRREL_summerschool_perception {
 			classpair.value = msg->parameters[0].value;
 			know1->values.push_back(classpair);
 			objectKnowledgePub.publish(know1);
-			
-			planning_knowledge_msgs::KnowledgeItem::Ptr know2(new planning_knowledge_msgs::KnowledgeItem());
-			know2->knowledge_type = planning_knowledge_msgs::KnowledgeItem::DOMAIN_ATTRIBUTE;
-			know2->attribute_name = "untidy";
-			diagnostic_msgs::KeyValue tidypair;
-			tidypair.key = "o";
-			tidypair.value = msg->parameters[0].value;
-			know2->values.push_back(tidypair);
-			objectKnowledgePub.publish(know2);*/
-			// HACK END
-			/*publich classified
-			if(is toy)
-				publish untidy*/
+
+			// Now depemnding on which class we found we decide what to do: clean away toys (i.e. set them untidy), ignore other stuff
+			if(objectClass == "car") // or any other toy
+			{
+				planning_knowledge_msgs::KnowledgeItem::Ptr know2(new planning_knowledge_msgs::KnowledgeItem());
+				know2->knowledge_type = planning_knowledge_msgs::KnowledgeItem::DOMAIN_ATTRIBUTE;
+				know2->attribute_name = "untidy";
+				diagnostic_msgs::KeyValue tidypair;
+				tidypair.key = "o";
+				tidypair.value = msg->parameters[0].value;
+				know2->values.push_back(tidypair);
+				objectKnowledgePub.publish(know2);
+			}
 		}
 
 		planning_dispatch_msgs::ActionFeedback feedbackAchieved;
@@ -198,6 +226,7 @@ namespace SQUIRREL_summerschool_perception {
 		SQUIRREL_summerschool_perception::PerceptionInterface pi;
 		pi.feedbackPub = nh.advertise<planning_dispatch_msgs::ActionFeedback>("/kcl_rosplan/action_feedback", 1000, true);
 		pi.objectPointCloudPub = nh.advertise<perception_msgs::SegmentedObject>("/kcl_rosplan/add_point_cloud", 100, true);
+		//pi.objectPositionPub = nh.advertise<perception_msgs::SegmentedObject>("/kcl_rosplan/add_position", 100, true);
 		pi.objectKnowledgePub = nh.advertise<planning_knowledge_msgs::KnowledgeItem>("/kcl_rosplan/add_knowledge", 100, true);
 		ros::Subscriber dispatchSub = nh.subscribe("/kcl_rosplan/action_dispatch", 1000,
 			&SQUIRREL_summerschool_perception::PerceptionInterface::dispatchCallback, &pi);

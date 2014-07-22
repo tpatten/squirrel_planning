@@ -1,4 +1,5 @@
 #include "perceptionInterface.h"
+#include "planning_knowledge_msgs/PositionService.h"
 
 /**
  * ROS node stub for SQUIRREL Summer School: PUSH
@@ -14,7 +15,23 @@ namespace SQUIRREL_summerschool_perception {
 		feedbackEnabled.status = "action enabled";
 		feedbackPub.publish(feedbackEnabled);
 
-		// TODO: push the object!
+		// get object position
+		std::string objectID = msg->parameters[0].value;
+		ros::ServiceClient positionClient = nh.serviceClient<planning_knowledge_msgs::PositionService>("/kcl_rosplan/get_object_position");
+		planning_knowledge_msgs::PositionService positionSrv;
+		positionSrv.request.name = objectID;
+		ROS_INFO("Push: getting object position.");
+		if (positionClient.call(positionSrv))
+		{
+			// TODO
+			geometry_msgs::Point pos = positionSrv.response.position;
+			ROS_INFO("pushing object at [%.3f %.3f %.3f]\n",
+				(float)pos.x, (float)pos.y, (float)pos.z);
+
+			// TODO: push the object!
+			// <your code here>
+		}
+
 
 		if(actionCancelled[msg->action_id]) {
 			// TODO: push is cancelled; finish immediately.
