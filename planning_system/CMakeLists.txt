@@ -36,7 +36,7 @@ include_directories(
 )
 
 ## needed for perception interface, should eventually go
-include_directories(include
+include_directories(
   ${PCL_INCLUDE_DIRS}
 )
   
