@@ -14,16 +14,21 @@ namespace SQUIRREL_summerschool_perception {
 		feedbackEnabled.status = "action enabled";
 		feedbackPub.publish(feedbackEnabled);
 
-		// TODO: move around
+		// TODO: move around intelligently
+		// <your code here>
 
 		// in some places:		
 		executeObserve(msg);
 
 		if(actionCancelled[msg->action_id]) {
 			// TODO: explore is cancelled; finish immediately.
+			// -> make the robot stop
+			// <your code here>
 		}
 
 		// after about "msg->duration" seconds of exploration:
+		// TODO: after some reasonable time stop exploring
+		// <your code here>
 
 		// completion feedback
 		planning_dispatch_msgs::ActionFeedback feedbackAchieved;
