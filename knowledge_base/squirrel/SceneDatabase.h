@@ -31,7 +31,7 @@ namespace KCL_rosplan {
 		void addPointCloud(const perception_msgs::SegmentedObject::ConstPtr& msg);
 		void removePointCloud(const std_msgs::String::ConstPtr& msg);
 
-		bool getPosition(planning_knowledge_msgs::PointCloudService::Request  &req, planning_knowledge_msgs::PositionService::Response &res);
+		bool getPosition(planning_knowledge_msgs::PositionService::Request  &req, planning_knowledge_msgs::PositionService::Response &res);
 		void addPosition(const perception_msgs::ObjectPosition::ConstPtr& msg);
 		void removePosition(const std_msgs::String::ConstPtr& msg);
 	};

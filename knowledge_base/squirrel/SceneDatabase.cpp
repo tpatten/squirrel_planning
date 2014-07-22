@@ -21,7 +21,7 @@ namespace KCL_rosplan {
 		return true;
 	}
 
-	bool SceneDatabase::getPosition(planning_knowledge_msgs::PointCloudService::Request  &req, planning_knowledge_msgs::PositionService::Response &res) {
+	bool SceneDatabase::getPosition(planning_knowledge_msgs::PositionService::Request  &req, planning_knowledge_msgs::PositionService::Response &res) {
 		res.position = positions[req.name];
 		return true;
 	}
