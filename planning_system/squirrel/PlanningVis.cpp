@@ -15,7 +15,7 @@
 
 #define SPACE 32
 
-namespace KCL_rosplan {
+namespace KCL_squirrelVIS {
 
 	unsigned int WINDOW_WIDTH = 500;
 	unsigned int WINDOW_HEIGHT = 500;
@@ -28,11 +28,14 @@ namespace KCL_rosplan {
 	int window;
 	GLuint base;
 
+	ros::Publisher pausePublisher;
+
 	/* The function called whenever a key is pressed. */
 	void keyPressed(unsigned char key, int x, int y) {
-		if (key == SPACE)
-			std::cout << "No pause! Must tidy!" << std::endl;
-//			PandoraKCL::dispatchPaused = !PandoraKCL::dispatchPaused;
+		if (key == SPACE) {
+			std_msgs::Empty msg;
+			pausePublisher.publish(msg);
+		}
 		// avoid thrashing this procedure
 		usleep(100);
 	}
@@ -232,7 +235,6 @@ namespace KCL_rosplan {
 			draw();
 			ros::spinOnce();
 			loop_rate.sleep();
-			
 		}
 	}	
 
@@ -269,11 +271,13 @@ namespace KCL_rosplan {
 		ros::init(argc,argv,"planning_ros_visualisation");
 
 		ros::NodeHandle nh("~");
-		ros::Subscriber dispatchVisSub = nh.subscribe("/kcl_rosplan/action_dispatch", 1000, KCL_rosplan::dispatchVisCallback);
-		ros::Subscriber feedbackVisSub = nh.subscribe("/kcl_rosplan/action_feedback", 1000, KCL_rosplan::feedbackVisCallback);
+		ros::Subscriber dispatchVisSub = nh.subscribe("/kcl_rosplan/action_dispatch", 1000, KCL_squirrelVIS::dispatchVisCallback);
+		ros::Subscriber feedbackVisSub = nh.subscribe("/kcl_rosplan/action_feedback", 1000, KCL_squirrelVIS::feedbackVisCallback);
 
-		KCL_rosplan::initVis();
-		KCL_rosplan::runVis();
+		KCL_squirrelVIS::pausePublisher = nh.advertise<std_msgs::Empty>("/kcl_rosplan/pause_dispatch", 1000, true);
+
+		KCL_squirrelVIS::initVis();
+		KCL_squirrelVIS::runVis();
 
 		return 0;
 	}
