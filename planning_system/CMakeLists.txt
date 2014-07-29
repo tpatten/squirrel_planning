@@ -35,16 +35,6 @@ include_directories(
   ${catkin_INCLUDE_DIRS}
 )
 
-## needed for perception interface, should eventually go
-include_directories(
-  ${PCL_INCLUDE_DIRS}
-)
-  
-## visualisation
-find_package(OpenGL REQUIRED)
-find_package(GLUT REQUIRED)
-include_directories(${OPENGL_INCLUDE_DIRS} ${GLUT_INCLUDE_DIRS})
-
 ## val sources
 set(VAL_SOURCES
 	src/VALfiles/DebugWriteController.cpp
@@ -79,32 +69,10 @@ set(VAL_SOURCES
 	src/VALfiles/LaTeXSupport.cpp
 	src/VALfiles/Utils.cpp)
 
-## squirrel interface sources
-set(SQUIRREL_SOURCES
-	squirrel/perceptionInterface.cpp
-	squirrel/ExploreAction.cpp
-	squirrel/PushAction.cpp)
-
 ## Declare cpp executables
 add_executable(planner src/PlanningLoop.cpp	${VAL_SOURCES})
-
-# some squirrel executables
-add_executable(squirrelVis squirrel/PlanningVis.cpp)
-add_executable(perceptionInterface ${SQUIRREL_SOURCES})
 
 ## Specify libraries against which to link a library or executable target
 target_link_libraries(planner
   ${catkin_LIBRARIES}
 )
-
-target_link_libraries(squirrelVis
-  ${catkin_LIBRARIES}
-  ${GLUT_LIBRARIES}
-  ${OPENGL_LIBRARIES}
-)
-
-target_link_libraries(perceptionInterface
-  ${catkin_LIBRARIES}
-  ${PCL_LIBRARIES}
-)
-

@@ -7,8 +7,6 @@ find_package(catkin REQUIRED COMPONENTS
   rospy
   std_msgs
   planning_knowledge_msgs
-  perception_msgs
-  geometry_msgs
 )
 
 ###################################
@@ -18,7 +16,7 @@ find_package(catkin REQUIRED COMPONENTS
 ## Declare things to be passed to dependent projects
 catkin_package(
   LIBRARIES knowledge_base
-  CATKIN_DEPENDS roscpp rospy std_msgs planning_knowledge_msgs perception_msgs geometry_msgs perception_msgs
+  CATKIN_DEPENDS roscpp rospy std_msgs planning_knowledge_msgs
   DEPENDS system_lib
 )
 
@@ -40,7 +38,6 @@ set(KNOWLEDGE_SOURCES
 ## Declare cpp executables
 add_executable(knowledgeBase ${KNOWLEDGE_SOURCES})
 add_executable(testHarness src/TestHarness.cpp)
-add_executable(sceneDatabase squirrel/SceneDatabase.cpp)
 
 ## Specify libraries against which to link a library or executable target
 target_link_libraries(knowledgeBase
@@ -48,9 +45,5 @@ target_link_libraries(knowledgeBase
 )
 
 target_link_libraries(testHarness
-  ${catkin_LIBRARIES}
-)
-
-target_link_libraries(sceneDatabase
   ${catkin_LIBRARIES}
 )

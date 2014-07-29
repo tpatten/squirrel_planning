@@ -188,14 +188,13 @@ namespace KCL_rosplan {
 	bool KnowledgeBase::getCurrentGoals(planning_knowledge_msgs::AttributeService::Request  &req, planning_knowledge_msgs::AttributeService::Response &res)
 	{
 		ROS_INFO("KCL: (KB) Sending getCurrentGoals response");
-/*
+
 		// fetch the knowledgeItems of the correct attribute
 		for(size_t i=0; i<domainGoals.size(); i++) {
 			res.attributes.push_back(domainGoals[i]);
 		}
-*/
 
-		// TESTING for SQUIRREL summer school 1/2
+		/* // TESTING for SQUIRREL summer school 1/2
 		std::vector<std::string>::iterator iit;
 		for(iit = domainInstances["object"].begin(); iit!=domainInstances["object"].end(); iit++) {
 
@@ -245,7 +244,7 @@ namespace KCL_rosplan {
 			goal.values.push_back(room);
 			res.attributes.push_back(goal);
 		}
-		// END TESTING
+		// END TESTING */
 
 		return true;
 	}
@@ -263,7 +262,7 @@ int main(int argc, char **argv)
 
 	KCL_rosplan::KnowledgeBase kb;
 
-	// TESTING for SQUIRREL summer school 2/2
+	/* // TESTING for SQUIRREL summer school 2/2
 	{
 		// objects
 		kb.domainInstances["room"].push_back("room");
@@ -275,7 +274,7 @@ int main(int argc, char **argv)
 		objectFilter.instance_name = "";
 		kb.missionFilter.push_back(objectFilter);
 	}
-	// END TESTING
+	// END TESTING */
 
 	// environment services
 	ros::ServiceServer instanceServer = n.advertiseService("/kcl_rosplan/get_instances", &KCL_rosplan::KnowledgeBase::getInstances, &kb);
