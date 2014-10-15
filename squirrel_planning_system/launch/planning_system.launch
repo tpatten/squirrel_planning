@@ -4,12 +4,6 @@
 	<node name="knowledge_base" pkg="knowledge_base" type="knowledgeBase" respawn="false" output="screen">
 	</node>
 
-
-	<!-- scene database -->
-	<node name="scene_database" pkg="knowledge_base" type="sceneDatabase" respawn="false" output="screen">
-	</node>
-
-
 	<!-- planning system -->
 	<node name="planning_system" pkg="planning_system" type="planner" respawn="false" output="screen">
 
@@ -21,11 +15,6 @@
 
 		<!-- location to generate problem file -->
 	    <param name="problem_path" value="$(find planning_system)/data/problem.pddl" />
-	</node>
-
-
-	<!-- action interface -->
-	<node name="action_interface" pkg="planning_system" type="perceptionInterface" respawn="false" output="screen">
 	</node>
 
 </launch>

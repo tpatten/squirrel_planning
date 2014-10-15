@@ -207,6 +207,7 @@ namespace KCL_rosplan
 		// clear old problem
 		typeObjectMap.clear();
 		instanceAttributes.clear();
+		domainAttributes.clear();
 		goalAttributes.clear();
 
 		// setup service calls

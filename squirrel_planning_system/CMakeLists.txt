@@ -64,12 +64,6 @@ set(VAL_SOURCES
 	src/VALfiles/LaTeXSupport.cpp
 	src/VALfiles/Utils.cpp)
 
-## squirrel interface sources
-set(SQUIRREL_SOURCES
-	squirrel/perceptionInterface.cpp
-	squirrel/ExploreAction.cpp
-	squirrel/PushAction.cpp)
-
 ## Declare cpp executables
 add_executable(planner src/PlanningLoop.cpp	${VAL_SOURCES})
 
