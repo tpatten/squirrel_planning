@@ -1,19 +1,14 @@
 cmake_minimum_required(VERSION 2.8.3)
-project(planning_system)
+project(squirrel_planning_system)
 
 ## Find catkin macros and libraries
 find_package(catkin REQUIRED COMPONENTS
   roscpp
   rospy
   std_msgs
-  sensor_msgs
-  planning_dispatch_msgs
-  planning_knowledge_msgs
-  perception_srv_definitions
+  squirrel_planning_dispatch_msgs
+  squirrel_planning_knowledge_msgs
 )
-
-## needed for perception interface, should eventually go
-find_package(PCL REQUIRED)
 
 ###################################
 ## catkin specific configuration ##
@@ -21,8 +16,8 @@ find_package(PCL REQUIRED)
 
 ## Declare things to be passed to dependent projects
 catkin_package(
-  LIBRARIES planning_system
-  CATKIN_DEPENDS roscpp rospy std_msgs sensor_msgs planning_dispatch_msgs planning_knowledge_msgs perception_srv_definitions perception_msgs
+  LIBRARIES squirrel_planning_system
+  CATKIN_DEPENDS roscpp rospy std_msgs squirrel_planning_dispatch_msgs squirrel_planning_knowledge_msgs
   DEPENDS system_lib
 )
 
@@ -34,16 +29,6 @@ catkin_package(
 include_directories(
   ${catkin_INCLUDE_DIRS}
 )
-
-## needed for perception interface, should eventually go
-include_directories(
-  ${PCL_INCLUDE_DIRS}
-)
-  
-## visualisation
-find_package(OpenGL REQUIRED)
-find_package(GLUT REQUIRED)
-include_directories(${OPENGL_INCLUDE_DIRS} ${GLUT_INCLUDE_DIRS})
 
 ## val sources
 set(VAL_SOURCES
@@ -88,23 +73,7 @@ set(SQUIRREL_SOURCES
 ## Declare cpp executables
 add_executable(planner src/PlanningLoop.cpp	${VAL_SOURCES})
 
-# some squirrel executables
-add_executable(squirrelVis squirrel/PlanningVis.cpp)
-add_executable(perceptionInterface ${SQUIRREL_SOURCES})
-
 ## Specify libraries against which to link a library or executable target
 target_link_libraries(planner
   ${catkin_LIBRARIES}
 )
-
-target_link_libraries(squirrelVis
-  ${catkin_LIBRARIES}
-  ${GLUT_LIBRARIES}
-  ${OPENGL_LIBRARIES}
-)
-
-target_link_libraries(perceptionInterface
-  ${catkin_LIBRARIES}
-  ${PCL_LIBRARIES}
-)
-
