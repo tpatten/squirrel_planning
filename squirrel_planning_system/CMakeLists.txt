@@ -71,3 +71,14 @@ add_executable(planner src/PlanningLoop.cpp	${VAL_SOURCES})
 target_link_libraries(planner
   ${catkin_LIBRARIES}
 )
+
+##########
+## Test ##
+##########
+
+## using ROSTest
+find_package(rostest REQUIRED)
+find_package(gtest)
+
+add_rostest_gtest(testPlanningSystem test/test_launch.launch test/utest.cpp)
+target_link_libraries(testPlanningSystem ${catkin_LIBRARIES} ${GTEST_LIBRARIES})

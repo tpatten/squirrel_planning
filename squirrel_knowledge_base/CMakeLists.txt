@@ -42,3 +42,14 @@ add_executable(knowledgeBase ${KNOWLEDGE_SOURCES})
 target_link_libraries(knowledgeBase
   ${catkin_LIBRARIES}
 )
+
+##########
+## Test ##
+##########
+
+## using ROSTest
+find_package(rostest REQUIRED)
+find_package(gtest)
+
+add_rostest_gtest(testKnowledgeBase test/test_launch.launch test/utest.cpp)
+target_link_libraries(testKnowledgeBase ${catkin_LIBRARIES} ${GTEST_LIBRARIES})
