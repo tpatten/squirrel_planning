@@ -12,7 +12,7 @@
 #include <cstdio>
 #include <iostream>
 
-#include "VALfiles/ptree.h"
+#include "../src/VALfiles/ptree.h"
 #include "FlexLexer.h"
 
 #include "planning_knowledge_msgs/InstanceService.h"
