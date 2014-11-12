@@ -27,11 +27,11 @@ catkin_package(
 ## include_directories(include)
 include_directories(
   ${catkin_INCLUDE_DIRS}
+  include
 )
 
 ## val sources
 set(KNOWLEDGE_SOURCES
-	src/KnowledgeBase.h
 	src/KnowledgeBase.cpp
 	src/PlanningFilter.cpp)
 

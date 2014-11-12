@@ -2,7 +2,7 @@
 #include <vector>
 #include <iostream>
 #include <fstream>
-#include "../include/KnowledgeBase.h"
+#include "squirrel_knowledge_base/KnowledgeBase.h"
 
 namespace KCL_rosplan {
 

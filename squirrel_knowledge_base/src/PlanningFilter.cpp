@@ -6,7 +6,7 @@
 #include "planning_knowledge_msgs/Notification.h"
 #include "planning_knowledge_msgs/Filter.h"
 #include "planning_knowledge_msgs/KnowledgeItem.h"
-#include "../include/KnowledgeBase.h"
+#include "squirrel_knowledge_base/KnowledgeBase.h"
 
 namespace KCL_rosplan {
 
