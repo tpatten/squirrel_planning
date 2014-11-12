@@ -13,9 +13,9 @@
 #include "planning_knowledge_msgs/Notification.h"
 #include "planning_knowledge_msgs/Filter.h"
 
-#include "Utilities.h"
-#include "PlanningEnvironment.h"
-#include "ActionDispatch.h"
+#include "../include/Utilities.h"
+#include "../include/PlanningEnvironment.h"
+#include "../include/ActionDispatch.h"
 
 #include "PDDLProblemGenerator.cpp"
 #include "ActionFeedback.cpp"
