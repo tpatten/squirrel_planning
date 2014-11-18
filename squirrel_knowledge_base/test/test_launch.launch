@@ -1,0 +1,3 @@
+<launch>
+ <test test-name="test_squirrel_knowledge_base" pkg="squirrel_knowledge_base" type="testKnowledgeBase" />
+</launch>
