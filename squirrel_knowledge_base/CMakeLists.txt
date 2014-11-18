@@ -17,7 +17,7 @@ find_package(catkin REQUIRED COMPONENTS
 catkin_package(
   LIBRARIES squirrel_knowledge_base
   CATKIN_DEPENDS roscpp rospy std_msgs squirrel_planning_knowledge_msgs
-  DEPENDS system_lib
+  DEPENDS
 )
 
 ###########

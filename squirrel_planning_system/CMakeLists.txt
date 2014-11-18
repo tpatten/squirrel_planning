@@ -18,7 +18,7 @@ find_package(catkin REQUIRED COMPONENTS
 catkin_package(
   LIBRARIES squirrel_planning_system
   CATKIN_DEPENDS roscpp rospy std_msgs squirrel_planning_dispatch_msgs squirrel_planning_knowledge_msgs
-  DEPENDS system_lib
+  DEPENDS 
 )
 
 ###########
@@ -28,6 +28,7 @@ catkin_package(
 ## include_directories(include)
 include_directories(
   ${catkin_INCLUDE_DIRS}
+  src/VALfiles
   include
 )
 
