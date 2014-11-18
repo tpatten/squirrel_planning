@@ -1,0 +1,18 @@
+<?xml version="1.0"?>
+<package>
+	<name>planning</name>
+	<version>0.0.0</version>
+	<description>Planning package for SQUIRREL</description>
+	<maintainer email="michael.cashmore@kcl.ac.uk">michael</maintainer>
+	<license>BSD</license>
+  
+	<buildtool_depend>catkin</buildtool_depend>
+
+	<run_depend>squirrel_planning_system</run_depend>
+	<run_depend>squirrel_knowledge_base</run_depend>
+
+	<export>
+		<metapackage/>
+	</export>
+
+</package>
