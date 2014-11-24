@@ -3,9 +3,9 @@
 #include <iostream>
 #include <fstream>
 #include <algorithm>
-#include "planning_knowledge_msgs/Notification.h"
-#include "planning_knowledge_msgs/Filter.h"
-#include "planning_knowledge_msgs/KnowledgeItem.h"
+#include "squirrel_planning_knowledge_msgs/Notification.h"
+#include "squirrel_planning_knowledge_msgs/Filter.h"
+#include "squirrel_planning_knowledge_msgs/KnowledgeItem.h"
 #include "squirrel_knowledge_base/KnowledgeBase.h"
 
 namespace KCL_rosplan {

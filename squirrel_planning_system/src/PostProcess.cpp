@@ -3,7 +3,7 @@
  * It can be replaced or extended to add domain-specific post-processing of PDDL actions, or to
  * change parsing to another planner.
  */
-#include "planning_dispatch_msgs/ActionDispatch.h"
+#include "squirrel_planning_dispatch_msgs/ActionDispatch.h"
 
 #include <sstream>
 #include <iostream>

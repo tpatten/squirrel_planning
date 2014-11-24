@@ -10,8 +10,8 @@
 #include "ros/ros.h"
 
 #include "std_msgs/Empty.h"
-#include "planning_knowledge_msgs/Notification.h"
-#include "planning_knowledge_msgs/Filter.h"
+#include "squirrel_planning_knowledge_msgs/Notification.h"
+#include "squirrel_planning_knowledge_msgs/Filter.h"
 
 #include "squirrel_planning_system/Utilities.h"
 #include "squirrel_planning_system/PlanningEnvironment.h"

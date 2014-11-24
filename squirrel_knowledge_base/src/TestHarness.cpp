@@ -1,8 +1,8 @@
 #include <ros/ros.h>
 #include <vector>
-#include "planning_knowledge_msgs/InstanceService.h"
-#include "planning_knowledge_msgs/AttributeService.h"
-#include "planning_knowledge_msgs/KnowledgeItem.h"
+#include "squirrel_planning_knowledge_msgs/InstanceService.h"
+#include "squirrel_planning_knowledge_msgs/AttributeService.h"
+#include "squirrel_planning_knowledge_msgs/KnowledgeItem.h"
 #include <iostream>
 #include <fstream>
 
