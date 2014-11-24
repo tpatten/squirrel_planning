@@ -13,7 +13,7 @@ namespace KCL_rosplan {
 	/**
 	 * returns true is the knowledge item contains the instance, as instance or attribute parameter.
 	 */
-	bool KnowledgeBase::containsInstance(const planning_knowledge_msgs::KnowledgeItem &a, std::string &name) {
+	bool KnowledgeBase::containsInstance(const squirrel_planning_knowledge_msgs::KnowledgeItem &a, std::string &name) {
 
 		if(0==a.instance_name.compare(name))
 			return true;
@@ -29,11 +29,11 @@ namespace KCL_rosplan {
 	/** 
 	 * returns true iff a is the same knowledge as b.
 	 */
-	bool KnowledgeBase::sameKnowledge(const planning_knowledge_msgs::KnowledgeItem &a, const planning_knowledge_msgs::KnowledgeItem &b) {
+	bool KnowledgeBase::sameKnowledge(const squirrel_planning_knowledge_msgs::KnowledgeItem &a, const squirrel_planning_knowledge_msgs::KnowledgeItem &b) {
 
 		if(a.knowledge_type != b.knowledge_type) return false;
 	
-		if(a.knowledge_type == planning_knowledge_msgs::KnowledgeItem::INSTANCE) {
+		if(a.knowledge_type == squirrel_planning_knowledge_msgs::KnowledgeItem::INSTANCE) {
 			if(0!=a.instance_type.compare(b.instance_type)) return false;
 			if(0!=a.instance_name.compare(b.instance_name)) return false;
 		} else {
@@ -51,11 +51,11 @@ namespace KCL_rosplan {
 	/** 
 	 * returns true iff b is in the filter of a.
 	 */
-	bool KnowledgeBase::isInFilter(const planning_knowledge_msgs::KnowledgeItem &a, const planning_knowledge_msgs::KnowledgeItem &b) {
+	bool KnowledgeBase::isInFilter(const squirrel_planning_knowledge_msgs::KnowledgeItem &a, const squirrel_planning_knowledge_msgs::KnowledgeItem &b) {
 
 		if(a.knowledge_type != b.knowledge_type) return false;
 	
-		if(a.knowledge_type == planning_knowledge_msgs::KnowledgeItem::INSTANCE) {
+		if(a.knowledge_type == squirrel_planning_knowledge_msgs::KnowledgeItem::INSTANCE) {
 			if(0!=a.instance_type.compare(b.instance_type)) return false;
 			if(0==a.instance_name.compare("")) return true;
 			if(0!=a.instance_name.compare(b.instance_name)) return false;
@@ -74,7 +74,7 @@ namespace KCL_rosplan {
 	/**
 	 * check filter
 	 */
-	void KnowledgeBase::checkFilters(const planning_knowledge_msgs::KnowledgeItem &a, bool added) {
+	void KnowledgeBase::checkFilters(const squirrel_planning_knowledge_msgs::KnowledgeItem &a, bool added) {
 
 		bool filterViolated = false;
 
@@ -99,9 +99,9 @@ namespace KCL_rosplan {
 		if(filterViolated) {
 			ROS_INFO("KCL: (KB) Filter violated, sending notification");	
 
-			planning_knowledge_msgs::Notification msg;
-			if(added) msg.function = planning_knowledge_msgs::Notification::ADDED;
-			else msg.function = planning_knowledge_msgs::Notification::REMOVED;
+			squirrel_planning_knowledge_msgs::Notification msg;
+			if(added) msg.function = squirrel_planning_knowledge_msgs::Notification::ADDED;
+			else msg.function = squirrel_planning_knowledge_msgs::Notification::REMOVED;
 			msg.knowledge_item = a;
 			notificationPublisher.publish(msg);
 		}
@@ -110,24 +110,24 @@ namespace KCL_rosplan {
 	/**
 	 * Recieve filter from planning_system and store.
 	 */
-	void KnowledgeBase::planningFilterCallback(const planning_knowledge_msgs::Filter::ConstPtr& msg) {
+	void KnowledgeBase::planningFilterCallback(const squirrel_planning_knowledge_msgs::Filter::ConstPtr& msg) {
 		
 		ROS_INFO("KCL: (KB) Filter updated (CLEAR=0;ADD=1;REMOVE=2) function %i", msg->function);
 
-		if(msg->function == planning_knowledge_msgs::Filter::CLEAR) {
+		if(msg->function == squirrel_planning_knowledge_msgs::Filter::CLEAR) {
 			planningFilter.clear();
 		}
 
-		if(msg->function == planning_knowledge_msgs::Filter::ADD) {
+		if(msg->function == squirrel_planning_knowledge_msgs::Filter::ADD) {
 			for(size_t i=0; i<msg->knowledge_items.size(); i++)
 				planningFilter.push_back(msg->knowledge_items[i]);
 		}
 
-		if(msg->function == planning_knowledge_msgs::Filter::REMOVE) {
-			std::vector<planning_knowledge_msgs::KnowledgeItem>::iterator position = planningFilter.begin();
+		if(msg->function == squirrel_planning_knowledge_msgs::Filter::REMOVE) {
+			std::vector<squirrel_planning_knowledge_msgs::KnowledgeItem>::iterator position = planningFilter.begin();
 			for(size_t i=0; i<msg->knowledge_items.size(); i++) {
 				for(; position != planningFilter.end(); position++) {
-					planning_knowledge_msgs::KnowledgeItem item = msg->knowledge_items[i];
+					squirrel_planning_knowledge_msgs::KnowledgeItem item = msg->knowledge_items[i];
 					if(sameKnowledge(item, *position))
 						planningFilter.erase(position);
 				}

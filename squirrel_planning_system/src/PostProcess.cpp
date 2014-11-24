@@ -24,8 +24,8 @@ namespace KCL_rosplan
 
 		// populate filter message with objects
 		for(size_t i=0; i<KCL_rosplan::filterObjects.size(); i++) {
-			planning_knowledge_msgs::KnowledgeItem filterItem;
-			filterItem.knowledge_type = planning_knowledge_msgs::KnowledgeItem::INSTANCE;
+			squirrel_planning_knowledge_msgs::KnowledgeItem filterItem;
+			filterItem.knowledge_type = squirrel_planning_knowledge_msgs::KnowledgeItem::INSTANCE;
 			filterItem.instance_type = KCL_rosplan::objectTypeMap[KCL_rosplan::filterObjects[i]];
 			filterItem.instance_name = KCL_rosplan::filterObjects[i];
 			KCL_rosplan::knowledgeFilter.push_back(filterItem);
@@ -34,8 +34,8 @@ namespace KCL_rosplan
 		// populate filter message with attributes
 		// TODO ONLY STATICS! Not all preconditions.
 		for(size_t i=0; i<KCL_rosplan::filterAttributes.size(); i++) {
-			planning_knowledge_msgs::KnowledgeItem filterItem;
-			filterItem.knowledge_type = planning_knowledge_msgs::KnowledgeItem::DOMAIN_ATTRIBUTE;
+			squirrel_planning_knowledge_msgs::KnowledgeItem filterItem;
+			filterItem.knowledge_type = squirrel_planning_knowledge_msgs::KnowledgeItem::DOMAIN_ATTRIBUTE;
 			filterItem.attribute_name = KCL_rosplan::filterAttributes[i][0];
 			filterItem.instance_type = KCL_rosplan::objectTypeMap[KCL_rosplan::filterAttributes[i][1]];
 			filterItem.instance_name = KCL_rosplan::filterAttributes[i][1];
@@ -52,7 +52,7 @@ namespace KCL_rosplan
 	/**
 	 * processes the parameters of a single PDDL action into an ActionDispatch message
 	 */
-	void processParameters(planning_dispatch_msgs::ActionDispatch &msg, std::vector<std::string> &params) {
+	void processParameters(squirrel_planning_dispatch_msgs::ActionDispatch &msg, std::vector<std::string> &params) {
 
 		// find the correct PDDL operator definition
 		std::map<std::string,std::vector<std::string> >::iterator ait;
@@ -120,7 +120,7 @@ namespace KCL_rosplan
 		
 		int curr, next; 
 		std::string line;
-		std::vector<planning_dispatch_msgs::ActionDispatch> potentialPlan;
+		std::vector<squirrel_planning_dispatch_msgs::ActionDispatch> potentialPlan;
 		double planDuration;
 		double expectedPlanDuration = 0;
 
@@ -144,7 +144,7 @@ namespace KCL_rosplan
 					if (line.length()<2)
 						break;
 
-					planning_dispatch_msgs::ActionDispatch msg;
+					squirrel_planning_dispatch_msgs::ActionDispatch msg;
 
 					// action ID
 					msg.action_id = KCL_rosplan::freeActionID;

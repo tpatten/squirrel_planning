@@ -10,9 +10,9 @@ namespace KCL_rosplan {
 	/* removing items */
 	/*----------------*/
 
-	void KnowledgeBase::removeKnowledge(const planning_knowledge_msgs::KnowledgeItem::ConstPtr& msg) {
+	void KnowledgeBase::removeKnowledge(const squirrel_planning_knowledge_msgs::KnowledgeItem::ConstPtr& msg) {
 
-		if(msg->knowledge_type == planning_knowledge_msgs::KnowledgeItem::INSTANCE) {		
+		if(msg->knowledge_type == squirrel_planning_knowledge_msgs::KnowledgeItem::INSTANCE) {		
 
 			// search for instance
 			std::vector<std::string>::iterator iit;
@@ -27,7 +27,7 @@ namespace KCL_rosplan {
 					domainInstances[msg->instance_type].erase(iit);
 
 					// remove affected domain attributes
-					std::vector<planning_knowledge_msgs::KnowledgeItem>::iterator pit;
+					std::vector<squirrel_planning_knowledge_msgs::KnowledgeItem>::iterator pit;
 					for(pit=domainAttributes.begin(); pit!=domainAttributes.end(); pit++) {
 						if(containsInstance(*pit, name)) {
 							ROS_INFO("KCL: (KB) Removing domain attribute (%s)", pit->attribute_name.c_str());
@@ -51,10 +51,10 @@ namespace KCL_rosplan {
 					break;
 				}
 			}
-		} else if(msg->knowledge_type == planning_knowledge_msgs::KnowledgeItem::DOMAIN_ATTRIBUTE) {
+		} else if(msg->knowledge_type == squirrel_planning_knowledge_msgs::KnowledgeItem::DOMAIN_ATTRIBUTE) {
 
 			// remove domain attribute (predicate) from knowledge base
-			std::vector<planning_knowledge_msgs::KnowledgeItem>::iterator pit;
+			std::vector<squirrel_planning_knowledge_msgs::KnowledgeItem>::iterator pit;
 			for(pit=domainAttributes.begin(); pit!=domainAttributes.end(); pit++) {
 				if(sameKnowledge(*msg, *pit)) {
 					ROS_INFO("KCL: (KB) Removing domain attribute (%s)", msg->attribute_name.c_str());
@@ -64,10 +64,10 @@ namespace KCL_rosplan {
 				}
 			}
 
-		} else if(msg->knowledge_type == planning_knowledge_msgs::KnowledgeItem::INSTANCE_ATTRIBUTE) {
+		} else if(msg->knowledge_type == squirrel_planning_knowledge_msgs::KnowledgeItem::INSTANCE_ATTRIBUTE) {
 
 			// remove instance attribute (non-symbolic) from knowledge base
-			std::vector<planning_knowledge_msgs::KnowledgeItem>::iterator pit;
+			std::vector<squirrel_planning_knowledge_msgs::KnowledgeItem>::iterator pit;
 			for(pit=instanceAttributes[msg->instance_name].begin(); pit!=instanceAttributes[msg->instance_name].end(); pit++) {
 				if(sameKnowledge(*msg, *pit)) {
 					ROS_INFO("KCL: (KB) Removing instance attribute (%s, %s)", msg->instance_name.c_str(), msg->attribute_name.c_str());
@@ -83,9 +83,9 @@ namespace KCL_rosplan {
 	/* adding items */
 	/*--------------*/
 
-	void KnowledgeBase::addKnowledge(const planning_knowledge_msgs::KnowledgeItem::ConstPtr& msg) {
+	void KnowledgeBase::addKnowledge(const squirrel_planning_knowledge_msgs::KnowledgeItem::ConstPtr& msg) {
 		
-		if(msg->knowledge_type == planning_knowledge_msgs::KnowledgeItem::INSTANCE) {
+		if(msg->knowledge_type == squirrel_planning_knowledge_msgs::KnowledgeItem::INSTANCE) {
 
 			// check if instance is already in knowledge base
 			std::vector<std::string>::iterator iit;
@@ -98,10 +98,10 @@ namespace KCL_rosplan {
 				checkFilters(*msg, true);
 			}
 
-		} else if(msg->knowledge_type == planning_knowledge_msgs::KnowledgeItem::DOMAIN_ATTRIBUTE) {
+		} else if(msg->knowledge_type == squirrel_planning_knowledge_msgs::KnowledgeItem::DOMAIN_ATTRIBUTE) {
 
 			// add domain attribute to knowledge base		
-			std::vector<planning_knowledge_msgs::KnowledgeItem>::iterator pit;
+			std::vector<squirrel_planning_knowledge_msgs::KnowledgeItem>::iterator pit;
 			for(pit=domainAttributes.begin(); pit!=domainAttributes.end(); pit++) {
 				if(sameKnowledge(*msg, *pit)) {
 					// already added
@@ -112,10 +112,10 @@ namespace KCL_rosplan {
 			domainAttributes.push_back(*msg);
 			checkFilters(*msg, true);
 
-		} else if(msg->knowledge_type == planning_knowledge_msgs::KnowledgeItem::INSTANCE_ATTRIBUTE) {
+		} else if(msg->knowledge_type == squirrel_planning_knowledge_msgs::KnowledgeItem::INSTANCE_ATTRIBUTE) {
 
 			// add instance attribute to knowledge base
-			std::vector<planning_knowledge_msgs::KnowledgeItem>::iterator pit;
+			std::vector<squirrel_planning_knowledge_msgs::KnowledgeItem>::iterator pit;
 			for(pit=instanceAttributes[msg->instance_name].begin(); pit!=instanceAttributes[msg->instance_name].end(); pit++) {
 				if(sameKnowledge(*msg, *pit)) {
 					// already added
@@ -128,7 +128,7 @@ namespace KCL_rosplan {
 		}
 	}
 
-	void KnowledgeBase::addMissionGoal(const planning_knowledge_msgs::KnowledgeItem::ConstPtr& msg) {
+	void KnowledgeBase::addMissionGoal(const squirrel_planning_knowledge_msgs::KnowledgeItem::ConstPtr& msg) {
 		// add mission goal to knowledge base
 		ROS_INFO("KCL: (KB) Adding mission goal (%s)", msg->attribute_name.c_str());
 		domainGoals.push_back(*msg);
@@ -138,7 +138,7 @@ namespace KCL_rosplan {
 	/* fetching items */
 	/*----------------*/
 
-	bool KnowledgeBase::getInstances(planning_knowledge_msgs::InstanceService::Request  &req, planning_knowledge_msgs::InstanceService::Response &res)
+	bool KnowledgeBase::getInstances(squirrel_planning_knowledge_msgs::InstanceService::Request  &req, squirrel_planning_knowledge_msgs::InstanceService::Response &res)
 	{
 		ROS_INFO("KCL: (KB) Sending %s getInstances", req.type_name.c_str());
 	
@@ -153,12 +153,12 @@ namespace KCL_rosplan {
 		return true;
 	}
 
-	bool KnowledgeBase::getInstanceAttr(planning_knowledge_msgs::AttributeService::Request  &req, planning_knowledge_msgs::AttributeService::Response &res)
+	bool KnowledgeBase::getInstanceAttr(squirrel_planning_knowledge_msgs::AttributeService::Request  &req, squirrel_planning_knowledge_msgs::AttributeService::Response &res)
 	{
 		ROS_INFO("KCL: (KB) Sending getInstanceAttr response for %s %s", req.type_name.c_str(), req.instance_name.c_str());
 
 		// fetch the instances of the correct type
-		std::map<std::string,std::vector<planning_knowledge_msgs::KnowledgeItem> >::iterator iit;
+		std::map<std::string,std::vector<squirrel_planning_knowledge_msgs::KnowledgeItem> >::iterator iit;
 		iit = instanceAttributes.find(req.instance_name);
 		if(iit != instanceAttributes.end()) {
 			// check to make sure each knowledge item is of the correct instance type
@@ -172,7 +172,7 @@ namespace KCL_rosplan {
 		return true;
 	}
 
-	bool KnowledgeBase::getDomainAttr(planning_knowledge_msgs::AttributeService::Request  &req, planning_knowledge_msgs::AttributeService::Response &res)
+	bool KnowledgeBase::getDomainAttr(squirrel_planning_knowledge_msgs::AttributeService::Request  &req, squirrel_planning_knowledge_msgs::AttributeService::Response &res)
 	{
 		ROS_INFO("KCL: (KB) Sending getDomainAttr response for %s", req.predicate_name.c_str());
 
@@ -185,7 +185,7 @@ namespace KCL_rosplan {
 		return true;
 	}
 
-	bool KnowledgeBase::getCurrentGoals(planning_knowledge_msgs::AttributeService::Request  &req, planning_knowledge_msgs::AttributeService::Response &res)
+	bool KnowledgeBase::getCurrentGoals(squirrel_planning_knowledge_msgs::AttributeService::Request  &req, squirrel_planning_knowledge_msgs::AttributeService::Response &res)
 	{
 		ROS_INFO("KCL: (KB) Sending getCurrentGoals response");
 
@@ -200,12 +200,12 @@ namespace KCL_rosplan {
 
 			// if untidy add push and return
 			bool classified = false;
-			std::vector<planning_knowledge_msgs::KnowledgeItem>::iterator pit;
+			std::vector<squirrel_planning_knowledge_msgs::KnowledgeItem>::iterator pit;
 			for(pit=domainAttributes.begin(); pit!=domainAttributes.end(); pit++) {
 				if(pit->attribute_name.compare("untidy")==0 && containsInstance(*pit, *iit)) {
 					res.attributes.clear();
-					planning_knowledge_msgs::KnowledgeItem goal;
-					goal.knowledge_type = planning_knowledge_msgs::KnowledgeItem::DOMAIN_ATTRIBUTE;
+					squirrel_planning_knowledge_msgs::KnowledgeItem goal;
+					goal.knowledge_type = squirrel_planning_knowledge_msgs::KnowledgeItem::DOMAIN_ATTRIBUTE;
 					goal.attribute_name = "tidy";
 					diagnostic_msgs::KeyValue pair;
 					pair.key = "o";
@@ -222,8 +222,8 @@ namespace KCL_rosplan {
 
 			// not classified: add classify
 			if(!classified) {
-				planning_knowledge_msgs::KnowledgeItem goal;
-				goal.knowledge_type = planning_knowledge_msgs::KnowledgeItem::DOMAIN_ATTRIBUTE;
+				squirrel_planning_knowledge_msgs::KnowledgeItem goal;
+				goal.knowledge_type = squirrel_planning_knowledge_msgs::KnowledgeItem::DOMAIN_ATTRIBUTE;
 				goal.attribute_name = "classified";
 				diagnostic_msgs::KeyValue pair;
 				pair.key = "o";
@@ -235,8 +235,8 @@ namespace KCL_rosplan {
 
 		// explore room
 		if(res.attributes.size()<1) {
-			planning_knowledge_msgs::KnowledgeItem goal;
-			goal.knowledge_type = planning_knowledge_msgs::KnowledgeItem::DOMAIN_ATTRIBUTE;
+			squirrel_planning_knowledge_msgs::KnowledgeItem goal;
+			goal.knowledge_type = squirrel_planning_knowledge_msgs::KnowledgeItem::DOMAIN_ATTRIBUTE;
 			goal.attribute_name = "explored";
 			diagnostic_msgs::KeyValue room;
 			room.key = "r";
@@ -268,8 +268,8 @@ int main(int argc, char **argv)
 		kb.domainInstances["room"].push_back("room");
 
 		// mission filter
-		planning_knowledge_msgs::KnowledgeItem objectFilter;
-		objectFilter.knowledge_type = planning_knowledge_msgs::KnowledgeItem::INSTANCE;
+		squirrel_planning_knowledge_msgs::KnowledgeItem objectFilter;
+		objectFilter.knowledge_type = squirrel_planning_knowledge_msgs::KnowledgeItem::INSTANCE;
 		objectFilter.instance_type = "object";
 		objectFilter.instance_name = "";
 		kb.missionFilter.push_back(objectFilter);
@@ -283,7 +283,7 @@ int main(int argc, char **argv)
 	ros::ServiceServer goalServer = n.advertiseService("/kcl_rosplan/get_current_goals", &KCL_rosplan::KnowledgeBase::getCurrentGoals, &kb);
 
 	// filter services
-	kb.notificationPublisher = n.advertise<planning_knowledge_msgs::Notification>("/kcl_rosplan/notification", 10, true);
+	kb.notificationPublisher = n.advertise<squirrel_planning_knowledge_msgs::Notification>("/kcl_rosplan/notification", 10, true);
 	ros::Subscriber filterSub = n.subscribe("/kcl_rosplan/filter", 100, &KCL_rosplan::KnowledgeBase::planningFilterCallback, &kb);
 
 	// knowledge subscribers

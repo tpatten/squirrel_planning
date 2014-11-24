@@ -20,7 +20,7 @@ namespace KCL_rosplan {
 	 * processes single action feedback message.
 	 * This method serves as the hook for defining more interesting behaviour on action feedback.
 	 */
-	void actionFeedback(const planning_dispatch_msgs::ActionFeedback::ConstPtr& msg) {
+	void actionFeedback(const squirrel_planning_dispatch_msgs::ActionFeedback::ConstPtr& msg) {
 	
 	}
 
@@ -31,7 +31,7 @@ namespace KCL_rosplan {
 	/**
 	 * listen to and process actionFeedback topic.
 	 */
-	void feedbackCallback(const planning_dispatch_msgs::ActionFeedback::ConstPtr& msg) {
+	void feedbackCallback(const squirrel_planning_dispatch_msgs::ActionFeedback::ConstPtr& msg) {
 
 		ROS_INFO("KCL: Feedback received [%i,%s]", msg->action_id, msg->status.c_str());
 
