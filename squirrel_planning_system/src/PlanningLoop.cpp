@@ -10,8 +10,9 @@
 #include "ros/ros.h"
 
 #include "std_msgs/Empty.h"
-#include "planning_knowledge_msgs/Notification.h"
-#include "planning_knowledge_msgs/Filter.h"
+#include "squirrel_planning_knowledge_msgs/Notification.h"
+#include "squirrel_planning_knowledge_msgs/Filter.h"
+#include "squirrel_planning_dispatch_msgs/ActionFeedback.h"
 
 #include "squirrel_planning_system/Utilities.h"
 #include "squirrel_planning_system/PlanningEnvironment.h"
@@ -62,7 +63,7 @@ namespace KCL_rosplan {
 	 * TODO this method should be made a clean interface to user code.  It is here that the real reasoning takes place.
 	 * The return type of this method should be a boolean (replan).
 	 */
-	void notificationCallBack(const planning_knowledge_msgs::Notification::ConstPtr& msg) {
+	void notificationCallBack(const squirrel_planning_knowledge_msgs::Notification::ConstPtr& msg) {
 		ROS_INFO("KCL: Notification received; plan invalidated; replanning.");
 		replanRequested = true;
 	}
@@ -73,13 +74,13 @@ namespace KCL_rosplan {
 	void publishFilter() {
 
 		// clear the old filter
-		planning_knowledge_msgs::Filter filterMessage;
-		filterMessage.function = planning_knowledge_msgs::Filter::CLEAR;
+		squirrel_planning_knowledge_msgs::Filter filterMessage;
+		filterMessage.function = squirrel_planning_knowledge_msgs::Filter::CLEAR;
 		filterPublisher.publish(filterMessage);
 
 		// push the new filter
 		ROS_INFO("KCL: Clean and update knowledge filter");
-		filterMessage.function = planning_knowledge_msgs::Filter::ADD;
+		filterMessage.function = squirrel_planning_knowledge_msgs::Filter::ADD;
 		filterMessage.knowledge_items = knowledgeFilter;
 		filterPublisher.publish(filterMessage);
 	}
@@ -97,7 +98,7 @@ namespace KCL_rosplan {
 		// save previous plan
 		KCL_rosplan::planningAttempts = KCL_rosplan::planningAttempts + 1;
 		if(KCL_rosplan::actionList.size() > 0) {
-			std::vector<planning_dispatch_msgs::ActionDispatch> oldplan(KCL_rosplan::actionList);
+			std::vector< squirrel_planning_dispatch_msgs::ActionDispatch> oldplan(KCL_rosplan::actionList);
 			KCL_rosplan::planList.push_back(oldplan);
 			KCL_rosplan::planListLastAction.push_back(currentAction);
 		}
@@ -178,13 +179,13 @@ namespace KCL_rosplan {
 		KCL_rosplan::parseDomain(domainPath);
 
 		// publishing "action_dispatch"; listening "action_feedback"
-		actionPublisher = nh.advertise<planning_dispatch_msgs::ActionDispatch>("/kcl_rosplan/action_dispatch", 1000, true);
+		actionPublisher = nh.advertise< squirrel_planning_dispatch_msgs::ActionDispatch>("/kcl_rosplan/action_dispatch", 1000, true);
 		feedbackSub = nh.subscribe("/kcl_rosplan/action_feedback", 1000, KCL_rosplan::feedbackCallback);
 		ros::Subscriber pauseDispatchSub = nh.subscribe("/kcl_rosplan/pause_dispatch", 1000, KCL_rosplan::pauseDispatchCallback);
 		ros::Rate loop_rate(10);
 
 		// publishing "/kcl_rosplan/filter"; listening "/kcl_rosplan/notification"
-		filterPublisher = nh.advertise<planning_knowledge_msgs::Filter>("/kcl_rosplan/filter", 10, true);
+		filterPublisher = nh.advertise<squirrel_planning_knowledge_msgs::Filter>("/kcl_rosplan/filter", 10, true);
 		notificationSub = nh.subscribe("/kcl_rosplan/notification", 100, KCL_rosplan::notificationCallBack);
 	
 		// generate PDDL problem and run planner
@@ -194,7 +195,7 @@ namespace KCL_rosplan {
 		// Loop through and publish planned actions
 		while (ros::ok() && KCL_rosplan::actionList.size() > KCL_rosplan::currentAction) {
 
-			planning_dispatch_msgs::ActionDispatch currentMessage = KCL_rosplan::actionList[KCL_rosplan::currentAction];
+			squirrel_planning_dispatch_msgs::ActionDispatch currentMessage = KCL_rosplan::actionList[KCL_rosplan::currentAction];
 			if((unsigned int)currentMessage.action_id != KCL_rosplan::currentAction)
 				ROS_INFO("KCL: ERROR message action_id [%d] does not meet expected [%zu]", currentMessage.action_id, KCL_rosplan::currentAction);
 
@@ -217,7 +218,7 @@ namespace KCL_rosplan {
 				if(replanRequested && !sentCancel) {
 					// cancel current action
 					ROS_INFO("KCL: Cancelling action: [%i, %s]", currentMessage.action_id, currentMessage.name.c_str());
-					planning_dispatch_msgs::ActionDispatch cancelMessage;
+					 squirrel_planning_dispatch_msgs::ActionDispatch cancelMessage;
 					cancelMessage.action_id = KCL_rosplan::currentAction;
 					cancelMessage.name = "cancel_action";
 					actionPublisher.publish(cancelMessage);
