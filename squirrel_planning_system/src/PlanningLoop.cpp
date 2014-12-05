@@ -248,7 +248,7 @@ namespace KCL_rosplan {
 	/*-------------*/
 
 	int main(int argc, char **argv) {
-		ros::init(argc,argv,"planning_ros_system");
+		ros::init(argc,argv,"rosplan_planning_system");
 		srand (static_cast <unsigned> (time(0)));
 		KCL_rosplan::runPlanningServer();
 		return 0;

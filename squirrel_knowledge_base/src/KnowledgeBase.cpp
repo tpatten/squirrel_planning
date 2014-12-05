@@ -182,6 +182,12 @@ namespace KCL_rosplan {
 				res.attributes.push_back(domainAttributes[i]);
 		}
 
+		// ...or fetch the knowledgeItems of the correct function
+		for(size_t i=0; i<domainFunctions.size(); i++) {
+			if(req.predicate_name.compare(domainFunctions[i].attribute_name)==0)
+				res.attributes.push_back(domainFunctions[i]);
+		}
+
 		return true;
 	}
 
@@ -373,6 +379,32 @@ int main(int argc, char **argv)
 
 		// attributes (6/6) (tidy ?o - object)
 		// none
+
+		// functions (1/1)
+		squirrel_planning_knowledge_msgs::KnowledgeItem distance_1;
+		distance_1.knowledge_type = squirrel_planning_knowledge_msgs::KnowledgeItem::DOMAIN_FUNCTION;
+		distance_1.attribute_name = "distance";
+		const std::string distance_keys[] = {"wp1","wp2"};
+		for(int i=0;i<2;i++) {
+			diagnostic_msgs::KeyValue pair;
+			pair.key = distance_keys[i];
+			pair.value = values[i];
+			distance_1.values.push_back(pair);
+		}
+		distance_1.function_value = 10.0;
+		kb.domainAttributes.push_back(distance_1);
+
+		squirrel_planning_knowledge_msgs::KnowledgeItem distance_2;
+		distance_2.knowledge_type = squirrel_planning_knowledge_msgs::KnowledgeItem::DOMAIN_FUNCTION;
+		distance_2.attribute_name = "distance";
+		for(int i=0;i<2;i++) {
+			diagnostic_msgs::KeyValue pair;
+			pair.key = distance_keys[i];
+			pair.value = values1[i];
+			distance_2.values.push_back(pair);
+		}
+		distance_2.function_value = 10.0;
+		kb.domainAttributes.push_back(distance_2);
 
 		// mission filter
 		squirrel_planning_knowledge_msgs::KnowledgeItem objectFilter;
