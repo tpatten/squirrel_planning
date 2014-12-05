@@ -6,8 +6,15 @@ find_package(catkin REQUIRED COMPONENTS
   roscpp
   rospy
   std_msgs
+  actionlib
   squirrel_planning_dispatch_msgs
   squirrel_planning_knowledge_msgs
+  move_base_msgs
+  mongodb_store
+)
+
+find_package(Boost REQUIRED COMPONENTS
+  filesystem
 )
 
 ###################################
@@ -17,7 +24,7 @@ find_package(catkin REQUIRED COMPONENTS
 ## Declare things to be passed to dependent projects
 catkin_package(
   LIBRARIES squirrel_planning_system
-  CATKIN_DEPENDS roscpp rospy std_msgs squirrel_planning_dispatch_msgs squirrel_planning_knowledge_msgs
+  CATKIN_DEPENDS roscpp rospy std_msgs actionlib squirrel_planning_dispatch_msgs squirrel_planning_knowledge_msgs move_base_msgs mongodb_store
   DEPENDS system_lib
 )
 
@@ -67,11 +74,15 @@ set(VAL_SOURCES
 
 ## Declare cpp executables
 add_executable(planner src/PlanningLoop.cpp	${VAL_SOURCES})
+add_executable(rpmovebase src/interface/RPMoveBase.cpp)
+add_executable(trpmovebase test/utRPMoveBase.cpp)
 
 ## Specify libraries against which to link a library or executable target
-target_link_libraries(planner
-  ${catkin_LIBRARIES}
-)
+target_link_libraries(planner ${catkin_LIBRARIES})
+target_link_libraries(rpmovebase ${catkin_LIBRARIES} ${Boost_LIBRARIES})
+target_link_libraries(trpmovebase ${catkin_LIBRARIES} ${Boost_LIBRARIES})
+
+# add_dependencies(rpmovebase ${learning_actionlib_EXPORTED_TARGETS})
 
 ##########
 ## Test ##
