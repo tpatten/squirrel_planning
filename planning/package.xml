@@ -2,7 +2,7 @@
 <package>
 	<name>planning</name>
 	<version>0.0.0</version>
-	<description>The planning package for SQUIRREL</description>
+	<description>Planning package for SQUIRREL</description>
 	<maintainer email="michael.cashmore@kcl.ac.uk">michael</maintainer>
 	<license>BSD</license>
   

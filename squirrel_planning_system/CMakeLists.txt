@@ -35,6 +35,7 @@ catkin_package(
 ## include_directories(include)
 include_directories(
   ${catkin_INCLUDE_DIRS}
+  src/VALfiles
   include
 )
 
