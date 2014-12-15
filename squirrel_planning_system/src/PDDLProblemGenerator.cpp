@@ -49,12 +49,22 @@ namespace KCL_rosplan {
 		for(size_t i=0; i<domainAttributes.size(); i++) {
 			
 			std::stringstream ss;			
-			ss << "    (" + domainAttributes[i].attribute_name;
+			ss << "    (";
+
+			// output function equality
+			if(domainAttributes[i].knowledge_type == squirrel_planning_knowledge_msgs::KnowledgeItem::DOMAIN_FUNCTION) {
+				ss << "= (";
+			};
+
+			ss << domainAttributes[i].attribute_name;
 
 			// fetch the corresponding symbols from domain
 			std::map<std::string,std::vector<std::string> >::iterator ait;
 			ait = domainPredicates.find(domainAttributes[i].attribute_name);
-			if(ait == domainPredicates.end()) continue;
+			if(ait == domainPredicates.end())
+				ait = domainFunctions.find(domainAttributes[i].attribute_name);
+			if(ait == domainFunctions.end())
+				continue;
 
 			// find the PDDL parameters in the KnowledgeItem
 			bool writeAttribute = true;
@@ -69,6 +79,12 @@ namespace KCL_rosplan {
 				if(!found) writeAttribute = false;
 			};
 			ss << ")";
+
+			// output function value
+			if(domainAttributes[i].knowledge_type == squirrel_planning_knowledge_msgs::KnowledgeItem::DOMAIN_FUNCTION) {
+				ss << " " << domainAttributes[i].function_value << ")";
+			};
+
 			if(writeAttribute) pFile << ss.str() << std::endl;
 		}
 

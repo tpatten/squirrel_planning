@@ -1,6 +1,6 @@
 /**
  * This file retrieves and stores the objects and attributes that are used to contruct the problem.
- * The objects are fetched using the planning_knowledge_msgs and then used to construct a PDDL
+ * The objects are fetched using the squirrel_planning_knowledge_msgs and then used to construct a PDDL
  * instance (see PDDLProblemGenerator).
  */
 #ifndef KCL_environment
@@ -15,8 +15,8 @@
 #include "../../src/VALfiles/ptree.h"
 #include "FlexLexer.h"
 
-#include "planning_knowledge_msgs/InstanceService.h"
-#include "planning_knowledge_msgs/AttributeService.h"
+#include "squirrel_planning_knowledge_msgs/InstanceService.h"
+#include "squirrel_planning_knowledge_msgs/AttributeService.h"
 
 extern int yyparse();
 extern int yydebug;
@@ -36,7 +36,7 @@ namespace KCL_rosplan
 	ros::Subscriber notificationSub;
 	std::vector<std::string> filterObjects;
 	std::vector<std::vector<std::string> > filterAttributes;
-	std::vector<planning_knowledge_msgs::KnowledgeItem> knowledgeFilter;
+	std::vector<squirrel_planning_knowledge_msgs::KnowledgeItem> knowledgeFilter;
 
 	/* PDDL to Ontology naming map */
 	std::map<std::string,std::string> name_map;
@@ -55,9 +55,9 @@ namespace KCL_rosplan
 	/* problem information */
 	std::map<std::string,std::vector<string> > typeObjectMap;
 	std::map<std::string,std::string> objectTypeMap;
-	std::vector<planning_knowledge_msgs::KnowledgeItem> instanceAttributes;
-	std::vector<planning_knowledge_msgs::KnowledgeItem> domainAttributes;
-	std::vector<planning_knowledge_msgs::KnowledgeItem> goalAttributes;
+	std::vector<squirrel_planning_knowledge_msgs::KnowledgeItem> instanceAttributes;
+	std::vector<squirrel_planning_knowledge_msgs::KnowledgeItem> domainAttributes;
+	std::vector<squirrel_planning_knowledge_msgs::KnowledgeItem> goalAttributes;
 
 	/*----------------*/
 	/* parsing domain */
@@ -211,15 +211,16 @@ namespace KCL_rosplan
 		goalAttributes.clear();
 
 		// setup service calls
-		ros::ServiceClient GetInstancesClient = nh.serviceClient<planning_knowledge_msgs::InstanceService>("/kcl_rosplan/get_instances");
-		ros::ServiceClient GetInstanceAttrsClient = nh.serviceClient<planning_knowledge_msgs::AttributeService>("/kcl_rosplan/get_instance_attributes");
-		ros::ServiceClient GetDomainAttrsClient = nh.serviceClient<planning_knowledge_msgs::AttributeService>("/kcl_rosplan/get_domain_attributes");
-		ros::ServiceClient GetCurrentGoalsClient = nh.serviceClient<planning_knowledge_msgs::AttributeService>("/kcl_rosplan/get_current_goals");
+		ros::ServiceClient GetInstancesClient = nh.serviceClient<squirrel_planning_knowledge_msgs::InstanceService>("/kcl_rosplan/get_instances");
+		ros::ServiceClient GetInstanceAttrsClient = nh.serviceClient<squirrel_planning_knowledge_msgs::AttributeService>("/kcl_rosplan/get_instance_attributes");
+		ros::ServiceClient GetDomainAttrsClient = nh.serviceClient<squirrel_planning_knowledge_msgs::AttributeService>("/kcl_rosplan/get_domain_attributes");
+		ros::ServiceClient GetDomainFuncsClient = nh.serviceClient<squirrel_planning_knowledge_msgs::AttributeService>("/kcl_rosplan/get_domain_functions");
+		ros::ServiceClient GetCurrentGoalsClient = nh.serviceClient<squirrel_planning_knowledge_msgs::AttributeService>("/kcl_rosplan/get_current_goals");
 
 		// for each type fetch instances
 		for(size_t t=0; t<domainTypes.size(); t++) {
 
-			planning_knowledge_msgs::InstanceService instanceSrv;
+			squirrel_planning_knowledge_msgs::InstanceService instanceSrv;
 			instanceSrv.request.type_name = domainTypes[t];
 			KCL_rosplan::typeObjectMap[domainTypes[t]];
 
@@ -233,14 +234,14 @@ namespace KCL_rosplan
 					KCL_rosplan::objectTypeMap[name] = domainTypes[t];
 
 					// get instance attributes
-					planning_knowledge_msgs::AttributeService instanceAttrSrv;
+					squirrel_planning_knowledge_msgs::AttributeService instanceAttrSrv;
 					instanceAttrSrv.request.instance_name = name;
 					instanceAttrSrv.request.type_name = domainTypes[t];
 					if (GetInstanceAttrsClient.call(instanceAttrSrv)) {
 						for(size_t j=0;j<instanceAttrSrv.response.attributes.size();j++) {
 							// if knowledge item corresponds to an attribute of this object, then store it.
-							planning_knowledge_msgs::KnowledgeItem attr = instanceAttrSrv.response.attributes[j];
-							if(attr.knowledge_type == planning_knowledge_msgs::KnowledgeItem::INSTANCE_ATTRIBUTE
+							squirrel_planning_knowledge_msgs::KnowledgeItem attr = instanceAttrSrv.response.attributes[j];
+							if(attr.knowledge_type == squirrel_planning_knowledge_msgs::KnowledgeItem::INSTANCE_ATTRIBUTE
 									&& attr.instance_type.compare(domainTypes[t])==0
 									&& attr.instance_name.compare(name)==0)
 								instanceAttributes.push_back(attr);
@@ -256,16 +257,28 @@ namespace KCL_rosplan
 		}
 
 
-		// get domain attributes
+		// get domain attributes and functions
 		std::map<std::string,std::vector<std::string> >::iterator ait;
 		for(ait = domainPredicates.begin(); ait != domainPredicates.end(); ait++) {
-			planning_knowledge_msgs::AttributeService domainAttrSrv;
+			squirrel_planning_knowledge_msgs::AttributeService domainAttrSrv;
 			domainAttrSrv.request.predicate_name = ait->first;
 			if (GetDomainAttrsClient.call(domainAttrSrv)) {
 				for(size_t j=0;j<domainAttrSrv.response.attributes.size();j++) {
-					planning_knowledge_msgs::KnowledgeItem attr = domainAttrSrv.response.attributes[j];
-					if(attr.knowledge_type == planning_knowledge_msgs::KnowledgeItem::DOMAIN_ATTRIBUTE
-							&& attr.attribute_name.compare(ait->first)==0)
+					squirrel_planning_knowledge_msgs::KnowledgeItem attr = domainAttrSrv.response.attributes[j];
+					if(attr.knowledge_type == squirrel_planning_knowledge_msgs::KnowledgeItem::DOMAIN_ATTRIBUTE && attr.attribute_name.compare(ait->first)==0)
+						domainAttributes.push_back(attr);
+				}
+			} else {
+				ROS_ERROR("KCL: Failed to call service /kcl_rosplan/get_domain_attributes %s", domainAttrSrv.request.predicate_name.c_str());
+			}
+		}
+		for(ait = domainFunctions.begin(); ait != domainFunctions.end(); ait++) {
+			squirrel_planning_knowledge_msgs::AttributeService domainAttrSrv;
+			domainAttrSrv.request.predicate_name = ait->first;
+			if (GetDomainAttrsClient.call(domainAttrSrv)) {
+				for(size_t j=0;j<domainAttrSrv.response.attributes.size();j++) {
+					squirrel_planning_knowledge_msgs::KnowledgeItem attr = domainAttrSrv.response.attributes[j];
+					if(attr.knowledge_type == squirrel_planning_knowledge_msgs::KnowledgeItem::DOMAIN_FUNCTION && attr.attribute_name.compare(ait->first)==0)
 						domainAttributes.push_back(attr);
 				}
 			} else {
@@ -274,11 +287,11 @@ namespace KCL_rosplan
 		}
 
 		// get current goals
-		planning_knowledge_msgs::AttributeService currentGoalSrv;
+		squirrel_planning_knowledge_msgs::AttributeService currentGoalSrv;
 		if (GetCurrentGoalsClient.call(currentGoalSrv)) {
 			for(size_t j=0;j<currentGoalSrv.response.attributes.size();j++) {
-				planning_knowledge_msgs::KnowledgeItem attr = currentGoalSrv.response.attributes[j];
-				if(attr.knowledge_type == planning_knowledge_msgs::KnowledgeItem::DOMAIN_ATTRIBUTE)
+				squirrel_planning_knowledge_msgs::KnowledgeItem attr = currentGoalSrv.response.attributes[j];
+				if(attr.knowledge_type == squirrel_planning_knowledge_msgs::KnowledgeItem::DOMAIN_ATTRIBUTE)
 					goalAttributes.push_back(attr);
 			}
 		} else {
