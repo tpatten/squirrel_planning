@@ -93,7 +93,7 @@ namespace KCL_rosplan {
 	 * passes the problem to the Planner; the plan to post-processing.
 	 * This method is popf-specific.
 	 */
-	bool runPlanner(std::string &dataPath, std::string &domainPath, std::string &problemPath)
+	bool runPlanner(std::string &dataPath, std::string &domainPath, std::string &problemPath, std::string &plannerCommand)
 	{
 		// save previous plan
 		KCL_rosplan::planningAttempts = KCL_rosplan::planningAttempts + 1;
@@ -104,10 +104,9 @@ namespace KCL_rosplan {
 		}
 
 		replanRequested = false;
-		std::string popfCommand = "timeout 10 rosrun planning_system bin/popf ";
 
 		// run the planner
-		std::string commandString = popfCommand + "-n "
+		std::string commandString = plannerCommand + " "
 			 + domainPath + " " + problemPath + " > "
 			 + dataPath + "plan.pddl";
 
@@ -172,9 +171,11 @@ namespace KCL_rosplan {
 		std::string dataPath;
 		std::string domainPath;
 		std::string problemPath;
-		nh.param("data_path", dataPath, std::string("data/"));
-		nh.param("domain_path", domainPath, std::string("data/domain.pddl"));
-		nh.param("problem_path", problemPath, std::string("data/problem.pddl"));
+		std::string plannerCommand;
+		nh.param("data_path", dataPath, std::string("common/"));
+		nh.param("domain_path", domainPath, std::string("common/domain.pddl"));
+		nh.param("problem_path", problemPath, std::string("common/problem.pddl"));
+		nh.param("planner_command", plannerCommand, std::string("timeout 10 common/bin/popf"));
 		ROS_INFO("KCL: Using data path: %s", dataPath.c_str());
 		KCL_rosplan::parseDomain(domainPath);
 
@@ -190,7 +191,7 @@ namespace KCL_rosplan {
 	
 		// generate PDDL problem and run planner
 		generatePlanningProblem(nh, problemPath);
-		runPlanner(dataPath, domainPath, problemPath);
+		runPlanner(dataPath, domainPath, problemPath, plannerCommand);
 
 		// Loop through and publish planned actions
 		while (ros::ok() && KCL_rosplan::actionList.size() > KCL_rosplan::currentAction) {
@@ -234,7 +235,7 @@ namespace KCL_rosplan {
 			// generate PDDL problem and (re)run planner
 			if(replanRequested || KCL_rosplan::actionList.size() <= KCL_rosplan::currentAction) {
 				generatePlanningProblem(nh, problemPath);
-				runPlanner(dataPath, domainPath, problemPath);
+				runPlanner(dataPath, domainPath, problemPath, plannerCommand);
 			}
 		}
 		ROS_INFO("KCL: Planning Complete");
@@ -247,7 +248,7 @@ namespace KCL_rosplan {
 	/*-------------*/
 
 	int main(int argc, char **argv) {
-		ros::init(argc,argv,"planning_ros_system");
+		ros::init(argc,argv,"rosplan_planning_system");
 		srand (static_cast <unsigned> (time(0)));
 		KCL_rosplan::runPlanningServer();
 		return 0;

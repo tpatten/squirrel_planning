@@ -214,6 +214,7 @@ namespace KCL_rosplan
 		ros::ServiceClient GetInstancesClient = nh.serviceClient<squirrel_planning_knowledge_msgs::InstanceService>("/kcl_rosplan/get_instances");
 		ros::ServiceClient GetInstanceAttrsClient = nh.serviceClient<squirrel_planning_knowledge_msgs::AttributeService>("/kcl_rosplan/get_instance_attributes");
 		ros::ServiceClient GetDomainAttrsClient = nh.serviceClient<squirrel_planning_knowledge_msgs::AttributeService>("/kcl_rosplan/get_domain_attributes");
+		ros::ServiceClient GetDomainFuncsClient = nh.serviceClient<squirrel_planning_knowledge_msgs::AttributeService>("/kcl_rosplan/get_domain_functions");
 		ros::ServiceClient GetCurrentGoalsClient = nh.serviceClient<squirrel_planning_knowledge_msgs::AttributeService>("/kcl_rosplan/get_current_goals");
 
 		// for each type fetch instances
@@ -256,7 +257,7 @@ namespace KCL_rosplan
 		}
 
 
-		// get domain attributes
+		// get domain attributes and functions
 		std::map<std::string,std::vector<std::string> >::iterator ait;
 		for(ait = domainPredicates.begin(); ait != domainPredicates.end(); ait++) {
 			squirrel_planning_knowledge_msgs::AttributeService domainAttrSrv;
@@ -264,8 +265,20 @@ namespace KCL_rosplan
 			if (GetDomainAttrsClient.call(domainAttrSrv)) {
 				for(size_t j=0;j<domainAttrSrv.response.attributes.size();j++) {
 					squirrel_planning_knowledge_msgs::KnowledgeItem attr = domainAttrSrv.response.attributes[j];
-					if(attr.knowledge_type == squirrel_planning_knowledge_msgs::KnowledgeItem::DOMAIN_ATTRIBUTE
-							&& attr.attribute_name.compare(ait->first)==0)
+					if(attr.knowledge_type == squirrel_planning_knowledge_msgs::KnowledgeItem::DOMAIN_ATTRIBUTE && attr.attribute_name.compare(ait->first)==0)
+						domainAttributes.push_back(attr);
+				}
+			} else {
+				ROS_ERROR("KCL: Failed to call service /kcl_rosplan/get_domain_attributes %s", domainAttrSrv.request.predicate_name.c_str());
+			}
+		}
+		for(ait = domainFunctions.begin(); ait != domainFunctions.end(); ait++) {
+			squirrel_planning_knowledge_msgs::AttributeService domainAttrSrv;
+			domainAttrSrv.request.predicate_name = ait->first;
+			if (GetDomainAttrsClient.call(domainAttrSrv)) {
+				for(size_t j=0;j<domainAttrSrv.response.attributes.size();j++) {
+					squirrel_planning_knowledge_msgs::KnowledgeItem attr = domainAttrSrv.response.attributes[j];
+					if(attr.knowledge_type == squirrel_planning_knowledge_msgs::KnowledgeItem::DOMAIN_FUNCTION && attr.attribute_name.compare(ait->first)==0)
 						domainAttributes.push_back(attr);
 				}
 			} else {
