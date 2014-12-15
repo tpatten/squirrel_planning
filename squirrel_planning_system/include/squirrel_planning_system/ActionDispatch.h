@@ -3,8 +3,8 @@
  * This is intended for use with the popf temporal planner (v1.2), however
  * it should be flexible enough to allow for different planners.
  */
-#include "planning_dispatch_msgs/ActionDispatch.h"
-#include "planning_dispatch_msgs/ActionFeedback.h"
+#include "squirrel_planning_dispatch_msgs/ActionDispatch.h"
+#include "squirrel_planning_dispatch_msgs/ActionFeedback.h"
 
 #ifndef KCL_dispatcher
 #define KCL_dispatcher
@@ -15,12 +15,12 @@ namespace KCL_rosplan
 	size_t freeActionID;
 
 	/* action dispatch list (current plan) */
-	std::vector<planning_dispatch_msgs::ActionDispatch> actionList;
+	std::vector<squirrel_planning_dispatch_msgs::ActionDispatch> actionList;
 	double totalPlanDuration;
 	size_t currentAction;
 
 	/* plan list (for remembering previous plans) */
-	std::vector< std::vector<planning_dispatch_msgs::ActionDispatch> > planList;
+	std::vector< std::vector<squirrel_planning_dispatch_msgs::ActionDispatch> > planList;
 	std::vector<size_t> planListLastAction;
 	size_t planningAttempts;
 
@@ -35,7 +35,7 @@ namespace KCL_rosplan
 	ros::Subscriber feedbackSub;
 
 	void publishAction(ros::NodeHandle nh);
-	void feedbackCallback(const planning_dispatch_msgs::ActionFeedback::ConstPtr& msg);
+	void feedbackCallback(const squirrel_planning_dispatch_msgs::ActionFeedback::ConstPtr& msg);
 }
 
 #endif
