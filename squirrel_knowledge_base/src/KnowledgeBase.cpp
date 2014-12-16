@@ -19,7 +19,7 @@ namespace KCL_rosplan {
 			iit = domainInstances[msg->instance_type].begin();
 			while(iit!=domainInstances[msg->instance_type].end()) {
 				std::string name = *iit;
-				if(name.compare(msg->instance_name)==0) {
+				if(name.compare(msg->instance_name)==0 || msg->instance_name.compare("")==0) {
 
 					// remove instance from knowledge base
 					ROS_INFO("KCL: (KB) Removing instance (%s, %s)", msg->instance_type.c_str(), msg->instance_name.c_str());
@@ -49,7 +49,7 @@ namespace KCL_rosplan {
 
 					// stop looping through instances
 					break;
-				}
+				} 
 			}
 		} else if(msg->knowledge_type == squirrel_planning_knowledge_msgs::KnowledgeItem::DOMAIN_ATTRIBUTE) {
 
