@@ -8,7 +8,7 @@
 	<node name="scene_base" pkg="mongodb_store" type="mongodb_server.py" respawn="false" output="screen">
 	    <param name="database_path" value="$(find squirrel_knowledge_base)/common/mongoDB" />
 	</node>
-	<node name="scene_message_store" pkg="mongodb_store" type="mongodb_message_store.py" respawn="false" output="screen">
+	<node name="scene_message_store" pkg="mongodb_store" type="message_store_node.py" respawn="false" output="screen">
 	</node>
 
 </launch>
