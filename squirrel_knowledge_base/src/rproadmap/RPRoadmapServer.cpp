@@ -1,4 +1,5 @@
 #include "ros/ros.h"
+#include "squirrel_knowledge_base/RPRoadmapServer.h"
 #include <fstream>
 #include <sstream>
 #include <string>
@@ -6,26 +7,33 @@
 #include <stdlib.h> 
 #include <algorithm> 
 #include "squirrel_planning_knowledge_msgs/KnowledgeItem.h"
-#include "squirrel_knowledge_base/RPRoadmapServer.h"
 #include "mongodb_store/message_store.h"
 #include "nav_msgs/OccupancyGrid.h"
 #include "geometry_msgs/PoseStamped.h"
 #include "diagnostic_msgs/KeyValue.h"
+#include "visualization_msgs/Marker.h"
+#include "visualization_msgs/MarkerArray.h"
 
 namespace KCL_rosplan {
 
 	/* constructor */
 	RPRoadmapServer::RPRoadmapServer(ros::NodeHandle &nh, std::string &dp)
 	 : message_store(nh), dataPath(dp) {
+
 		add_knowledge_pub = nh.advertise<squirrel_planning_knowledge_msgs::KnowledgeItem>("/kcl_rosplan/add_knowledge", 10, true);
 		remove_knowledge_pub = nh.advertise<squirrel_planning_knowledge_msgs::KnowledgeItem>("/kcl_rosplan/remove_knowledge", 10, true);
 		map_client = nh.serviceClient<nav_msgs::GetMap>("/static_map");
+		waypoints_pub = nh.advertise<visualization_msgs::MarkerArray>("/kcl_rosplan/viz/waypoints", 10, true);
+		edges_pub = nh.advertise<visualization_msgs::Marker>("/kcl_rosplan/viz/edges", 10, true);
+
 	}
 
 	/**
 	 * Generates waypoints and stores them in the knowledge base and scene database
 	 */
 	bool RPRoadmapServer::generateRoadmap(std_srvs::Empty::Request &req, std_srvs::Empty::Response &res) {
+
+		ros::NodeHandle nh("~");
 
 		// clear previous roadmap from knowledge base
 		ROS_INFO("KCL: (RPRoadmapServer) Cleaning old roadmap");
@@ -42,6 +50,9 @@ namespace KCL_rosplan {
 		for (std::map<std::string,Waypoint>::iterator wit=waypoints.begin(); wit!=waypoints.end(); ++wit)
 			message_store.deleteID(db_name_map[wit->first]);
 		db_name_map.clear();
+
+		// clear from visualization
+		clearMarkerArrays(nh);
  
 		// read map
 		ROS_INFO("KCL: (RPRoadmapServer) Reading in map");
@@ -51,15 +62,15 @@ namespace KCL_rosplan {
 
 		// generate waypoints
 		ROS_INFO("KCL: (RPRoadmapServer) Generating roadmap");
-		createPRM(map, 8, 40, 100);
+		// K, number of seed waypoints
+		// D, distance of random motions
+		// R, radius of random connections
+		// M, max number of waypoints
+		createPRM(map, 5, 5, 20, 50);
 
-		// print map for debugging
-		std::ofstream wpsFile;
-		wpsFile.open("/home/michael/WPs.txt");
-		for (std::map<std::string,Waypoint>::iterator wit=waypoints.begin(); wit!=waypoints.end(); ++wit)
-		for (std::vector<std::string>::iterator nit=wit->second.neighbours.begin(); nit!=wit->second.neighbours.end(); ++nit)
-			wpsFile << wit->second.x << " " << wit->second.y << " " << waypoints[*nit].x << " " << waypoints[*nit].y << std::endl;
-		wpsFile.close();
+		// publish visualization
+		publishWaypointMarkerArray(nh);
+		publishEdgeMarkerArray(nh);
 
 		// add roadmap to knowledge base and scene database
 		ROS_INFO("KCL: (RPRoadmapServer) Adding knowledge");
@@ -91,8 +102,8 @@ namespace KCL_rosplan {
 			//data
 			geometry_msgs::PoseStamped pose;
 			pose.header.frame_id = map.header.frame_id;
-			pose.pose.position.x = wit->second.x;
-			pose.pose.position.y = wit->second.y;
+			pose.pose.position.x = wit->second.real_x;
+			pose.pose.position.y = wit->second.real_y;
 			pose.pose.position.z = 0.0;
 			std::string id(message_store.insertNamed(wit->first, pose));
 			db_name_map[wit->first] = id;
@@ -107,13 +118,15 @@ namespace KCL_rosplan {
 	 * 	K, number of seed waypoints
 	 * 	D, distance of random motions
 	 * 	R, radius of random connections
+	 * 	M, max number of waypoints
 	 * Output: A roadmap G = (V, E)
 	*/
-	void RPRoadmapServer::createPRM(nav_msgs::OccupancyGrid map, unsigned int K, unsigned int D, unsigned int R) {
+	void RPRoadmapServer::createPRM(nav_msgs::OccupancyGrid map, unsigned int K, double D, double R, unsigned int M) {
 
 		// map info
 		int width = map.info.width;
 		int height = map.info.height;
+		double resolution = map.info.resolution; // m per cell
 
 		if(width==0 || height==0) {
 			ROS_INFO("KCL: (RPRoadmapServer) Empty map");
@@ -123,6 +136,9 @@ namespace KCL_rosplan {
 		// V <-- empty set; E <-- empty set.
 		waypoints.clear();
 		edges.clear();
+
+		Waypoint wp("wp0", 0, 0, resolution);
+		waypoints[wp.wpID] = wp;
 
 		// while cardinality(V) < K do
 		while(waypoints.size() < K) {
@@ -134,12 +150,12 @@ namespace KCL_rosplan {
 			if(map.data[ (width*y + x) ] <= 0) {
 				std::stringstream ss;
 				ss << "wp" << waypoints.size();
-				Waypoint wp(ss.str(), x, y);
+				Waypoint wp(ss.str(), x, y, resolution);
 				waypoints[wp.wpID] = wp;
 			}
 		}
 
-		while(!allConnected() && waypoints.size()<50) {
+		while(!allConnected() && waypoints.size() < M) {
 
 			for(size_t grow=0; grow<3; grow++) {
 				// get random free point
@@ -151,29 +167,30 @@ namespace KCL_rosplan {
 				}
 
 				// find closest waypoint from V
-				double dist = sqrt((width*width)+(height*height));
+				double dist = -1;
 				Waypoint closest;
 				for (std::map<std::string,Waypoint>::iterator wit=waypoints.begin(); wit!=waypoints.end(); ++wit) {
 					Waypoint w = wit->second;
-					double d = sqrt( ((x - w.x)*(x - w.x)) + ((y - w.y)*(y - w.y)) );
-					if(d < dist) {
+					double d = sqrt( ((x - w.grid_x)*(x - w.grid_x)) + ((y - w.grid_y)*(y - w.grid_y)) );
+					if(dist < 0 || d < dist) {
 						closest = w;
 						dist = d;
 					}
 				}
-				if(closest.wpID.compare("wp_err")==0) {
-					ROS_INFO("KCL: (RPRoadmapServer) Error in RRT (can't find closest neighbour)");
-					return;
-				}
+				if(dist<0) ROS_INFO("KCL: (RPRoadmapServer) Error in RRT (can't find closest neighbour)");
 
 				// new point
-				int xNew = closest.x + (int)(D*(x-closest.x)/dist);
-				int yNew = closest.y + (int)(D*(y-closest.y)/dist);
-			
+				int xNew = closest.grid_x + (int)((D/resolution)*(x-closest.grid_x)/dist);
+				int yNew = closest.grid_y + (int)((D/resolution)*(y-closest.grid_y)/dist);
+				if(xNew<0) xNew = 1;
+				if(yNew<0) yNew = 1;
+				if(xNew>width) xNew = width-1;
+				if(yNew>height) yNew = height-1;
+
 				// (TODO check collision and) add to waypoints
 				std::stringstream ss;
 				ss << "wp" << waypoints.size();
-				Waypoint wpNew(ss.str(), xNew, yNew);
+				Waypoint wpNew(ss.str(), xNew, yNew, resolution);
 				waypoints[wpNew.wpID] = wpNew;
 				closest.neighbours.push_back(wpNew.wpID);
 				wpNew.neighbours.push_back(closest.wpID);
@@ -182,7 +199,6 @@ namespace KCL_rosplan {
 
 				// try and connect things up seeds to map
 				makeConnections(R);
-
 			}
 		}
 	}
@@ -201,8 +217,6 @@ namespace KCL_rosplan {
 		int count = 0;
 		for (std::map<std::string,Waypoint>::iterator wit=waypoints.begin(); wit!=waypoints.end(); ++wit)
 			if(connected[wit->first]) count++;
-// std::cout << count << " " << waypoints.size() << std::endl;
-
 		return (count == waypoints.size());
 	}
 
@@ -225,7 +239,7 @@ namespace KCL_rosplan {
 				continue;
 			Waypoint w = wit->second;
 			Waypoint s = sit->second;
-			double d = sqrt( ((s.x - w.x)*(s.x - w.x)) + ((s.y - w.y)*(s.y - w.y)) );
+			double d = sqrt( ((s.grid_x - w.grid_x)*(s.grid_x - w.grid_x)) + ((s.grid_y - w.grid_y)*(s.grid_y - w.grid_y)) );
 			if(d<R) {
 				wit->second.neighbours.push_back(s.wpID);
 				sit->second.neighbours.push_back(w.wpID);
@@ -252,7 +266,7 @@ namespace KCL_rosplan {
 		// default config
 		std::string dataPath = "common/";
 		nh.param("data_path", dataPath, dataPath);
-		
+
 		// init services
 		KCL_rosplan::RPRoadmapServer rms(nh, dataPath);
 		ros::ServiceServer service = nh.advertiseService("/kcl_rosplan/roadmap_server", &KCL_rosplan::RPRoadmapServer::generateRoadmap, &rms);

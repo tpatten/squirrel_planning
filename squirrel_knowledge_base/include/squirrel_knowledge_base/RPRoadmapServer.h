@@ -22,15 +22,21 @@ namespace KCL_rosplan {
 
 	struct Waypoint 
 	{
-		Waypoint(const std::string &id, unsigned int xCoord, unsigned int yCoord)
-			: wpID(id), x(xCoord), y(yCoord) {}
+		Waypoint(const std::string &id, unsigned int xCoord, unsigned int yCoord, double resolution)
+			: wpID(id), grid_x(xCoord), grid_y(yCoord) {
+
+			real_x = resolution*xCoord;
+			real_y = resolution*yCoord;
+		}
 
 		Waypoint()
-			: wpID("wp_err"), x(0), y(0) {}
+			: wpID("wp_err"), grid_x(0), grid_y(0) {}
 
 		std::string wpID;
-		unsigned int x;
-		unsigned int y;
+		int grid_x;
+		int grid_y;
+		double real_x;
+		double real_y;
 		std::vector<std::string> neighbours;
 	};
 
@@ -47,7 +53,7 @@ namespace KCL_rosplan {
 	{
 
 	private:
-
+		
 		std::string dataPath;
 
 		// Scene database
@@ -63,6 +69,13 @@ namespace KCL_rosplan {
 		std::map<std::string, std::string> db_name_map;
 		std::vector<Edge> edges;
 
+		// visualisation
+		ros::Publisher waypoints_pub;
+		ros::Publisher edges_pub;
+		void publishWaypointMarkerArray(ros::NodeHandle nh);
+		void publishEdgeMarkerArray(ros::NodeHandle nh);
+		void clearMarkerArrays(ros::NodeHandle nh);
+
 	public:
 
 		/* constructor */
@@ -70,7 +83,7 @@ namespace KCL_rosplan {
 
 		/* service to (re)generate waypoints */
 		bool generateRoadmap(std_srvs::Empty::Request &req, std_srvs::Empty::Response &res);
-		void createPRM(nav_msgs::OccupancyGrid map, unsigned int K, unsigned int D, unsigned int R);
+		void createPRM(nav_msgs::OccupancyGrid map, unsigned int K, double D, double R, unsigned int M);
 		bool allConnected();
 		void connectRecurse(std::map<std::string,bool> &connected, Waypoint &waypoint);
 		bool makeConnections(unsigned int R);
