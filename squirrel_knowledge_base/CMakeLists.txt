@@ -14,6 +14,10 @@ find_package(catkin REQUIRED COMPONENTS
   visualization_msgs
 )
 
+find_package(Boost REQUIRED COMPONENTS
+  filesystem
+)
+
 ###################################
 ## catkin specific configuration ##
 ###################################
@@ -56,8 +60,8 @@ add_executable(rpobjectServer ${RPOBJECT_SOURCES})
 
 ## Specify libraries against which to link a library or executable target
 target_link_libraries(knowledgeBase ${catkin_LIBRARIES})
-target_link_libraries(rproadmapServer ${catkin_LIBRARIES})
-target_link_libraries(rpobjectServer ${catkin_LIBRARIES})
+target_link_libraries(rproadmapServer ${catkin_LIBRARIES} ${Boost_LIBRARIES})
+target_link_libraries(rpobjectServer ${catkin_LIBRARIES} ${Boost_LIBRARIES})
 
 ##########
 ## Test ##
