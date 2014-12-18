@@ -1,8 +1,8 @@
 <launch>
 
-	<!-- knowledge base -->
+	<!-- knowledge base
 	<node name="knowledge_base" pkg="squirrel_knowledge_base" type="knowledgeBase" respawn="false" output="screen">
-	</node>
+	</node>-->
 
 	<!-- planning system -->
 	<node name="planning_system" pkg="squirrel_planning_system" type="planner" respawn="false" output="screen">

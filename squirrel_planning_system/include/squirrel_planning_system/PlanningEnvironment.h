@@ -28,6 +28,7 @@ namespace VAL {
 
 namespace KCL_rosplan
 {
+
 	/* simulation information */
 	bool use_plan_visualisation;
 
