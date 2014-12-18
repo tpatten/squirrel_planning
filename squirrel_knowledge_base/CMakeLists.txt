@@ -19,6 +19,10 @@ find_package(Boost REQUIRED COMPONENTS
   filesystem
 )
 
+find_package(Boost REQUIRED COMPONENTS
+  filesystem
+)
+
 ###################################
 ## catkin specific configuration ##
 ###################################
