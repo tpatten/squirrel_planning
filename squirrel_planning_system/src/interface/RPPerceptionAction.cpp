@@ -6,21 +6,21 @@
 #include <actionlib/client/simple_action_client.h>
 #include "squirrel_planning_dispatch_msgs/ActionDispatch.h"
 #include "squirrel_planning_dispatch_msgs/ActionFeedback.h"
-#include "move_base_msgs/MoveBaseAction.h"
+#include "squirrel_object_perception_msgs/LookForObjectsAction.h"
+#include "squirrel_planning_system/RPPerceptionAction.h"
 #include "mongodb_store/message_store.h"
 #include "geometry_msgs/PoseStamped.h"
-#include "squirrel_planning_system/RPPerceptionAction.h"
 
 /* The implementation of RPMoveBase.h */
 namespace KCL_rosplan {
 
 	/* constructor */
 	RPPerceptionAction::RPPerceptionAction(ros::NodeHandle &nh, std::string &actionserver)
-	 : message_store(nh) /*, action_client(actionserver, true) */ {
+	 : message_store(nh), action_client(actionserver, true) {
 		
-		// create the action client
-		// ROS_INFO("KCL: (PerceptionAction) waiting for action server to start on %s", actionserver.c_str());
-		// action_client.waitForServer();
+		// create the action clients
+		ROS_INFO("KCL: (PerceptionAction) waiting for action server to start on %s", actionserver.c_str());
+		action_client.waitForServer();
 		
 		// create the action feedback publisher
 		action_feedback_pub = nh.advertise<squirrel_planning_dispatch_msgs::ActionFeedback>("/kcl_rosplan/action_feedback", 10, true);
@@ -48,19 +48,39 @@ namespace KCL_rosplan {
 			return;
 		}
 
+		// dispatch Perception action
+		squirrel_object_perception_msgs::LookForObjectsGoal goal;
+		goal.look_for_object = squirrel_object_perception_msgs::LookForObjectsGoal::EXPLORE;
+		action_client.sendGoal(goal);
+
 		// publish feedback (enabled)
-		squirrel_planning_dispatch_msgs::ActionFeedback fb;
+		 squirrel_planning_dispatch_msgs::ActionFeedback fb;
 		fb.action_id = msg->action_id;
 		fb.status = "action enabled";
 		action_feedback_pub.publish(fb);
 
-		ROS_INFO("KCL: (PerceptionAction) action finished: %s", "DUMMY_ACTION"); //state.toString().c_str());
-		
-		// publish feedback (achieved)
-		 squirrel_planning_dispatch_msgs::ActionFeedback fbAchieved;
-		fbAchieved.action_id = msg->action_id;
-		fbAchieved.status = "action achieved";
-		action_feedback_pub.publish(fbAchieved);
+		bool finished_before_timeout = action_client.waitForResult(ros::Duration(msg->duration));
+		if (finished_before_timeout) {
+
+			actionlib::SimpleClientGoalState state = action_client.getState();
+			ROS_INFO("KCL: (PerceptionAction) action finished: %s", state.toString().c_str());
+			
+			// publish feedback (achieved)
+			 squirrel_planning_dispatch_msgs::ActionFeedback fb;
+			fb.action_id = msg->action_id;
+			fb.status = "action achieved";
+			action_feedback_pub.publish(fb);
+
+		} else {
+
+			ROS_INFO("KCL: (PerceptionAction) action timed out");
+
+			// publish feedback (failed)
+			 squirrel_planning_dispatch_msgs::ActionFeedback fb;
+			fb.action_id = msg->action_id;
+			fb.status = "action failed";
+			action_feedback_pub.publish(fb);
+		}
 	}
 } // close namespace
 
@@ -74,7 +94,7 @@ namespace KCL_rosplan {
 		ros::NodeHandle nh;
 
 		std::string actionserver;
-		nh.param("action_server", actionserver, std::string("/move_base"));
+		nh.param("action_server", actionserver, std::string("/squirrel_object_perception"));
 
 		// create PDDL action subscriber
 		KCL_rosplan::RPPerceptionAction rppa(nh, actionserver);

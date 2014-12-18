@@ -22,7 +22,7 @@ namespace KCL_rosplan {
 	private:
 
 		mongodb_store::MessageStoreProxy message_store;
-		// actionlib::SimpleActionClient<move_base_msgs::MoveBaseAction> action_client;
+		actionlib::SimpleActionClient<squirrel_object_perception_msgs::LookForObjectsAction> action_client;
 		ros::Publisher action_feedback_pub;
 
 	public:

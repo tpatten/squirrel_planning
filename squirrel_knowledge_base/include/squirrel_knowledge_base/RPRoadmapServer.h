@@ -24,11 +24,11 @@ namespace KCL_rosplan {
 
 	struct Waypoint 
 	{
-		Waypoint(const std::string &id, unsigned int xCoord, unsigned int yCoord, double resolution)
+		Waypoint(const std::string &id, unsigned int xCoord, unsigned int yCoord, double resolution, geometry_msgs::Pose origin)
 			: wpID(id), grid_x(xCoord), grid_y(yCoord) {
 
-			real_x = resolution*xCoord;
-			real_y = resolution*yCoord;
+			real_x = xCoord * resolution + origin.position.x;
+			real_y = yCoord * resolution + origin.position.y;
 		}
 
 		Waypoint()

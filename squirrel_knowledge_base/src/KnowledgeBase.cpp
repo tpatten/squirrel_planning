@@ -374,7 +374,7 @@ int main(int argc, char **argv)
 		robot_at.values.push_back(robot_at_pair);
 		diagnostic_msgs::KeyValue robot_at_pair1;
 		robot_at_pair1.key = "wp";
-		robot_at_pair1.value = "wp1";
+		robot_at_pair1.value = "wp0";
 		robot_at.values.push_back(robot_at_pair1);
 		kb.domainAttributes.push_back(robot_at);
 /*
