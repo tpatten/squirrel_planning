@@ -10,6 +10,7 @@ find_package(catkin REQUIRED COMPONENTS
   actionlib
   squirrel_planning_dispatch_msgs
   squirrel_planning_knowledge_msgs
+  squirrel_object_perception_msgs
   move_base_msgs
   mongodb_store
   geometry_msgs
@@ -27,7 +28,7 @@ find_package(Boost REQUIRED COMPONENTS
 ## Declare things to be passed to dependent projects
 catkin_package(
   LIBRARIES squirrel_planning_system
-  CATKIN_DEPENDS roscpp rospy std_msgs std_srvs actionlib squirrel_planning_dispatch_msgs squirrel_planning_knowledge_msgs mongodb_store diagnostic_msgs
+  CATKIN_DEPENDS roscpp rospy std_msgs std_srvs actionlib squirrel_planning_dispatch_msgs squirrel_planning_knowledge_msgs squirrel_object_perception_msgs mongodb_store diagnostic_msgs
   DEPENDS
 )
 
