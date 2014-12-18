@@ -169,7 +169,7 @@ namespace KCL_rosplan {
 
 		int startX = (int)((start_pose_transformed.pose.position.x - map.info.origin.position.x) / resolution);
 		int startY = (int)((start_pose_transformed.pose.position.y - map.info.origin.position.y) / resolution);
-		Waypoint wp("wp0", startX, startY, resolution);
+		Waypoint wp("wp0", startX, startY, resolution, map.info.origin);
 		waypoints[wp.wpID] = wp;
 
 		// while cardinality(V) < K do
@@ -182,7 +182,7 @@ namespace KCL_rosplan {
 			if(map.data[ (width*y + x) ] <= 65 && map.data[ (width*y + x) ] >= 0) {
 				std::stringstream ss;
 				ss << "wp" << waypoints.size();
-				Waypoint wp(ss.str(), x, y, resolution);
+				Waypoint wp(ss.str(), x, y, resolution, map.info.origin);
 				waypoints[wp.wpID] = wp;
 			}
 		}
@@ -224,7 +224,7 @@ namespace KCL_rosplan {
 				if(map.data[ (width*yNew + xNew) ] <= 65 && map.data[ (width*yNew + xNew) ] >= 0) {
 					std::stringstream ss;
 					ss << "wp" << waypoints.size();
-					Waypoint wpNew(ss.str(), xNew, yNew, resolution);
+					Waypoint wpNew(ss.str(), xNew, yNew, resolution, map.info.origin);
 					waypoints[wpNew.wpID] = wpNew;
 					closest.neighbours.push_back(wpNew.wpID);
 					wpNew.neighbours.push_back(closest.wpID);
