@@ -2,9 +2,11 @@
 #include <vector>
 #include <iostream>
 #include <fstream>
+#include <tf/transform_listener.h>
 #include "squirrel_planning_knowledge_msgs/KnowledgeItem.h"
 #include "mongodb_store/message_store.h"
 #include "geometry_msgs/Pose.h"
+#include "nav_msgs/Odometry.h"
 #include "nav_msgs/GetMap.h"
 #include "std_srvs/Empty.h"
 
@@ -56,6 +58,10 @@ namespace KCL_rosplan {
 		
 		std::string dataPath;
 
+		// odometry
+		geometry_msgs::PoseStamped base_odom;
+		tf::TransformListener tf;
+
 		// Scene database
 		mongodb_store::MessageStoreProxy message_store;
 
@@ -87,6 +93,7 @@ namespace KCL_rosplan {
 		bool allConnected();
 		void connectRecurse(std::map<std::string,bool> &connected, Waypoint &waypoint);
 		bool makeConnections(unsigned int R);
+		void odomCallback( const nav_msgs::OdometryConstPtr& msg );
 	};
 }
 #endif
