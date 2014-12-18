@@ -12,6 +12,11 @@ find_package(catkin REQUIRED COMPONENTS
   geometry_msgs
   diagnostic_msgs
   visualization_msgs
+  tf
+)
+
+find_package(Boost REQUIRED COMPONENTS
+  filesystem
 )
 
 ###################################
@@ -21,7 +26,7 @@ find_package(catkin REQUIRED COMPONENTS
 ## Declare things to be passed to dependent projects
 catkin_package(
   LIBRARIES squirrel_knowledge_base
-  CATKIN_DEPENDS roscpp rospy std_msgs squirrel_planning_knowledge_msgs nav_msgs mongodb_store geometry_msgs diagnostic_msgs visualization_msgs
+  CATKIN_DEPENDS roscpp rospy std_msgs squirrel_planning_knowledge_msgs nav_msgs mongodb_store geometry_msgs diagnostic_msgs visualization_msgs tf
   DEPENDS
 )
 
@@ -56,16 +61,11 @@ add_executable(rpobjectServer ${RPOBJECT_SOURCES})
 
 ## Specify libraries against which to link a library or executable target
 target_link_libraries(knowledgeBase ${catkin_LIBRARIES})
-target_link_libraries(rproadmapServer ${catkin_LIBRARIES})
-target_link_libraries(rpobjectServer ${catkin_LIBRARIES})
+target_link_libraries(rproadmapServer ${catkin_LIBRARIES} ${Boost_LIBRARIES})
+target_link_libraries(rpobjectServer ${catkin_LIBRARIES} ${Boost_LIBRARIES})
 
 ##########
 ## Test ##
 ##########
-
-## using ROSTest
-find_package(rostest REQUIRED)
-find_package(gtest)
-
-add_rostest_gtest(testKnowledgeBase test/test_launch.launch test/utest.cpp)
-target_link_libraries(testKnowledgeBase ${catkin_LIBRARIES} ${GTEST_LIBRARIES})
+# please do not use add_rosttest_gtest (seems to be interfering with qtcreator and cmake)
+# see test documentation: http://wiki.ros.org/gtest

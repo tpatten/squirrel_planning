@@ -10,9 +10,12 @@
 #include "mongodb_store/message_store.h"
 #include "nav_msgs/OccupancyGrid.h"
 #include "geometry_msgs/PoseStamped.h"
+#include "nav_msgs/Odometry.h"
 #include "diagnostic_msgs/KeyValue.h"
 #include "visualization_msgs/Marker.h"
 #include "visualization_msgs/MarkerArray.h"
+#include <tf/transform_listener.h>
+#include <nav_msgs/Odometry.h>
 
 namespace KCL_rosplan {
 
@@ -25,7 +28,14 @@ namespace KCL_rosplan {
 		map_client = nh.serviceClient<nav_msgs::GetMap>("/static_map");
 		waypoints_pub = nh.advertise<visualization_msgs::MarkerArray>("/kcl_rosplan/viz/waypoints", 10, true);
 		edges_pub = nh.advertise<visualization_msgs::Marker>("/kcl_rosplan/viz/edges", 10, true);
+	}
 
+	/* update position of the robot */
+	void RPRoadmapServer::odomCallback( const nav_msgs::OdometryConstPtr& msg ) {
+		//we assume that the odometry is published in the frame of the base
+		base_odom.header = msg->header;
+		base_odom.pose.position = msg->pose.pose.position;
+		base_odom.pose.orientation = msg->pose.pose.orientation;
 	}
 
 	/**
@@ -66,7 +76,7 @@ namespace KCL_rosplan {
 		// D, distance of random motions
 		// R, radius of random connections
 		// M, max number of waypoints
-		createPRM(map, 5, 5, 20, 50);
+		createPRM(map, 1, 1, 5, 10);
 
 		// publish visualization
 		publishWaypointMarkerArray(nh);
@@ -137,7 +147,29 @@ namespace KCL_rosplan {
 		waypoints.clear();
 		edges.clear();
 
-		Waypoint wp("wp0", 0, 0, resolution);
+		// create robot start point
+		geometry_msgs::PoseStamped start_pose;
+		geometry_msgs::PoseStamped start_pose_transformed;
+		start_pose.header = base_odom.header;
+		start_pose.pose.position = base_odom.pose.position;
+		start_pose.pose.orientation = base_odom.pose.orientation; 
+		try {
+			tf.waitForTransform( base_odom.header.frame_id, "map", ros::Time::now(), ros::Duration( 500 ) );
+			tf.transformPose( "map", start_pose,  start_pose_transformed);
+		} catch(tf::LookupException& ex) {
+			ROS_ERROR("Lookup Error: %s\n", ex.what());
+			return;
+		} catch(tf::ConnectivityException& ex) {
+			ROS_ERROR("Connectivity Error: %s\n", ex.what());
+			return;
+		} catch(tf::ExtrapolationException& ex) {
+			ROS_ERROR("Extrapolation Error: %s\n", ex.what());
+			return;
+		}
+
+		int startX = (int)((start_pose_transformed.pose.position.x - map.info.origin.position.x) / resolution);
+		int startY = (int)((start_pose_transformed.pose.position.y - map.info.origin.position.y) / resolution);
+		Waypoint wp("wp0", startX, startY, resolution);
 		waypoints[wp.wpID] = wp;
 
 		// while cardinality(V) < K do
@@ -147,7 +179,7 @@ namespace KCL_rosplan {
 			int x = rand() % width;
 			int y = rand() % height;
 
-			if(map.data[ (width*y + x) ] <= 0) {
+			if(map.data[ (width*y + x) ] <= 65 && map.data[ (width*y + x) ] >= 0) {
 				std::stringstream ss;
 				ss << "wp" << waypoints.size();
 				Waypoint wp(ss.str(), x, y, resolution);
@@ -155,10 +187,11 @@ namespace KCL_rosplan {
 			}
 		}
 
-		while(!allConnected() && waypoints.size() < M) {
+		// TODO make connected proper
+		while( waypoints.size() < M) { // || (!allConnected() && waypoints.size() < M)) {
 
 			for(size_t grow=0; grow<3; grow++) {
-				// get random free point
+				// get random point
 				int x = rand() % width;
 				int y = rand() % height;
 				while(map.data[ (width*y + x) ] > 0) {
@@ -187,18 +220,20 @@ namespace KCL_rosplan {
 				if(xNew>width) xNew = width-1;
 				if(yNew>height) yNew = height-1;
 
-				// (TODO check collision and) add to waypoints
-				std::stringstream ss;
-				ss << "wp" << waypoints.size();
-				Waypoint wpNew(ss.str(), xNew, yNew, resolution);
-				waypoints[wpNew.wpID] = wpNew;
-				closest.neighbours.push_back(wpNew.wpID);
-				wpNew.neighbours.push_back(closest.wpID);
-				Edge e(closest.wpID, wpNew.wpID);
-				edges.push_back(e);
+				// (check collision and) add to waypoints
+				if(map.data[ (width*yNew + xNew) ] <= 65 && map.data[ (width*yNew + xNew) ] >= 0) {
+					std::stringstream ss;
+					ss << "wp" << waypoints.size();
+					Waypoint wpNew(ss.str(), xNew, yNew, resolution);
+					waypoints[wpNew.wpID] = wpNew;
+					closest.neighbours.push_back(wpNew.wpID);
+					wpNew.neighbours.push_back(closest.wpID);
+					Edge e(closest.wpID, wpNew.wpID);
+					edges.push_back(e);
 
-				// try and connect things up seeds to map
-				makeConnections(R);
+					// try and connect things up
+					makeConnections(R);
+				}
 			}
 		}
 	}
@@ -269,6 +304,7 @@ namespace KCL_rosplan {
 
 		// init services
 		KCL_rosplan::RPRoadmapServer rms(nh, dataPath);
+		ros::Subscriber odom_sub = nh.subscribe<nav_msgs::Odometry>("/odom", 1, &KCL_rosplan::RPRoadmapServer::odomCallback, &rms);
 		ros::ServiceServer service = nh.advertiseService("/kcl_rosplan/roadmap_server", &KCL_rosplan::RPRoadmapServer::generateRoadmap, &rms);
 
 		ROS_INFO("KCL: (RPRoadmapServer) Ready to receive");
