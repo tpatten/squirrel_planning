@@ -40,18 +40,24 @@ set(KNOWLEDGE_SOURCES
 	src/KnowledgeBase.cpp
 	src/PlanningFilter.cpp)
 
-## knowledge sources
+## roadmap sources
 set(RPROADMAP_SOURCES
 	src/rproadmap/RPRoadmapServer.cpp
 	src/rproadmap/RPRoadmapVisualization.cpp)
 
+## object perception sources
+set(RPOBJECT_SOURCES
+	src/rpobjectperception/RPObjectPerception.cpp)
+
 ## Declare cpp executables
 add_executable(knowledgeBase ${KNOWLEDGE_SOURCES})
 add_executable(rproadmapServer ${RPROADMAP_SOURCES})
+add_executable(rpobjectServer ${RPOBJECT_SOURCES})
 
 ## Specify libraries against which to link a library or executable target
 target_link_libraries(knowledgeBase ${catkin_LIBRARIES})
 target_link_libraries(rproadmapServer ${catkin_LIBRARIES})
+target_link_libraries(rpobjectServer ${catkin_LIBRARIES})
 
 ##########
 ## Test ##

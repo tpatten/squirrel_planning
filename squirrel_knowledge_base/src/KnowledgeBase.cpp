@@ -260,7 +260,7 @@ namespace KCL_rosplan {
 					explored = true;
 			}
 
-			// not explored: add classify
+			// not explored
 			if(!explored) {
 				squirrel_planning_knowledge_msgs::KnowledgeItem goal;
 				goal.knowledge_type = squirrel_planning_knowledge_msgs::KnowledgeItem::DOMAIN_ATTRIBUTE;
@@ -292,11 +292,12 @@ int main(int argc, char **argv)
 
 	// TESTING for SQUIRREL integration meeting 2/2
 	{
+		kb.domainInstances["robot"].push_back("kenny");
+/*
 		// objects
 		kb.domainInstances["waypoint"].push_back("wp1");
 		kb.domainInstances["waypoint"].push_back("wp2");
 		kb.domainInstances["waypoint"].push_back("wp3");
-		kb.domainInstances["robot"].push_back("tommy");
 		kb.domainInstances["object"].push_back("object0");
 		kb.domainInstances["object"].push_back("object1");
 		kb.domainInstances["object"].push_back("object2");
@@ -362,21 +363,21 @@ int main(int argc, char **argv)
 			object_at.values.push_back(pair1);
 			kb.domainAttributes.push_back(object_at);
 		}
-
+*/
 		// attributes (5/6) (robot_at ?v - robot ?wp - waypoint)
 		squirrel_planning_knowledge_msgs::KnowledgeItem robot_at;
 		robot_at.knowledge_type = squirrel_planning_knowledge_msgs::KnowledgeItem::DOMAIN_ATTRIBUTE;
 		robot_at.attribute_name = "robot_at";
 		diagnostic_msgs::KeyValue robot_at_pair;
 		robot_at_pair.key = "v";
-		robot_at_pair.value = "tommy";
+		robot_at_pair.value = "kenny";
 		robot_at.values.push_back(robot_at_pair);
 		diagnostic_msgs::KeyValue robot_at_pair1;
 		robot_at_pair1.key = "wp";
 		robot_at_pair1.value = "wp1";
 		robot_at.values.push_back(robot_at_pair1);
 		kb.domainAttributes.push_back(robot_at);
-
+/*
 		// attributes (6/6) (tidy ?o - object)
 		// none
 
@@ -405,7 +406,7 @@ int main(int argc, char **argv)
 		}
 		distance_2.function_value = 10.0;
 		kb.domainAttributes.push_back(distance_2);
-
+*/
 		// mission filter
 		squirrel_planning_knowledge_msgs::KnowledgeItem objectFilter;
 		objectFilter.knowledge_type = squirrel_planning_knowledge_msgs::KnowledgeItem::INSTANCE;

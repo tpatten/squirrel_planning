@@ -39,7 +39,7 @@ namespace KCL_rosplan {
 		ROS_INFO("KCL: (RPRoadmapServer) Cleaning old roadmap");
 		squirrel_planning_knowledge_msgs::KnowledgeItem clearWP;
 		clearWP.knowledge_type = squirrel_planning_knowledge_msgs::KnowledgeItem::INSTANCE;
-		clearWP.instance_type = "Waypoint";
+		clearWP.instance_type = "waypoint";
 		remove_knowledge_pub.publish(clearWP);
 
 		squirrel_planning_knowledge_msgs::KnowledgeItem clearConn;
@@ -79,7 +79,7 @@ namespace KCL_rosplan {
 			// instance
 			squirrel_planning_knowledge_msgs::KnowledgeItem addWP;
 			addWP.knowledge_type = squirrel_planning_knowledge_msgs::KnowledgeItem::INSTANCE;
-			addWP.instance_type = "Waypoint";
+			addWP.instance_type = "waypoint";
 			addWP.instance_name = wit->first;
 			add_knowledge_pub.publish(addWP);
 

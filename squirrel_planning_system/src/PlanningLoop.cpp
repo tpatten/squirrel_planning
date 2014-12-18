@@ -8,7 +8,7 @@
  */
 
 #include "ros/ros.h"
-
+#include "std_srvs/Empty.h"
 #include "std_msgs/Empty.h"
 #include "squirrel_planning_knowledge_msgs/Notification.h"
 #include "squirrel_planning_knowledge_msgs/Filter.h"
@@ -150,20 +150,26 @@ namespace KCL_rosplan {
 	 */
 	bool generatePlanningProblem(ros::NodeHandle nh, std::string &problemPath)
 	{
-		// update the environment from the ontology
-		ROS_INFO("KCL: Fetching objects");
-		updateEnvironment(nh);
+		ros::ServiceClient roadmap_client = nh.serviceClient<std_srvs::Empty>("/kcl_rosplan/roadmap_server");
+		std_srvs::Empty srv;
+		if(!roadmap_client.call(srv)) {
+			ROS_ERROR("Failed to call service /kcl_rosplan/roadmap_server");
+			return false;
+		} else {
+			// update the environment from the ontology
+			ROS_INFO("KCL: Fetching objects");
+			updateEnvironment(nh);
 
-		// generate PDDL problem
-		generatePDDLProblemFile(problemPath);
-
+			// generate PDDL problem
+			generatePDDLProblemFile(problemPath);
+		}
 		return true;
 	}
 
 	/**
 	 * sets up the ROS node; prepares planning; main loop.
 	 */
-	void runPlanningServer()
+	bool runPlanningServer(std_srvs::Empty::Request &req, std_srvs::Empty::Response &res)
 	{
 		ros::NodeHandle nh("~");
 
@@ -239,6 +245,7 @@ namespace KCL_rosplan {
 			}
 		}
 		ROS_INFO("KCL: Planning Complete");
+		return true;
 	}
 
 } // close namespace
@@ -248,8 +255,15 @@ namespace KCL_rosplan {
 	/*-------------*/
 
 	int main(int argc, char **argv) {
+
 		ros::init(argc,argv,"rosplan_planning_system");
+		ros::NodeHandle n;
 		srand (static_cast <unsigned> (time(0)));
-		KCL_rosplan::runPlanningServer();
+
+		ros::ServiceServer service = n.advertiseService("/kcl_rosplan/planning_server", KCL_rosplan::runPlanningServer);
+		// KCL_rosplan::runPlanningServer();
+		ROS_INFO("KCL: Ready to receive");
+		ros::spin();
+
 		return 0;
 	}
