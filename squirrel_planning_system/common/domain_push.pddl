@@ -9,14 +9,10 @@
 )
 
 (:predicates
-
 	(explored ?wp - waypoint)
-
 	(robot_at ?v - robot ?wp - waypoint)
 	(object_at ?o - object ?wp - waypoint)
-
 	(connected ?from ?to - waypoint)
-
 	(classified ?o - object)
 	(tidy ?o - object)
 )
@@ -49,7 +45,7 @@
 ;; Move between any two waypoints, avoiding terrain
 (:durative-action goto_waypoint
 	:parameters (?v - robot ?from ?to - waypoint)
-	:duration ( = ?duration (* (distance ?from ?to) 10))
+	:duration ( = ?duration 10);;(* (distance ?from ?to) 10))
 	:condition (and
 		(at start (robot_at ?v ?from)))
 	:effect (and
@@ -60,7 +56,7 @@
 ;; Push an object between two waypoints in an unobstructed straight line
 (:durative-action push_object
 	:parameters (?v - robot ?ob - object ?from ?to - waypoint)
-	:duration ( = ?duration (* (distance ?from ?to) 10))
+	:duration ( = ?duration 10);;(* (distance ?from ?to) 120))
 	:condition (and
 		(at start (robot_at ?v ?from))
 		(at start (object_at ?ob ?from))

@@ -78,15 +78,17 @@ set(VAL_SOURCES
 	src/VALfiles/Utils.cpp)
 
 ## Declare cpp executables
-add_executable(planner src/PlanningLoop.cpp	${VAL_SOURCES})
+add_executable(planner src/PlanningLoop.cpp ${VAL_SOURCES})
 add_executable(rpmovebase src/interface/RPMoveBase.cpp)
 add_executable(rpperceptionaction src/interface/RPPerceptionAction.cpp)
+add_executable(rppushaction src/interface/RPPushAction.cpp)
 add_executable(trpmovebase test/utRPMoveBase.cpp)
 
 ## Specify libraries against which to link a library or executable target
 target_link_libraries(planner ${catkin_LIBRARIES})
 target_link_libraries(rpmovebase ${catkin_LIBRARIES} ${Boost_LIBRARIES})
 target_link_libraries(rpperceptionaction ${catkin_LIBRARIES} ${Boost_LIBRARIES})
+target_link_libraries(rppushaction ${catkin_LIBRARIES} ${Boost_LIBRARIES})
 target_link_libraries(trpmovebase ${catkin_LIBRARIES} ${Boost_LIBRARIES})
 
 # add_dependencies(rpmovebase ${learning_actionlib_EXPORTED_TARGETS})

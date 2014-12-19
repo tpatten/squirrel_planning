@@ -60,8 +60,10 @@ namespace KCL_rosplan {
 
 			// dispatch MoveBase action
 			move_base_msgs::MoveBaseGoal goal;
-			geometry_msgs::PoseStamped &pose = *results[0];
-			goal.target_pose = pose;
+			goal.target_pose.header.frame_id = results[0]->header.frame_id;
+			goal.target_pose.pose.position.x = results[0]->pose.position.x;
+			goal.target_pose.pose.position.y = results[0]->pose.position.y;
+			goal.target_pose.pose.orientation.w = 1;
 			action_client.sendGoal(goal);
 
 			// publish feedback (enabled)

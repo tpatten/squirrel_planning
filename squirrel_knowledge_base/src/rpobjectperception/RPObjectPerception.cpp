@@ -19,6 +19,24 @@ namespace KCL_rosplan {
 		remove_knowledge_pub = nh.advertise<squirrel_planning_knowledge_msgs::KnowledgeItem>("/kcl_rosplan/remove_knowledge", 10, true);
 	}
 
+	/* add new object to knowledge base and scene database */
+	bool RPObjectPerception::addObjects(
+		squirrel_planning_knowledge_msgs::AddObjectService::Request &req,
+		squirrel_planning_knowledge_msgs::AddObjectService::Response &res) {
+	}
+
+	/* remove object from knowledge base and scene database */
+	bool RPObjectPerception::removeObjects(
+		squirrel_planning_knowledge_msgs::RemoveObjectService::Request &req,
+		squirrel_planning_knowledge_msgs::RemoveObjectService::Response &res) {
+	}
+
+	/* update object in scene database and recalculate for knowledge base */
+	bool RPObjectPerception::updateObjects(
+		squirrel_planning_knowledge_msgs::UpdateObjectService::Request &req,
+		squirrel_planning_knowledge_msgs::UpdateObjectService::Response &res) {
+	}
+
 } // close namespace
 
 	/*-------------*/
