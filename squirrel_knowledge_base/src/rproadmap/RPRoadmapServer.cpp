@@ -25,7 +25,7 @@ namespace KCL_rosplan {
 
 		add_knowledge_pub = nh.advertise<squirrel_planning_knowledge_msgs::KnowledgeItem>("/kcl_rosplan/add_knowledge", 10, true);
 		remove_knowledge_pub = nh.advertise<squirrel_planning_knowledge_msgs::KnowledgeItem>("/kcl_rosplan/remove_knowledge", 10, true);
-		map_client = nh.serviceClient<nav_msgs::GetMap>("/static_map");
+		map_client = nh.serviceClient<nav_msgs::GetMap>("/move_base/local_costmap/costmap");
 		waypoints_pub = nh.advertise<visualization_msgs::MarkerArray>("/kcl_rosplan/viz/waypoints", 10, true);
 		edges_pub = nh.advertise<visualization_msgs::Marker>("/kcl_rosplan/viz/edges", 10, true);
 	}
