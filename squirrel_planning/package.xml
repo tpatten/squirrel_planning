@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <package>
-	<name>planning</name>
+	<name>squirrel_planning</name>
 	<version>0.0.0</version>
 	<description>Planning package for SQUIRREL</description>
 	<maintainer email="michael.cashmore@kcl.ac.uk">michael</maintainer>
