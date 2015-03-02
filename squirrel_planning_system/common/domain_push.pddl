@@ -15,6 +15,7 @@
 	(connected ?from ?to - waypoint)
 	(classified ?o - object)
 	(tidy ?o - object)
+	(tidy_location ?o - object ?wp -waypoint)
 )
 
 (:functions
@@ -56,7 +57,7 @@
 ;; Push an object between two waypoints in an unobstructed straight line
 (:durative-action push_object
 	:parameters (?v - robot ?ob - object ?from ?to - waypoint)
-	:duration ( = ?duration 10);;(* (distance ?from ?to) 120))
+	:duration ( = ?duration 180);;(* (distance ?from ?to) 120))
 	:condition (and
 		(at start (robot_at ?v ?from))
 		(at start (object_at ?ob ?from))
@@ -68,10 +69,22 @@
 		(at end (object_at ?ob ?to)))
 )
 
-;; Tidy a classified object -- an abstract action in place of push_object
+;; Tidy a classified object at its goal location
+(:durative-action tidy_object
+	:parameters (?v - robot ?o - object ?wp - waypoint)
+	:duration ( = ?duration 5)
+	:condition (and
+		(at start (robot_at ?v ?wp))
+		(at start (object_at ?o ?wp))
+		(at start (tidy_location ?o ?wp)))
+	:effect (and
+		(at end (tidy ?o)))
+)
+
+;; Tidy a classified object -- an abstract action in place of push_object / tidy_obect
 (:durative-action make_tidy
 	:parameters (?v - robot ?o - object ?wp - waypoint)
-	:duration ( = ?duration 10)
+	:duration ( = ?duration 60)
 	:condition (and
 		(at start (robot_at ?v ?wp))
 		(at start (object_at ?o ?wp))
