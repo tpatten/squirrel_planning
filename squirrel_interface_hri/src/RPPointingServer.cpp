@@ -22,7 +22,6 @@ namespace KCL_rosplan {
 	}
 	
 	void RPPointingServer::receivePointLocation(const geometry_msgs::PointStamped::ConstPtr& ptr) {
-		ROS_INFO("Received point: (%f, %f, %f)", ptr->point.x, ptr->point.y, ptr->point.z);
 		received_point_ = *ptr;
 		has_received_point_ = true;
 	}
@@ -63,7 +62,7 @@ namespace KCL_rosplan {
 			r.sleep();
 		}
 		has_received_point_ = false;
-		ROS_INFO("KCL: Received point");
+		ROS_INFO("KCL: (RPPointingServer) Received point");
 
 		// Store the found point in the database.
 		std::stringstream ss;
