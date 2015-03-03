@@ -1,3 +1,0 @@
-<launch>
- <test test-name="test_squirrel_planning_system" pkg="squirrel_planning_system" type="testPlanningSystem" />
-</launch>
