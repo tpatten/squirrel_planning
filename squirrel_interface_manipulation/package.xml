@@ -1,11 +1,11 @@
 <?xml version="1.0"?>
 <package>
-  <name>squirrel_hri_knowledge</name>
+  <name>squirrel_interface_manipulation</name>
   <version>0.0.0</version>
-  <description>Sample Knowledge base for ROSPlan. Used to collect and store information used to build the planning model. The knowledge_base is queried by the planning_system to construct the model, and possibly by controllers to retrieve continuous information.</description>
+  <description>ROSPlan interface for the SQUIRREL manipulation package.</description>
   <maintainer email="michael.cashmore@kcl.ac.uk">michael</maintainer>
   <license>BSD</license>
-  <url type="website">https://github.com/KCL-Planning/ROSPlan</url>
+  <url type="website">http://www.squirrel-project.eu/</url>
 
   <buildtool_depend>catkin</buildtool_depend>
 
@@ -18,7 +18,7 @@
   <build_depend>nav_msgs</build_depend>
   <build_depend>visualization_msgs</build_depend>
   <build_depend>mongodb_store</build_depend>
-  <build_depend>squirrel_planning_knowledge_msgs</build_depend>
+  <build_depend>rosplan_knowledge_msgs</build_depend>
   <build_depend>tf</build_depend>
 
   <run_depend>rospy</run_depend>
@@ -30,7 +30,7 @@
   <run_depend>nav_msgs</run_depend>
   <run_depend>visualization_msgs</run_depend>
   <run_depend>mongodb_store</run_depend>
-  <run_depend>squirrel_planning_knowledge_msgs</run_depend>
+  <run_depend>rosplan_knowledge_msgs</run_depend>
   <run_depend>tf</run_depend>
 
   <export></export>

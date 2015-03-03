@@ -1,13 +1,13 @@
 cmake_minimum_required(VERSION 2.8.3)
-project(squirrel_hri_knowledge)
+project(squirrel_interface_manipulation)
 
 ## Find catkin macros and libraries
 find_package(catkin REQUIRED COMPONENTS
   roscpp
   rospy
   std_msgs
-  squirrel_planning_knowledge_msgs
-  squirrel_planning_dispatch_msgs
+  rosplan_knowledge_msgs
+  rosplan_dispatch_msgs
   nav_msgs
   mongodb_store
   geometry_msgs
@@ -27,7 +27,7 @@ find_package(Boost REQUIRED COMPONENTS
 ## Declare things to be passed to dependent projects
 catkin_package(
   LIBRARIES squirrel_knowledge_base
-  CATKIN_DEPENDS roscpp rospy std_msgs squirrel_planning_knowledge_msgs nav_msgs mongodb_store geometry_msgs diagnostic_msgs visualization_msgs tf
+  CATKIN_DEPENDS roscpp rospy std_msgs rosplan_knowledge_msgs rosplan_dispatch_msgs nav_msgs mongodb_store geometry_msgs diagnostic_msgs visualization_msgs tf
   DEPENDS
 )
 
@@ -42,17 +42,18 @@ include_directories(
 )
 
 ## Pointing service
-set(RPPointingService_SOURCES
-	src/RPPointingServer.cpp)
+set(SIM_SOURCES
+	src/RPPushAction.cpp)
 
 ## Declare cpp executables
-add_executable(rppointingServer ${RPPointingService_SOURCES})
+add_executable(rppushServer ${SIM_SOURCES})
 
 ## Specify libraries against which to link a library or executable target
-target_link_libraries(rppointingServer ${catkin_LIBRARIES})
+target_link_libraries(rppushServer ${catkin_LIBRARIES})
 
 ##########
 ## Test ##
 ##########
+
 # please do not use add_rosttest_gtest (seems to be interfering with qtcreator and cmake)
 # see test documentation: http://wiki.ros.org/gtest

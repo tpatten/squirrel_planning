@@ -6,8 +6,8 @@ find_package(catkin REQUIRED COMPONENTS
   roscpp
   rospy
   std_msgs
-  squirrel_planning_knowledge_msgs
-  squirrel_planning_dispatch_msgs
+  rosplan_knowledge_msgs
+  rosplan_dispatch_msgs
   nav_msgs
   mongodb_store
   geometry_msgs
@@ -27,7 +27,7 @@ find_package(Boost REQUIRED COMPONENTS
 ## Declare things to be passed to dependent projects
 catkin_package(
   LIBRARIES squirrel_knowledge_base
-  CATKIN_DEPENDS roscpp rospy std_msgs squirrel_planning_knowledge_msgs nav_msgs mongodb_store geometry_msgs diagnostic_msgs visualization_msgs tf
+  CATKIN_DEPENDS roscpp rospy std_msgs rosplan_knowledge_msgs rosplan_dispatch_msgs nav_msgs mongodb_store geometry_msgs diagnostic_msgs visualization_msgs tf
   DEPENDS
 )
 
@@ -42,14 +42,14 @@ include_directories(
 )
 
 ## Pointing service
-set(RPPointingService_SOURCES
+set(SIP_SOURCES
 	src/RPPerceptionAction.cpp)
 
 ## Declare cpp executables
-add_executable(rppointingServer ${RPPointingService_SOURCES})
+add_executable(rpperceptionServer ${SIP_SOURCES})
 
 ## Specify libraries against which to link a library or executable target
-target_link_libraries(rppointingServer ${catkin_LIBRARIES})
+target_link_libraries(rpperceptionServer ${catkin_LIBRARIES})
 
 ##########
 ## Test ##
