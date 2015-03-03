@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 2.8.3)
-project(squirrel_knowledge_base)
+project(squirrel_interface_roadmap)
 
 ## Find catkin macros and libraries
 find_package(catkin REQUIRED COMPONENTS
@@ -24,11 +24,11 @@ find_package(Boost REQUIRED COMPONENTS
 ###################################
 
 ## Declare things to be passed to dependent projects
-catkin_package(
-  LIBRARIES squirrel_knowledge_base
-  CATKIN_DEPENDS roscpp rospy std_msgs squirrel_planning_knowledge_msgs nav_msgs mongodb_store geometry_msgs diagnostic_msgs visualization_msgs tf
-  DEPENDS
-)
+#catkin_package(
+#  LIBRARIES squirrel_knowledge_base
+#  CATKIN_DEPENDS roscpp rospy std_msgs squirrel_planning_knowledge_msgs nav_msgs mongodb_store geometry_msgs diagnostic_msgs visualization_msgs tf
+#  DEPENDS
+#)
 
 ###########
 ## Build ##
@@ -40,29 +40,16 @@ include_directories(
   include
 )
 
-## knowledge sources
-set(KNOWLEDGE_SOURCES
-	src/KnowledgeBase.cpp
-	src/PlanningFilter.cpp)
-
 ## roadmap sources
-#set(RPROADMAP_SOURCES
-#	src/rproadmap/RPRoadmapServer.cpp
-#	src/rproadmap/RPRoadmapVisualization.cpp)
-
-## object perception sources
-set(RPOBJECT_SOURCES
-	src/rpobjectperception/RPObjectPerception.cpp)
+set(RPROADMAP_SOURCES
+	src/RPRoadmapServer.cpp
+	src/RPRoadmapVisualization.cpp)
 
 ## Declare cpp executables
-add_executable(knowledgeBase ${KNOWLEDGE_SOURCES})
-#add_executable(rproadmapServer ${RPROADMAP_SOURCES})
-add_executable(rpobjectServer ${RPOBJECT_SOURCES})
+add_executable(rproadmapServer ${RPROADMAP_SOURCES})
 
 ## Specify libraries against which to link a library or executable target
-target_link_libraries(knowledgeBase ${catkin_LIBRARIES})
-#target_link_libraries(rproadmapServer ${catkin_LIBRARIES} ${Boost_LIBRARIES})
-target_link_libraries(rpobjectServer ${catkin_LIBRARIES} ${Boost_LIBRARIES})
+target_link_libraries(rproadmapServer ${catkin_LIBRARIES} ${Boost_LIBRARIES})
 
 ##########
 ## Test ##
