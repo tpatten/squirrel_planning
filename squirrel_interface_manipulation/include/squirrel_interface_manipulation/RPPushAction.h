@@ -3,8 +3,8 @@
 #include <iostream>
 #include <fstream>
 #include <actionlib/client/simple_action_client.h>
-#include "squirrel_planning_dispatch_msgs/ActionDispatch.h"
-#include "squirrel_planning_dispatch_msgs/ActionFeedback.h"
+#include "rosplan_dispatch_msgs/ActionDispatch.h"
+#include "rosplan_dispatch_msgs/ActionFeedback.h"
 #include "squirrel_manipulation_msgs/PushAction.h"
 #include "mongodb_store/message_store.h"
 #include "geometry_msgs/PoseStamped.h"
@@ -35,7 +35,7 @@ namespace KCL_rosplan {
 		RPPushAction(ros::NodeHandle &nh, std::string &actionserver);
 
 		/* listen to and process action_dispatch topic */
-		void dispatchCallback(const squirrel_planning_dispatch_msgs::ActionDispatch::ConstPtr& msg);
+		void dispatchCallback(const rosplan_dispatch_msgs::ActionDispatch::ConstPtr& msg);
 	};
 }
 #endif

@@ -4,8 +4,8 @@
 #include <fstream>
 #include <boost/foreach.hpp>
 #include <actionlib/client/simple_action_client.h>
-#include "squirrel_planning_dispatch_msgs/ActionDispatch.h"
-#include "squirrel_planning_dispatch_msgs/ActionFeedback.h"
+#include "rosplan_dispatch_msgs/ActionDispatch.h"
+#include "rosplan_dispatch_msgs/ActionFeedback.h"
 #include "squirrel_object_perception_msgs/LookForObjectsAction.h"
 #include "squirrel_interface_perception/RPPerceptionAction.h"
 #include "mongodb_store/message_store.h"
@@ -23,11 +23,11 @@ namespace KCL_rosplan {
 		action_client.waitForServer();
 		
 		// create the action feedback publisher
-		action_feedback_pub = nh.advertise<squirrel_planning_dispatch_msgs::ActionFeedback>("/kcl_rosplan/action_feedback", 10, true);
+		action_feedback_pub = nh.advertise<rosplan_dispatch_msgs::ActionFeedback>("/kcl_rosplan/action_feedback", 10, true);
 	}
 
 	/* action dispatch callback; parameters (?v - robot ?wp - waypoint) */
-	void RPPerceptionAction::dispatchCallback(const squirrel_planning_dispatch_msgs::ActionDispatch::ConstPtr& msg) {
+	void RPPerceptionAction::dispatchCallback(const rosplan_dispatch_msgs::ActionDispatch::ConstPtr& msg) {
 
 		// ignore non-goto-waypoint actions
 		if(0!=msg->name.compare("explore_waypoint")) return;
@@ -54,7 +54,7 @@ namespace KCL_rosplan {
 		action_client.sendGoal(goal);
 
 		// publish feedback (enabled)
-		 squirrel_planning_dispatch_msgs::ActionFeedback fb;
+		 rosplan_dispatch_msgs::ActionFeedback fb;
 		fb.action_id = msg->action_id;
 		fb.status = "action enabled";
 		action_feedback_pub.publish(fb);
@@ -66,7 +66,7 @@ namespace KCL_rosplan {
 			ROS_INFO("KCL: (PerceptionAction) action finished: %s", state.toString().c_str());
 			
 			// publish feedback (achieved)
-			 squirrel_planning_dispatch_msgs::ActionFeedback fb;
+			 rosplan_dispatch_msgs::ActionFeedback fb;
 			fb.action_id = msg->action_id;
 			fb.status = "action achieved";
 			action_feedback_pub.publish(fb);
@@ -76,7 +76,7 @@ namespace KCL_rosplan {
 			ROS_INFO("KCL: (PerceptionAction) action timed out");
 
 			// publish feedback (failed)
-			 squirrel_planning_dispatch_msgs::ActionFeedback fb;
+			 rosplan_dispatch_msgs::ActionFeedback fb;
 			fb.action_id = msg->action_id;
 			fb.status = "action failed";
 			action_feedback_pub.publish(fb);
