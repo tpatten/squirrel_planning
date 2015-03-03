@@ -15,8 +15,7 @@ namespace KCL_rosplan {
 	RPPointingServer::RPPointingServer(ros::NodeHandle &nh)
 	 : message_store(nh), has_received_point_(false) {
 
-		add_knowledge_pub = nh.advertise<rosplan_knowledge_msgs::KnowledgeItem>("/kcl_rosplan/add_knowledge", 10, true);
-		remove_knowledge_pub = nh.advertise<rosplan_knowledge_msgs::KnowledgeItem>("/kcl_rosplan/remove_knowledge", 10, true);
+		knowledgeInterface = nh.serviceClient<knowledge_msgs::KnowledgeInterface>("/kcl_rosplan/update_knowledge_base");
 		
 		action_feedback_pub = nh.advertise<rosplan_dispatch_msgs::ActionFeedback>("/kcl_rosplan/action_feedback", 10, true);
 		
@@ -67,28 +66,32 @@ namespace KCL_rosplan {
 		
 		// Store the found point in the database.
 		std::stringstream ss;
-		ss << "pointed_location_" << obID;
+		ss << "point_location_" << obID;
 		std::string id(message_store.insertNamed(ss.str(), received_point_));
 		
 		// Store it in the knowledge base.
-		rosplan_knowledge_msgs::KnowledgeItem addWP;
-		addWP.knowledge_type = squirrel_planning_knowledge_msgs::KnowledgeItem::INSTANCE;
-		addWP.instance_type = "waypoint";
-		addWP.instance_name = ss.str();
-		add_knowledge_pub.publish(addWP);
+		KnowledgeUpdateService wpSrv;
+		wpSrv.update_type = rosplan_knowledge_msgs::KnowledgeUpdateService::ADD_KNOWLEDGE;
+		wpSrv.knowledge.knowledge_type = squirrel_planning_knowledge_msgs::KnowledgeItem::INSTANCE;
+		wpSrv.knowledge.instance_type = "waypoint";
+		wpSrv.knowledge.instance_name = ss.str();
+		if (!knowledgeInterface.call(wpSrv))
+			ROS_ERROR("KCL: (RPPointingServer) error adding knowledge");
 		
-		rosplan_knowledge_msgs::KnowledgeItem addTL;
-		addTL.knowledge_type = squirrel_planning_knowledge_msgs::KnowledgeItem::DOMAIN_ATTRIBUTE;
-		addTL.attribute_name = "tidy_location";
+		KnowledgeUpdateService tlSrv;
+		tlSrv.update_type = rosplan_knowledge_msgs::KnowledgeUpdateService::ADD_KNOWLEDGE;
+		tlSrv.knowledge.knowledge_type = squirrel_planning_knowledge_msgs::KnowledgeItem::DOMAIN_ATTRIBUTE;
+		tlSrv.knowledge.attribute_name = "tidy_location";
 		diagnostic_msgs::KeyValue object;
 		object.key = "o";
 		object.value = obID;
-		addTL.values.push_back(object);
+		tlSrv.knowledge.values.push_back(object);
 		diagnostic_msgs::KeyValue location;
 		location.key = "wp";
 		location.value = ss.str();
-		addTL.values.push_back(location);
-		add_knowledge_pub.publish(addTL);
+		tlSrv.knowledge.values.push_back(location);
+		if (!knowledgeInterface.call(addTL))
+			ROS_ERROR("KCL: (RPPointingServer) error adding knowledge");
 		
 		// publish feedback (achieved)
 		fb.action_id = msg->action_id;
