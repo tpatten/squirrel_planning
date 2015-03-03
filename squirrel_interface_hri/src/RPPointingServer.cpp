@@ -5,7 +5,8 @@
 #include <string>
 #include <ctime>
 #include <stdlib.h> 
-#include <algorithm> 
+#include <algorithm>
+#include "rosplan_knowledge_msgs/KnowledgeUpdateService.h" 
 #include "rosplan_knowledge_msgs/KnowledgeItem.h"
 #include "mongodb_store/message_store.h"
 
@@ -15,7 +16,7 @@ namespace KCL_rosplan {
 	RPPointingServer::RPPointingServer(ros::NodeHandle &nh)
 	 : message_store(nh), has_received_point_(false) {
 
-		knowledgeInterface = nh.serviceClient<knowledge_msgs::KnowledgeInterface>("/kcl_rosplan/update_knowledge_base");
+		knowledgeInterface = nh.serviceClient<rosplan_knowledge_msgs::KnowledgeUpdateService>("/kcl_rosplan/update_knowledge_base");
 		
 		action_feedback_pub = nh.advertise<rosplan_dispatch_msgs::ActionFeedback>("/kcl_rosplan/action_feedback", 10, true);
 		
@@ -70,27 +71,27 @@ namespace KCL_rosplan {
 		std::string id(message_store.insertNamed(ss.str(), received_point_));
 		
 		// Store it in the knowledge base.
-		KnowledgeUpdateService wpSrv;
-		wpSrv.update_type = rosplan_knowledge_msgs::KnowledgeUpdateService::ADD_KNOWLEDGE;
-		wpSrv.knowledge.knowledge_type = squirrel_planning_knowledge_msgs::KnowledgeItem::INSTANCE;
-		wpSrv.knowledge.instance_type = "waypoint";
-		wpSrv.knowledge.instance_name = ss.str();
+		rosplan_knowledge_msgs::KnowledgeUpdateService wpSrv;
+		wpSrv.request.update_type = rosplan_knowledge_msgs::KnowledgeUpdateService::Request::ADD_KNOWLEDGE;
+		wpSrv.request.knowledge.knowledge_type = rosplan_knowledge_msgs::KnowledgeItem::INSTANCE;
+		wpSrv.request.knowledge.instance_type = "waypoint";
+		wpSrv.request.knowledge.instance_name = ss.str();
 		if (!knowledgeInterface.call(wpSrv))
 			ROS_ERROR("KCL: (RPPointingServer) error adding knowledge");
 		
-		KnowledgeUpdateService tlSrv;
-		tlSrv.update_type = rosplan_knowledge_msgs::KnowledgeUpdateService::ADD_KNOWLEDGE;
-		tlSrv.knowledge.knowledge_type = squirrel_planning_knowledge_msgs::KnowledgeItem::DOMAIN_ATTRIBUTE;
-		tlSrv.knowledge.attribute_name = "tidy_location";
+		rosplan_knowledge_msgs::KnowledgeUpdateService tlSrv;
+		tlSrv.request.update_type = rosplan_knowledge_msgs::KnowledgeUpdateService::Request::ADD_KNOWLEDGE;
+		tlSrv.request.knowledge.knowledge_type = rosplan_knowledge_msgs::KnowledgeItem::DOMAIN_ATTRIBUTE;
+		tlSrv.request.knowledge.attribute_name = "tidy_location";
 		diagnostic_msgs::KeyValue object;
 		object.key = "o";
 		object.value = obID;
-		tlSrv.knowledge.values.push_back(object);
+		tlSrv.request.knowledge.values.push_back(object);
 		diagnostic_msgs::KeyValue location;
 		location.key = "wp";
 		location.value = ss.str();
-		tlSrv.knowledge.values.push_back(location);
-		if (!knowledgeInterface.call(addTL))
+		tlSrv.request.knowledge.values.push_back(location);
+		if (!knowledgeInterface.call(tlSrv))
 			ROS_ERROR("KCL: (RPPointingServer) error adding knowledge");
 		
 		// publish feedback (achieved)

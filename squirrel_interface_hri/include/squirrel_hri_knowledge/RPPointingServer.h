@@ -47,7 +47,7 @@ namespace KCL_rosplan {
 		/* constructor */
 		RPPointingServer(ros::NodeHandle &nh);
 
-		void dispatchCallback(const plan_ispatch_msgs::ActionDispatch::ConstPtr& msg);
+		void dispatchCallback(const rosplan_dispatch_msgs::ActionDispatch::ConstPtr& msg);
 	};
 }
 #endif
