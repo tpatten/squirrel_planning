@@ -1,0 +1,12 @@
+<launch>
+
+	<!-- ROSPlan -->
+	<include file="$(find rosplan_planning_system)/launch/interfaced_planning_system.launch" >
+	</include>
+
+	<!-- SQUIRREL interfaces -->
+	<node name="squirrel_interface_perception" pkg="squirrel_interface_perception" type="rpperceptionServer" respawn="false" output="screen"></node>
+	<node name="squirrel_interface_hri" pkg="squirrel_interface_hri" type="rppointingServer" respawn="false" output="screen"></node>
+	<node name="squirrel_interface_manipulation" pkg="squirrel_interface_manipulation" type="rppushServer" respawn="false" output="screen"></node>
+
+</launch>
