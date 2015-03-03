@@ -5,7 +5,7 @@
   <description>Interface to the Human Robotics Interface, we receive the messages and store them in the knowledge base to be used by the planner.</description>
   <maintainer email="michael.cashmore@kcl.ac.uk">michael</maintainer>
   <license>BSD</license>
-  <url type="website">https://github.com/KCL-Planning/ROSPlan</url>
+  <url type="website">/http://www.squirrel-project.eu/</url>
 
   <buildtool_depend>catkin</buildtool_depend>
 
