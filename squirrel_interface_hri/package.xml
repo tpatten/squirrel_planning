@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <package>
-  <name>squirrel_hri_knowledge</name>
+  <name>squirrel_interface_hri</name>
   <version>0.0.0</version>
   <description>Interface to the Human Robotics Interface, we receive the messages and store them in the knowledge base to be used by the planner.</description>
   <maintainer email="michael.cashmore@kcl.ac.uk">michael</maintainer>

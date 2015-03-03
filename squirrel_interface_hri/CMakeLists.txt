@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 2.8.3)
-project(squirrel_hri_knowledge)
+project(squirrel_interface_hri)
 
 ## Find catkin macros and libraries
 find_package(catkin REQUIRED COMPONENTS
