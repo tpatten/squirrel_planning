@@ -19,12 +19,10 @@ namespace KCL_rosplan {
 		knowledgeInterface = nh.serviceClient<rosplan_knowledge_msgs::KnowledgeUpdateService>("/kcl_rosplan/update_knowledge_base");
 		
 		action_feedback_pub = nh.advertise<rosplan_dispatch_msgs::ActionFeedback>("/kcl_rosplan/action_feedback", 10, true);
-		
-		pointing_pose_sub = nh.subscribe("/pointing_pose", 1, &RPPointingServer::receivePointLocation, this);
 	}
 	
-	void RPPointingServer::receivePointLocation(const geometry_msgs::PoseStamped::ConstPtr& ptr) {
-		ROS_INFO("Received point: (%f, %f, %f)", ptr->pose.position.x, ptr->pose.position.y, ptr->pose.position.z);
+	void RPPointingServer::receivePointLocation(const geometry_msgs::PointStamped::ConstPtr& ptr) {
+		ROS_INFO("Received point: (%f, %f, %f)", ptr->point.x, ptr->point.y, ptr->point.z);
 		received_point_ = *ptr;
 		has_received_point_ = true;
 	}
@@ -59,12 +57,14 @@ namespace KCL_rosplan {
 
 		// Wait for a point to be published.
 		ros::Rate r(10);
+		has_received_point_ = false;
 		while (!has_received_point_ && ros::ok()) {
 			ros::spinOnce();
 			r.sleep();
 		}
 		has_received_point_ = false;
-		
+		ROS_INFO("KCL: Received point");
+
 		// Store the found point in the database.
 		std::stringstream ss;
 		ss << "point_location_" << obID;
@@ -113,6 +113,9 @@ int main(int argc, char **argv) {
 
 	// create PDDL action subscriber
 	KCL_rosplan::RPPointingServer rpps(nh);
+
+	// listen for pointing
+	ros::Subscriber pointing_pose_sub = nh.subscribe("/squirrel_person_tracker/pointing_pose", 1, &KCL_rosplan::RPPointingServer::receivePointLocation, &rpps);
 
 	// listen for action dispatch
 	ros::Subscriber ds = nh.subscribe("/kcl_rosplan/action_dispatch", 1000, &KCL_rosplan::RPPointingServer::dispatchCallback, &rpps);

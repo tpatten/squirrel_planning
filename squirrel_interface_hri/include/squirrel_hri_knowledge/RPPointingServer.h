@@ -8,7 +8,7 @@
 #include "rosplan_dispatch_msgs/ActionDispatch.h"
 #include "mongodb_store/message_store.h"
 
-#include <geometry_msgs/PoseStamped.h>
+#include <geometry_msgs/PointStamped.h>
 
 #ifndef KCL_pointing_server
 #define KCL_pointing_server
@@ -37,10 +37,7 @@ namespace KCL_rosplan {
 		ros::Publisher action_feedback_pub;
 		ros::Subscriber pointing_pose_sub;
 
-		// Callback of the pointing pose topic.
-		void receivePointLocation(const geometry_msgs::PoseStamped::ConstPtr& ptr);
-
-		geometry_msgs::PoseStamped received_point_;
+		geometry_msgs::PointStamped received_point_;
 		bool has_received_point_;
 	public:
 
@@ -48,6 +45,9 @@ namespace KCL_rosplan {
 		RPPointingServer(ros::NodeHandle &nh);
 
 		void dispatchCallback(const rosplan_dispatch_msgs::ActionDispatch::ConstPtr& msg);
+
+		// Callback of the pointing pose topic.
+		void receivePointLocation(const geometry_msgs::PointStamped::ConstPtr& ptr);
 	};
 }
 #endif
