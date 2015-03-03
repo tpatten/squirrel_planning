@@ -1,5 +1,5 @@
 #include "ros/ros.h"
-#include "squirrel_knowledge_base/RPRoadmapServer.h"
+#include <squirrel_interface_roadmap/RPRoadmapServer.h>
 #include <fstream>
 #include <sstream>
 #include <string>
