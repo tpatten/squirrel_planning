@@ -7,7 +7,7 @@
 #include "squirrel_planning_dispatch_msgs/ActionDispatch.h"
 #include "squirrel_planning_dispatch_msgs/ActionFeedback.h"
 #include "squirrel_object_perception_msgs/LookForObjectsAction.h"
-#include "squirrel_planning_system/RPPerceptionAction.h"
+#include "squirrel_interface_perception/RPPerceptionAction.h"
 #include "mongodb_store/message_store.h"
 #include "geometry_msgs/PoseStamped.h"
 
