@@ -2,12 +2,12 @@
 #include <vector>
 #include <iostream>
 #include <fstream>
-#include "squirrel_planning_knowledge_msgs/KnowledgeItem.h"
-#include "squirrel_planning_knowledge_msgs/AddObjectService.h"
-#include "squirrel_planning_knowledge_msgs/RemoveObjectService.h"
-#include "squirrel_planning_knowledge_msgs/UpdateObjectService.h"
-#include "squirrel_planning_dispatch_msgs/ActionFeedback.h"
-#include "squirrel_planning_dispatch_msgs/ActionDispatch.h"
+#include "rosplan_knowledge_msgs/KnowledgeItem.h"
+#include "rosplan_knowledge_msgs/AddObjectService.h"
+#include "rosplan_knowledge_msgs/RemoveObjectService.h"
+#include "rosplan_knowledge_msgs/UpdateObjectService.h"
+#include "rosplan_dispatch_msgs/ActionFeedback.h"
+#include "rosplan_dispatch_msgs/ActionDispatch.h"
 #include "mongodb_store/message_store.h"
 
 #include <geometry_msgs/PoseStamped.h>
@@ -50,7 +50,7 @@ namespace KCL_rosplan {
 		/* constructor */
 		RPPointingServer(ros::NodeHandle &nh);
 
-		void dispatchCallback(const squirrel_planning_dispatch_msgs::ActionDispatch::ConstPtr& msg);
+		void dispatchCallback(const plan_ispatch_msgs::ActionDispatch::ConstPtr& msg);
 	};
 }
 #endif

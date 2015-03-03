@@ -6,7 +6,7 @@
 #include <ctime>
 #include <stdlib.h> 
 #include <algorithm> 
-#include "squirrel_planning_knowledge_msgs/KnowledgeItem.h"
+#include "rosplan_knowledge_msgs/KnowledgeItem.h"
 #include "mongodb_store/message_store.h"
 
 namespace KCL_rosplan {
@@ -15,10 +15,10 @@ namespace KCL_rosplan {
 	RPPointingServer::RPPointingServer(ros::NodeHandle &nh)
 	 : message_store(nh), has_received_point_(false) {
 
-		add_knowledge_pub = nh.advertise<squirrel_planning_knowledge_msgs::KnowledgeItem>("/kcl_rosplan/add_knowledge", 10, true);
-		remove_knowledge_pub = nh.advertise<squirrel_planning_knowledge_msgs::KnowledgeItem>("/kcl_rosplan/remove_knowledge", 10, true);
+		add_knowledge_pub = nh.advertise<rosplan_knowledge_msgs::KnowledgeItem>("/kcl_rosplan/add_knowledge", 10, true);
+		remove_knowledge_pub = nh.advertise<rosplan_knowledge_msgs::KnowledgeItem>("/kcl_rosplan/remove_knowledge", 10, true);
 		
-		action_feedback_pub = nh.advertise<squirrel_planning_dispatch_msgs::ActionFeedback>("/kcl_rosplan/action_feedback", 10, true);
+		action_feedback_pub = nh.advertise<rosplan_dispatch_msgs::ActionFeedback>("/kcl_rosplan/action_feedback", 10, true);
 		
 		pointing_pose_sub = nh.subscribe("/pointing_pose", 1, &RPPointingServer::receivePointLocation, this);
 	}
@@ -30,7 +30,7 @@ namespace KCL_rosplan {
 	}
 	
 	/* action dispatch callback; parameters (?ob - object) */
-	void RPPointingServer::dispatchCallback(const squirrel_planning_dispatch_msgs::ActionDispatch::ConstPtr& msg) {
+	void RPPointingServer::dispatchCallback(const rosplan_dispatch_msgs::ActionDispatch::ConstPtr& msg) {
 
 		// ignore non-goto-waypoint actions
 		if(0!=msg->name.compare("request_tidy")) return;
@@ -38,7 +38,7 @@ namespace KCL_rosplan {
 		ROS_INFO("KCL: (RPPointingServer) action recieved");
 
 		// publish feedback (enabled)
-		squirrel_planning_dispatch_msgs::ActionFeedback fb;
+		rosplan_dispatch_msgs::ActionFeedback fb;
 		fb.action_id = msg->action_id;
 		fb.status = "action enabled";
 		action_feedback_pub.publish(fb);
@@ -71,13 +71,13 @@ namespace KCL_rosplan {
 		std::string id(message_store.insertNamed(ss.str(), received_point_));
 		
 		// Store it in the knowledge base.
-		squirrel_planning_knowledge_msgs::KnowledgeItem addWP;
+		rosplan_knowledge_msgs::KnowledgeItem addWP;
 		addWP.knowledge_type = squirrel_planning_knowledge_msgs::KnowledgeItem::INSTANCE;
 		addWP.instance_type = "waypoint";
 		addWP.instance_name = ss.str();
 		add_knowledge_pub.publish(addWP);
 		
-		squirrel_planning_knowledge_msgs::KnowledgeItem addTL;
+		rosplan_knowledge_msgs::KnowledgeItem addTL;
 		addTL.knowledge_type = squirrel_planning_knowledge_msgs::KnowledgeItem::DOMAIN_ATTRIBUTE;
 		addTL.attribute_name = "tidy_location";
 		diagnostic_msgs::KeyValue object;

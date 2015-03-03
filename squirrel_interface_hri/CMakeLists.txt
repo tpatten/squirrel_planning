@@ -6,8 +6,8 @@ find_package(catkin REQUIRED COMPONENTS
   roscpp
   rospy
   std_msgs
-  squirrel_planning_knowledge_msgs
-  squirrel_planning_dispatch_msgs
+  rosplan_knowledge_msgs
+  rosplan_dispatch_msgs
   nav_msgs
   mongodb_store
   geometry_msgs
