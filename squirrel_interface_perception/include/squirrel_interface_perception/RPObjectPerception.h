@@ -2,7 +2,6 @@
 #include <vector>
 #include <iostream>
 #include <fstream>
-#include "squirrel_planning_knowledge_msgs/KnowledgeItem.h"
 #include "squirrel_planning_knowledge_msgs/AddObjectService.h"
 #include "squirrel_planning_knowledge_msgs/RemoveObjectService.h"
 #include "squirrel_planning_knowledge_msgs/UpdateObjectService.h"
@@ -10,6 +9,8 @@
 
 #ifndef KCL_object_perception
 #define KCL_object_perception
+
+#include <map>
 
 /**
  * This file defines the RPObjectPerception class.
@@ -31,8 +32,15 @@ namespace KCL_rosplan {
 		mongodb_store::MessageStoreProxy message_store;
 
 		// Knowledge base
-		ros::Publisher add_knowledge_pub;
-		ros::Publisher remove_knowledge_pub;
+		ros::ServiceClient update_knowledge_client;
+		
+		// Clients for object services.
+		ros::ServiceServer add_object_service;
+		ros::ServiceServer remove_object_service;
+		ros::ServiceServer update_object_service;
+		
+		// Map ids passed by the caller to ids as stored in mongodb.
+		std::multimap<std::string, std::string> mongo_id_mapping;
 
 	public:
 
