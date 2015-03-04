@@ -46,11 +46,18 @@ include_directories(
 set(SIP_SOURCES
 	src/RPPerceptionAction.cpp)
 
+set(ROP_SOURCES
+	src/RPObjectPerception.cpp)
+
 ## Declare cpp executables
 add_executable(rpperceptionServer ${SIP_SOURCES})
 
+add_executable(rpObjectPerception ${ROP_SOURCES})
+
 ## Specify libraries against which to link a library or executable target
 target_link_libraries(rpperceptionServer ${catkin_LIBRARIES})
+
+target_link_libraries(rpObjectPerception ${catkin_LIBRARIES})
 
 ##########
 ## Test ##
