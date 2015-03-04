@@ -32,7 +32,7 @@ namespace KCL_rosplan {
 		// ignore non-goto-waypoint actions
 		if(0!=msg->name.compare("request_tidy")) return;
 
-		ROS_INFO("KCL: (RPPointingServer) action recieved");
+		ROS_INFO("KCL: (PointingServer) action recieved");
 
 		// publish feedback (enabled)
 		rosplan_dispatch_msgs::ActionFeedback fb;
@@ -50,7 +50,7 @@ namespace KCL_rosplan {
 			}
 		}
 		if(!found) {
-			ROS_INFO("KCL: (RPPointingServer) aborting action dispatch; malformed parameters");
+			ROS_INFO("KCL: (PointingServer) aborting action dispatch; malformed parameters");
 			return;
 		}
 
@@ -62,7 +62,7 @@ namespace KCL_rosplan {
 			r.sleep();
 		}
 		has_received_point_ = false;
-		ROS_INFO("KCL: (RPPointingServer) Received point");
+		ROS_INFO("KCL: (PointingServer) Received point");
 
 		// Store the found point in the database.
 		std::stringstream ss;
@@ -76,7 +76,7 @@ namespace KCL_rosplan {
 		wpSrv.request.knowledge.instance_type = "waypoint";
 		wpSrv.request.knowledge.instance_name = ss.str();
 		if (!knowledgeInterface.call(wpSrv))
-			ROS_ERROR("KCL: (RPPointingServer) error adding knowledge");
+			ROS_ERROR("KCL: (PointingServer) error adding knowledge");
 		
 		rosplan_knowledge_msgs::KnowledgeUpdateService tlSrv;
 		tlSrv.request.update_type = rosplan_knowledge_msgs::KnowledgeUpdateService::Request::ADD_KNOWLEDGE;
@@ -91,7 +91,7 @@ namespace KCL_rosplan {
 		location.value = ss.str();
 		tlSrv.request.knowledge.values.push_back(location);
 		if (!knowledgeInterface.call(tlSrv))
-			ROS_ERROR("KCL: (RPPointingServer) error adding knowledge");
+			ROS_ERROR("KCL: (PointingServer) error adding knowledge");
 		
 		// publish feedback (achieved)
 		fb.action_id = msg->action_id;
@@ -118,7 +118,7 @@ int main(int argc, char **argv) {
 
 	// listen for action dispatch
 	ros::Subscriber ds = nh.subscribe("/kcl_rosplan/action_dispatch", 1000, &KCL_rosplan::RPPointingServer::dispatchCallback, &rpps);
-	ROS_INFO("KCL: (RPPointingServer) Ready to receive");
+	ROS_INFO("KCL: (PointingServer) Ready to receive");
 
 	ros::spin();
 	return 0;
