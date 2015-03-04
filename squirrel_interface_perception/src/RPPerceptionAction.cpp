@@ -94,7 +94,7 @@ namespace KCL_rosplan {
 		ros::NodeHandle nh;
 
 		std::string actionserver;
-		nh.param("action_server", actionserver, std::string("/squirrel_object_perception"));
+		nh.param("action_server", actionserver, std::string("/look_for_objects"));
 
 		// create PDDL action subscriber
 		KCL_rosplan::RPPerceptionAction rppa(nh, actionserver);
