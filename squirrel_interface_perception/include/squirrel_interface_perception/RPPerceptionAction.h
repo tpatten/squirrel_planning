@@ -21,6 +21,7 @@ namespace KCL_rosplan {
 
 	private:
 
+		bool simulate_;
 		mongodb_store::MessageStoreProxy message_store;
 		actionlib::SimpleActionClient<squirrel_object_perception_msgs::LookForObjectsAction> action_client;
 		ros::Publisher action_feedback_pub;
@@ -28,7 +29,7 @@ namespace KCL_rosplan {
 	public:
 
 		/* constructor */
-		RPPerceptionAction(ros::NodeHandle &nh, std::string &actionserver);
+		RPPerceptionAction(ros::NodeHandle &nh, std::string &actionserver, bool simulate);
 
 		/* listen to and process action_dispatch topic */
 		void dispatchCallback(const rosplan_dispatch_msgs::ActionDispatch::ConstPtr& msg);

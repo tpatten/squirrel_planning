@@ -25,14 +25,17 @@ namespace KCL_rosplan {
 
 	private:
 
+		bool simulate_;
+
 		mongodb_store::MessageStoreProxy message_store;
 		actionlib::SimpleActionClient<squirrel_manipulation_msgs::PushAction> action_client;
+		actionlib::SimpleActionClient<move_base_msgs::MoveBaseAction> simulate_client;
 		ros::Publisher action_feedback_pub;
 
 	public:
 
 		/* constructor */
-		RPPushAction(ros::NodeHandle &nh, std::string &actionserver);
+		RPPushAction(ros::NodeHandle &nh, std::string &actionserver, bool simulate);
 
 		/* listen to and process action_dispatch topic */
 		void dispatchCallback(const rosplan_dispatch_msgs::ActionDispatch::ConstPtr& msg);
