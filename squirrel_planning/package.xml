@@ -8,8 +8,11 @@
   
 	<buildtool_depend>catkin</buildtool_depend>
 
-	<run_depend>squirrel_planning_system</run_depend>
-	<run_depend>squirrel_knowledge_base</run_depend>
+	<run_depend>squirrel_interface_hri</run_depend>
+	<run_depend>squirrel_inteface_manipulation</run_depend>
+	<run_depend>squirrel_inteface_perception</run_depend>
+	<run_depend>squirrel_planning_execution</run_depend>
+	<run_depend>squirrel_planning_launch</run_depend>
 
 	<export>
 		<metapackage/>
