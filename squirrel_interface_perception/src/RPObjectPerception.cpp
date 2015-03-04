@@ -53,6 +53,21 @@ namespace KCL_rosplan {
 			res.result = squirrel_planning_knowledge_msgs::AddObjectService::Response::FAILURE;
 			return false;
 		}
+
+		// Add "tidy object" goal to the knowledge base "(tidy ?o - object)"
+		rosplan_knowledge_msgs::KnowledgeUpdateService toSrv;
+		toSrv.request.update_type = rosplan_knowledge_msgs::KnowledgeUpdateService::Request::ADD_GOAL;
+		toSrv.request.knowledge.knowledge_type = rosplan_knowledge_msgs::KnowledgeItem::DOMAIN_ATTRIBUTE;
+		toSrv.request.knowledge.attribute_name = "tidy";
+		diagnostic_msgs::KeyValue oPair;
+		oPair.key = "o";
+		oPair.value = req.id;
+		toSrv.request.knowledge.values.push_back(oPair);
+		if (!update_knowledge_client.call(toSrv)) {
+			ROS_ERROR("KCL: (ObjectPerception) error adding tidy goal");
+			res.result = squirrel_planning_knowledge_msgs::AddObjectService::Response::FAILURE;
+			return false;
+		}
 		
 		res.result = squirrel_planning_knowledge_msgs::AddObjectService::Response::SUCCESS;
 		return true;
