@@ -2,7 +2,7 @@
 <package>
   <name>squirrel_interface_perception</name>
   <version>0.0.0</version>
-  <description>ROSPlan inerface for the SQUIRREL perception package.</description>
+  <description>ROSPlan interface for the SQUIRREL perception package.</description>
   <maintainer email="michael.cashmore@kcl.ac.uk">michael</maintainer>
   <license>BSD</license>
   <url type="website">http://www.squirrel-project.eu/</url>
