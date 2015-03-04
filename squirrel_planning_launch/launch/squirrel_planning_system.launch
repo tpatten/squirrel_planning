@@ -27,19 +27,19 @@
 	    <param name="data_path" value="$(find squirrel_planning_launch)/common/" />
 	    <param name="cost_map_topic" value="/move_base/global_costmap/costmap" />
 	    <param name="odom_topic" value="/odom" />
-	    <param name="use_static_map" value="false" />
+	    <param name="use_static_map" value="false" type="bool" />
 	    <param name="static_map_service" value="/static_map" />
 	</node>
 
 	<!-- SQUIRREL interfaces -->
 	<node name="squirrel_interface_perception" pkg="squirrel_interface_perception" type="rpperceptionServer" respawn="false" output="screen">
-	    <param name="simulate" value="false" />
+	    <param name="simulate" type="bool" value="true" />
 	</node>
 	<node name="squirrel_interface_hri" pkg="squirrel_interface_hri" type="rppointingServer" respawn="false" output="screen">
-	    <param name="simulate" value="false" />
+	    <param name="simulate" type="bool" value="true" />
 	</node>
 	<node name="squirrel_interface_manipulation" pkg="squirrel_interface_manipulation" type="rppushServer" respawn="false" output="screen">
-	    <param name="simulate" value="false" />
+	    <param name="simulate" type="bool" value="true" />
 	</node>
 
 </launch>

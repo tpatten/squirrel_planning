@@ -17,6 +17,7 @@ namespace KCL_rosplan {
 	/* constructor */
 	RPPerceptionAction::RPPerceptionAction(ros::NodeHandle &nh, std::string &actionserver, bool simulate)
 	 : message_store(nh), action_client(actionserver, true), simulate_(simulate) {
+		ROS_INFO("KCL: (PerceptionAction) Simulate is set to %s", simulate ? "true" : "false");
 		
 		if(!simulate) {
 			// create the action clients
@@ -104,13 +105,14 @@ namespace KCL_rosplan {
 	int main(int argc, char **argv) {
 
 		ros::init(argc, argv, "rosplan_interface_perception");
-		ros::NodeHandle nh;
+		ros::NodeHandle nh("~");
 
 		bool simulate;
-		nh.param("simulate", simulate, false);
-
+		nh.getParam("simulate", simulate);
+		
 		std::string actionserver;
 		nh.param("action_server", actionserver, std::string("/look_for_objects"));
+		ROS_INFO("KCL: (PerceptionAction) Simulate is set to %s", simulate ? "true" : "false");
 
 		// create PDDL action subscriber
 		KCL_rosplan::RPPerceptionAction rppa(nh, actionserver, simulate);
