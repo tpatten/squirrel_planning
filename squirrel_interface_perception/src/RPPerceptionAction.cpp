@@ -18,9 +18,11 @@ namespace KCL_rosplan {
 	RPPerceptionAction::RPPerceptionAction(ros::NodeHandle &nh, std::string &actionserver, bool simulate)
 	 : message_store(nh), action_client(actionserver, true), simulate_(simulate) {
 		
-		// create the action clients
-		ROS_INFO("KCL: (PerceptionAction) waiting for action server to start on %s", actionserver.c_str());
-		action_client.waitForServer();
+		if(!simulate) {
+			// create the action clients
+			ROS_INFO("KCL: (PerceptionAction) waiting for action server to start on %s", actionserver.c_str());
+			action_client.waitForServer();
+		}
 		
 		// create the action feedback publisher
 		action_feedback_pub = nh.advertise<rosplan_dispatch_msgs::ActionFeedback>("/kcl_rosplan/action_feedback", 10, true);
