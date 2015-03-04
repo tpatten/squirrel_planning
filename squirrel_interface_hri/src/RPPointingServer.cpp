@@ -13,11 +13,9 @@
 namespace KCL_rosplan {
 
 	/* constructor */
-	RPPointingServer::RPPointingServer(ros::NodeHandle &nh)
-	 : message_store(nh), has_received_point_(false) {
-
+	RPPointingServer::RPPointingServer(ros::NodeHandle &nh, bool simulate)
+	 : message_store(nh), has_received_point_(false), simulate_(simulate) {
 		knowledgeInterface = nh.serviceClient<rosplan_knowledge_msgs::KnowledgeUpdateService>("/kcl_rosplan/update_knowledge_base");
-		
 		action_feedback_pub = nh.advertise<rosplan_dispatch_msgs::ActionFeedback>("/kcl_rosplan/action_feedback", 10, true);
 	}
 	
@@ -57,7 +55,7 @@ namespace KCL_rosplan {
 		// Wait for a point to be published.
 		ros::Rate r(10);
 		has_received_point_ = false;
-		while (!has_received_point_ && ros::ok()) {
+		while (!simulate_ && !has_received_point_ && ros::ok()) {
 			ros::spinOnce();
 			r.sleep();
 		}
@@ -66,7 +64,8 @@ namespace KCL_rosplan {
 
 		// Store the found point in the database.
 		std::stringstream ss;
-		ss << "point_location_" << obID;
+		if(simulate_) ss << "wp0";
+		else ss << "point_location_" << obID;
 		std::string id(message_store.insertNamed(ss.str(), received_point_));
 		
 		// Store it in the knowledge base.
@@ -110,11 +109,15 @@ int main(int argc, char **argv) {
 	ros::init(argc, argv, "rosplan_pointing_server");
 	ros::NodeHandle nh;
 
+	bool simulate;
+	nh.param("simulate", simulate, false);
+
 	// create PDDL action subscriber
-	KCL_rosplan::RPPointingServer rpps(nh);
+	KCL_rosplan::RPPointingServer rpps(nh, simulate);
 
 	// listen for pointing
-	ros::Subscriber pointing_pose_sub = nh.subscribe("/squirrel_person_tracker/pointing_pose", 1, &KCL_rosplan::RPPointingServer::receivePointLocation, &rpps);
+	if(!simulate)
+		ros::Subscriber pointing_pose_sub = nh.subscribe("/squirrel_person_tracker/pointing_pose", 1, &KCL_rosplan::RPPointingServer::receivePointLocation, &rpps);
 
 	// listen for action dispatch
 	ros::Subscriber ds = nh.subscribe("/kcl_rosplan/action_dispatch", 1000, &KCL_rosplan::RPPointingServer::dispatchCallback, &rpps);

@@ -32,8 +32,14 @@
 	</node>
 
 	<!-- SQUIRREL interfaces -->
-	<node name="squirrel_interface_perception" pkg="squirrel_interface_perception" type="rpperceptionServer" respawn="false" output="screen"></node>
-	<node name="squirrel_interface_hri" pkg="squirrel_interface_hri" type="rppointingServer" respawn="false" output="screen"></node>
-	<node name="squirrel_interface_manipulation" pkg="squirrel_interface_manipulation" type="rppushServer" respawn="false" output="screen"></node>
+	<node name="squirrel_interface_perception" pkg="squirrel_interface_perception" type="rpperceptionServer" respawn="false" output="screen">
+	    <param name="simulate" value="false" />
+	</node>
+	<node name="squirrel_interface_hri" pkg="squirrel_interface_hri" type="rppointingServer" respawn="false" output="screen">
+	    <param name="simulate" value="false" />
+	</node>
+	<node name="squirrel_interface_manipulation" pkg="squirrel_interface_manipulation" type="rppushServer" respawn="false" output="screen">
+	    <param name="simulate" value="false" />
+	</node>
 
 </launch>

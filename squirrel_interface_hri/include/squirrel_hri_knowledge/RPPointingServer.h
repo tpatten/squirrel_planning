@@ -27,6 +27,8 @@ namespace KCL_rosplan {
 
 	private:
 		
+		bool simulate_;
+
 		// Scene database
 		mongodb_store::MessageStoreProxy message_store;
 
@@ -39,10 +41,11 @@ namespace KCL_rosplan {
 
 		geometry_msgs::PointStamped received_point_;
 		bool has_received_point_;
+
 	public:
 
 		/* constructor */
-		RPPointingServer(ros::NodeHandle &nh);
+		RPPointingServer(ros::NodeHandle &nh, bool simulate);
 
 		void dispatchCallback(const rosplan_dispatch_msgs::ActionDispatch::ConstPtr& msg);
 
