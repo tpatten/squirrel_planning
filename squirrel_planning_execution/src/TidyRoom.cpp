@@ -50,7 +50,7 @@ int main(int argc, char **argv) {
 			
 			// Setup the goal.
 			rosplan_knowledge_msgs::KnowledgeItem waypoint_goal;
-			waypoint_goal.knowledge_type = rosplan_knowledge_msgs::KnowledgeItem::INSTANCE_ATTRIBUTE;
+			waypoint_goal.knowledge_type = rosplan_knowledge_msgs::KnowledgeItem::DOMAIN_ATTRIBUTE;
 			waypoint_goal.attribute_name = "explored";
 			diagnostic_msgs::KeyValue kv;
 			kv.key = "wp";
