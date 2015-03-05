@@ -22,7 +22,8 @@
 	</node>
 
 	<!-- standard ROS interfaces -->
-	<node name="rosplan_interface_movebase" pkg="rosplan_interface_movebase" type="rpmovebase" respawn="false" output="screen"></node>
+	<node name="rosplan_interface_movebase" pkg="rosplan_interface_movebase" type="rpmovebase" respawn="false" output="screen">
+	</node>
 	<node name="rosplan_interface_mapping" pkg="rosplan_interface_mapping" type="rproadmapServer" respawn="false" output="screen">
 	    <param name="data_path" value="$(find squirrel_planning_launch)/common/" />
 	    <param name="cost_map_topic" value="/move_base/global_costmap/costmap" />
