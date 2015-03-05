@@ -128,13 +128,17 @@ namespace KCL_rosplan {
 			std::cout << "Is there an object? (y/N)";
 			std::cin >> i;
 			if('y' == i) {
+				geometry_msgs::PoseStamped &pose = *results[0];
 				squirrel_planning_knowledge_msgs::AddObjectService aos;
 				aos.request.id = "simulated_object";
 				aos.request.category = "ghost";
-				aos.request.pose.position.x = results[0]->pose.position.x;
-				aos.request.pose.position.y = results[0]->pose.position.y;
-				aos.request.pose.position.z = results[0]->pose.position.z;
+				aos.request.pose = pose;
+				/*
+				aos.request.pose.position.x = pose.pose.position.x;
+				aos.request.pose.position.y = pose.pose.position.y;
+				aos.request.pose.position.z = pose.pose.position.z;
 				aos.request.pose.orientation.w = 1;
+				*/
 				if(add_object_client.call(aos))
 					ROS_INFO("KCL: (PerceptionAction) added object");
 			}
