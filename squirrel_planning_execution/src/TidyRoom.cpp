@@ -33,12 +33,17 @@ int main(int argc, char **argv) {
 	filterMessage.function = rosplan_knowledge_msgs::Filter::ADD;
 	rosplan_knowledge_msgs::KnowledgeItem object_filter;
 	object_filter.knowledge_type = rosplan_knowledge_msgs::KnowledgeItem::INSTANCE;
-	object_filter.instance_name = "object";
+	object_filter.instance_type = "object";
 	filterMessage.knowledge_items.push_back(object_filter);
 	rosplan_knowledge_msgs::KnowledgeItem waypoint_filter;
 	waypoint_filter.knowledge_type = rosplan_knowledge_msgs::KnowledgeItem::INSTANCE;
-	waypoint_filter.instance_name = "waypoint";
+	waypoint_filter.instance_type = "waypoint";
 	filterMessage.knowledge_items.push_back(waypoint_filter);
+	filter_publisher.publish(filterMessage);
+	rosplan_knowledge_msgs::KnowledgeItem tidy_location;
+	tidy_location.knowledge_type = rosplan_knowledge_msgs::KnowledgeItem::DOMAIN_ATTRIBUTE;
+	tidy_location.attribute_name = "tidy_location";
+	filterMessage.knowledge_items.push_back(tidy_location);
 	filter_publisher.publish(filterMessage);
 	
 	// Keep running forever.
