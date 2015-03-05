@@ -34,6 +34,10 @@ int main(int argc, char **argv) {
 	object_filter.knowledge_type = rosplan_knowledge_msgs::KnowledgeItem::INSTANCE;
 	object_filter.instance_name = "object";
 	filterMessage.knowledge_items.push_back(object_filter);
+	rosplan_knowledge_msgs::KnowledgeItem waypoint_filter;
+	waypoint_filter.knowledge_type = rosplan_knowledge_msgs::KnowledgeItem::INSTANCE;
+	waypoint_filter.instance_name = "waypoint";
+	filterMessage.knowledge_items.push_back(waypoint_filter);
 	filter_publisher.publish(filterMessage);
 	
 	// Keep running forever.

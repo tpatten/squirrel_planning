@@ -38,6 +38,7 @@ namespace KCL_rosplan {
 		// action topics
 		ros::Publisher action_feedback_pub;
 		ros::Publisher head_tilt_pub;
+		ros::Publisher head_nod_pub;
 		ros::Subscriber pointing_pose_sub;
 
 		// points
