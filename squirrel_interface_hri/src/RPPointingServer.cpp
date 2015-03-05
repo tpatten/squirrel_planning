@@ -132,7 +132,7 @@ int main(int argc, char **argv) {
 	ros::NodeHandle nh;
 
 	bool simulate;
-	nh.param("simulate", simulate, false);
+	nh.getParam("simulate", simulate);
 
 	// create PDDL action subscriber
 	KCL_rosplan::RPPointingServer rpps(nh, simulate);

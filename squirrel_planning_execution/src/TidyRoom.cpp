@@ -5,6 +5,7 @@
 #include <rosplan_knowledge_msgs/GetAttributeService.h>
 #include <rosplan_knowledge_msgs/KnowledgeUpdateService.h>
 #include <rosplan_knowledge_msgs/KnowledgeItem.h>
+#include <rosplan_knowledge_msgs/CreatePRM.h>
 #include <rosplan_knowledge_msgs/Filter.h>
 
 int main(int argc, char **argv) {
@@ -12,7 +13,7 @@ int main(int argc, char **argv) {
 	ros::init(argc, argv, "tidy_room_execution");
 	ros::NodeHandle nh;
 
-	ros::ServiceClient roadmap_service = nh.serviceClient<std_srvs::Empty>("/kcl_rosplan/roadmap_server");
+	ros::ServiceClient roadmap_service = nh.serviceClient<rosplan_knowledge_msgs::CreatePRM>("/kcl_rosplan/roadmap_server");
 	
 	// Get access to the knowledge base.
 	ros::ServiceClient get_instance_client = nh.serviceClient<rosplan_knowledge_msgs::GetInstanceService>("/kcl_rosplan/get_instances");
@@ -46,8 +47,13 @@ int main(int argc, char **argv) {
 		ros::spinOnce();
 		
 		// Start by generating some waypoints.
-		std_srvs::Empty dummy;
-		if (!roadmap_service.call(dummy)) {
+		rosplan_knowledge_msgs::CreatePRM create_prm;
+		create_prm.request.nr_waypoints = 10;
+		create_prm.request.min_distance = 1;
+		create_prm.request.casting_distance = 10;
+		create_prm.request.connecting_distance = 10;
+		create_prm.request.occupancy_threshold = 20;
+		if (!roadmap_service.call(create_prm)) {
 			ROS_ERROR("KCL: (TidyRoom) Failed to call the road map service.");
 			return -1;
 		}
@@ -87,6 +93,7 @@ int main(int argc, char **argv) {
 		}
 		
 		// Run the planner.
+		std_srvs::Empty dummy;
 		if (!run_planner_client.call(dummy)) {
 			ROS_ERROR("KCL: (TidyRoom) Failed to run the planning system.");
 			exit(-1);
