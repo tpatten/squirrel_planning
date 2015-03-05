@@ -37,10 +37,16 @@ namespace KCL_rosplan {
 		
 		// action topics
 		ros::Publisher action_feedback_pub;
+		ros::Publisher head_tilt_pub;
 		ros::Subscriber pointing_pose_sub;
 
+		// points
 		geometry_msgs::PointStamped received_point_;
 		bool has_received_point_;
+
+		// head tilt
+		float head_down_angle;
+		float head_up_angle;
 
 	public:
 

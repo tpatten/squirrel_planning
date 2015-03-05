@@ -8,6 +8,7 @@
 #include <algorithm>
 #include "rosplan_knowledge_msgs/KnowledgeUpdateService.h" 
 #include "rosplan_knowledge_msgs/KnowledgeItem.h"
+#include "std_msgs/Float64.h"
 #include "mongodb_store/message_store.h"
 
 namespace KCL_rosplan {
@@ -17,6 +18,9 @@ namespace KCL_rosplan {
 	 : message_store(nh), has_received_point_(false), simulate_(simulate) {
 		knowledgeInterface = nh.serviceClient<rosplan_knowledge_msgs::KnowledgeUpdateService>("/kcl_rosplan/update_knowledge_base");
 		action_feedback_pub = nh.advertise<rosplan_dispatch_msgs::ActionFeedback>("/kcl_rosplan/action_feedback", 10, true);
+		head_tilt_pub = nh.advertise<std_msgs::Float64>("/joint_conroller/command", 10, true);
+		head_down_angle = 0.7;
+		head_up_angle = 0.0;
 	}
 	
 	void RPPointingServer::receivePointLocation(const geometry_msgs::PointStamped::ConstPtr& ptr) {
@@ -52,6 +56,11 @@ namespace KCL_rosplan {
 			return;
 		}
 
+		// tilt the head kinect up
+		std_msgs::Float64 ht;
+		ht.data = head_up_angle;
+		head_tilt_pub.publish(ht);
+
 		// Wait for a point to be published.
 		ros::Rate r(10);
 		has_received_point_ = false;
@@ -61,6 +70,21 @@ namespace KCL_rosplan {
 		}
 		has_received_point_ = false;
 		ROS_INFO("KCL: (PointingServer) Received point");
+
+		// nod the head (TODO: replace with expressions call)
+		ros::Rate nodRate(2);
+		for(int i=0;i<2;i++) {
+			ht.data = 0.5;
+			head_tilt_pub.publish(ht);
+			nodRate.sleep();
+			ht.data = 0.0;
+			head_tilt_pub.publish(ht);
+			nodRate.sleep();
+		}
+
+		// tilt the head kinect down
+		ht.data = head_down_angle;
+		head_tilt_pub.publish(ht);
 
 		// Store the found point in the database.
 		std::stringstream ss;
