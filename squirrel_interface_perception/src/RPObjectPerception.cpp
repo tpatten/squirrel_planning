@@ -37,17 +37,49 @@ namespace KCL_rosplan {
 		
 		std_msgs::String ros_string_category;
 		ros_string_category.data = req.category;
-		message_store.insertNamed(req.id, ros_string_category);
+		id = message_store.insertNamed(req.id, ros_string_category);
 		mongo_id_mapping.insert(std::make_pair(req.id, id));
-		message_store.insertNamed(req.id, req.pose);
+		id = message_store.insertNamed(req.id, req.pose);
 		mongo_id_mapping.insert(std::make_pair(req.id, id));
 		
 		// Store the mappings to the knowledge base.
+		rosplan_knowledge_msgs::KnowledgeUpdateService obSrv;
+		obSrv.request.update_type = rosplan_knowledge_msgs::KnowledgeUpdateService::Request::ADD_KNOWLEDGE;
+		obSrv.request.knowledge.knowledge_type = rosplan_knowledge_msgs::KnowledgeItem::INSTANCE;
+		obSrv.request.knowledge.instance_type = "object";
+		obSrv.request.knowledge.instance_name = req.id;
+		if (!update_knowledge_client.call(obSrv)) {
+			ROS_ERROR("KCL: (ObjectPerception) error adding knowledge");
+			res.result = squirrel_planning_knowledge_msgs::AddObjectService::Response::FAILURE;
+			return false;
+		}
+		
+		// Add at_object predicate to the knowledge base and database 
+		rosplan_knowledge_msgs::KnowledgeUpdateService atObjectSrv;
+		atObjectSrv.request.update_type = rosplan_knowledge_msgs::KnowledgeUpdateService::Request::ADD_KNOWLEDGE;
+		atObjectSrv.request.knowledge.knowledge_type = rosplan_knowledge_msgs::KnowledgeItem::DOMAIN_ATTRIBUTE;
+		atObjectSrv.request.knowledge.attribute_name = "object_at";
+		diagnostic_msgs::KeyValue oPair;
+		oPair.key = "o";
+		oPair.value = req.id;
+		atObjectSrv.request.knowledge.values.push_back(oPair);
+		oPair.key = "wp";
+		oPair.value = "simulated_object_wp";
+		atObjectSrv.request.knowledge.values.push_back(oPair);
+		if (!update_knowledge_client.call(atObjectSrv)) {
+			ROS_ERROR("KCL: (ObjectPerception) error adding object_at predicate");
+			res.result = squirrel_planning_knowledge_msgs::AddObjectService::Response::FAILURE;
+			return false;
+		}
+		
+		id = message_store.insertNamed("simulated_object_wp", req.pose);
+		mongo_id_mapping.insert(std::make_pair("simulated_object_wp", id));
+		
 		rosplan_knowledge_msgs::KnowledgeUpdateService wpSrv;
 		wpSrv.request.update_type = rosplan_knowledge_msgs::KnowledgeUpdateService::Request::ADD_KNOWLEDGE;
 		wpSrv.request.knowledge.knowledge_type = rosplan_knowledge_msgs::KnowledgeItem::INSTANCE;
-		wpSrv.request.knowledge.instance_type = "object";
-		wpSrv.request.knowledge.instance_name = req.id;
+		wpSrv.request.knowledge.instance_type = "waypoint";
+		wpSrv.request.knowledge.instance_name = "simulated_object_wp";
 		if (!update_knowledge_client.call(wpSrv)) {
 			ROS_ERROR("KCL: (ObjectPerception) error adding knowledge");
 			res.result = squirrel_planning_knowledge_msgs::AddObjectService::Response::FAILURE;
@@ -59,7 +91,6 @@ namespace KCL_rosplan {
 		toSrv.request.update_type = rosplan_knowledge_msgs::KnowledgeUpdateService::Request::ADD_GOAL;
 		toSrv.request.knowledge.knowledge_type = rosplan_knowledge_msgs::KnowledgeItem::DOMAIN_ATTRIBUTE;
 		toSrv.request.knowledge.attribute_name = "tidy";
-		diagnostic_msgs::KeyValue oPair;
 		oPair.key = "o";
 		oPair.value = req.id;
 		toSrv.request.knowledge.values.push_back(oPair);

@@ -13,7 +13,7 @@
 	(robot_at ?v - robot ?wp - waypoint)
 	(object_at ?o - object ?wp - waypoint)
 	(connected ?from ?to - waypoint)
-	(classified ?o - object)
+;;	(classified ?o - object)
 	(tidy ?o - object)
 	(tidy_location ?o - object ?wp -waypoint)
 )
@@ -33,15 +33,15 @@
 )
 
 ;; Use perception actions to classify an object
-(:durative-action classify_object
-	:parameters (?v - robot ?wp - waypoint ?o - object)
-	:duration ( = ?duration 10)
-	:condition (and
-		(over all (robot_at ?v ?wp))
-		(over all (object_at ?o ?wp)))
-	:effect (and
-		(at end (classified ?o)))
-)
+;;(:durative-action classify_object
+;;	:parameters (?v - robot ?wp - waypoint ?o - object)
+;;	:duration ( = ?duration 10)
+;;	:condition (and
+;;		(over all (robot_at ?v ?wp))
+;;		(over all (object_at ?o ?wp)))
+;;	:effect (and
+;;		(at end (classified ?o)))
+;;)
 
 ;; Move between any two waypoints, avoiding terrain
 (:durative-action goto_waypoint
@@ -82,14 +82,16 @@
 )
 
 ;; Tidy a classified object -- an abstract action in place of push_object / tidy_obect
-(:durative-action make_tidy
-	:parameters (?v - robot ?o - object ?wp - waypoint)
+(:durative-action request_tidy
+	:parameters (?v - robot ?ob - object ?wp - waypoint)
 	:duration ( = ?duration 60)
 	:condition (and
 		(at start (robot_at ?v ?wp))
-		(at start (object_at ?o ?wp))
-		(at start (classified ?o)))
+		(at start (object_at ?ob ?wp))
+;;		(at start (classified ?ob)))
+        )
+
 	:effect (and
-		(at end (tidy ?o)))
+		(at end (tidy ?ob)))
 )
 )
