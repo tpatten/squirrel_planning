@@ -5,6 +5,7 @@
 #include <actionlib/client/simple_action_client.h>
 #include "rosplan_dispatch_msgs/ActionDispatch.h"
 #include "rosplan_dispatch_msgs/ActionFeedback.h"
+#include "move_base_msgs/MoveBaseAction.h"
 #include "mongodb_store/message_store.h"
 
 #ifndef KCL_perception
@@ -24,7 +25,9 @@ namespace KCL_rosplan {
 		bool simulate_;
 		mongodb_store::MessageStoreProxy message_store;
 		actionlib::SimpleActionClient<squirrel_object_perception_msgs::LookForObjectsAction> action_client;
+		actionlib::SimpleActionClient<move_base_msgs::MoveBaseAction> movebase_client;
 		ros::Publisher action_feedback_pub;
+		void publishFeedback(int action_id, std::string feedback);
 
 	public:
 

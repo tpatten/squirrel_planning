@@ -8,6 +8,7 @@
 #include "rosplan_dispatch_msgs/ActionFeedback.h"
 #include "squirrel_object_perception_msgs/LookForObjectsAction.h"
 #include "squirrel_interface_perception/RPPerceptionAction.h"
+#include "move_base_msgs/MoveBaseAction.h"
 #include "mongodb_store/message_store.h"
 #include "geometry_msgs/PoseStamped.h"
 
@@ -16,8 +17,12 @@ namespace KCL_rosplan {
 
 	/* constructor */
 	RPPerceptionAction::RPPerceptionAction(ros::NodeHandle &nh, std::string &actionserver, bool simulate)
-	 : message_store(nh), action_client(actionserver, true), simulate_(simulate) {
+	 : message_store(nh), action_client(actionserver, true), movebase_client("/move_base", true), simulate_(simulate) {
 		
+		// create the action client
+		ROS_INFO("KCL: (MoveBase) waiting for action server to start on /move_base");
+		movebase_client.waitForServer();
+
 		if(!simulate) {
 			// create the action clients
 			ROS_INFO("KCL: (PerceptionAction) waiting for action server to start on %s", actionserver.c_str());
@@ -50,6 +55,22 @@ namespace KCL_rosplan {
 			return;
 		}
 
+		// get pose from message store
+		std::vector< boost::shared_ptr<geometry_msgs::PoseStamped> > results;
+		if(message_store.queryNamed<geometry_msgs::PoseStamped>(wpID, results)) {
+			if(results.size()<1) {
+				ROS_INFO("KCL: (MoveBase) aborting action dispatch; no matching wpID %s", wpID.c_str());
+				publishFeedback(msg->action_id,"action failed");
+				return;
+			}
+			if(results.size()>1)
+				ROS_ERROR("KCL: (MoveBase) multiple waypoints share the same wpID");
+		} else {
+			// publish feedback (failed)
+			publishFeedback(msg->action_id,"action failed");
+			return;
+		}
+
 		if(!simulate_) {
 			// dispatch Perception action
 			squirrel_object_perception_msgs::LookForObjectsGoal goal;
@@ -58,42 +79,57 @@ namespace KCL_rosplan {
 		}
 
 		// publish feedback (enabled)
-		 rosplan_dispatch_msgs::ActionFeedback fb;
-		fb.action_id = msg->action_id;
-		fb.status = "action enabled";
-		action_feedback_pub.publish(fb);
+		publishFeedback(msg->action_id,"action enabled");
 
 		if(!simulate_) {
-			bool finished_before_timeout = action_client.waitForResult(ros::Duration(msg->duration));
-			if (finished_before_timeout) {
 
+			bool success = true;
+			for(int i=0; i<3; i++) {
+
+				// rotate to angle
+				ROS_INFO("KCL: (PerceptionAction) rotate to angle: %f", (i*2.7));
+
+				// dispatch MoveBase action
+				move_base_msgs::MoveBaseGoal goal;
+				geometry_msgs::PoseStamped &pose = *results[0];
+				goal.target_pose = pose;
+				goal.target_pose.pose.orientation.w = (i*0.33);
+				goal.target_pose.pose.orientation.x = 0;
+				goal.target_pose.pose.orientation.y = 0;
+				goal.target_pose.pose.orientation.z = sqrt(1-(i*0.33)*(i*0.33));
+				movebase_client.sendGoal(goal);
+
+				bool rotatedToAngle = movebase_client.waitForResult(ros::Duration(5*msg->duration));
+				if(!rotatedToAngle) success = false;
+
+				// observe
+				bool finished_before_timeout = action_client.waitForResult(ros::Duration(msg->duration));
 				actionlib::SimpleClientGoalState state = action_client.getState();
-				ROS_INFO("KCL: (PerceptionAction) action finished: %s", state.toString().c_str());
-			
-				// publish feedback (achieved)
-				 rosplan_dispatch_msgs::ActionFeedback fb;
-				fb.action_id = msg->action_id;
-				fb.status = "action achieved";
-				action_feedback_pub.publish(fb);
-
-			} else {
-
-				ROS_INFO("KCL: (PerceptionAction) action timed out");
-
-				// publish feedback (failed)
-				 rosplan_dispatch_msgs::ActionFeedback fb;
-				fb.action_id = msg->action_id;
-				fb.status = "action failed";
-				action_feedback_pub.publish(fb);
+				if(!finished_before_timeout) success = false;
+				ROS_INFO("KCL: (PerceptionAction) observe (%i) finished: %s", i, state.toString().c_str());
 			}
+
+			if (success) {
+				ROS_INFO("KCL: (PerceptionAction) action complete");
+				publishFeedback(msg->action_id, "action achieved");
+			} else {
+				ROS_INFO("KCL: (PerceptionAction) action timed out");
+				publishFeedback(msg->action_id, "action failed");
+			}
+
 		} else {
 			// publish feedback (achieved)
 			ROS_INFO("KCL: (PerceptionAction) simulated action finished");
-			rosplan_dispatch_msgs::ActionFeedback fb;
-			fb.action_id = msg->action_id;
-			fb.status = "action achieved";
-			action_feedback_pub.publish(fb);
+			publishFeedback(msg->action_id, "action achieved");
 		}
+	}
+
+	void RPPerceptionAction::publishFeedback(int action_id, std::string feedback) {
+		// publish feedback
+		rosplan_dispatch_msgs::ActionFeedback fb;
+		fb.action_id = action_id;
+		fb.status = feedback;
+		action_feedback_pub.publish(fb);
 	}
 } // close namespace
 

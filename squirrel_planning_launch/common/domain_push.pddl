@@ -82,7 +82,7 @@
 )
 
 ;; Tidy a classified object -- an abstract action in place of push_object / tidy_obect
-(:durative-action make_tidy
+(:durative-action request_tidy
 	:parameters (?v - robot ?o - object ?wp - waypoint)
 	:duration ( = ?duration 60)
 	:condition (and
