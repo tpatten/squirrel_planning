@@ -164,7 +164,7 @@ namespace KCL_rosplan {
 		ros::NodeHandle nh;
 
 		bool simulate;
-		nh.param("simulate", simulate, false);
+		nh.getParam("simulate", simulate);
 
 		std::string actionserver;
 		nh.param("action_server", actionserver, std::string("/look_for_objects"));
