@@ -8,6 +8,7 @@
 #include "rosplan_dispatch_msgs/ActionFeedback.h"
 #include "squirrel_object_perception_msgs/LookForObjectsAction.h"
 #include "squirrel_interface_perception/RPPerceptionAction.h"
+#include "squirrel_planning_knowledge_msgs/AddObjectService.h"
 #include "move_base_msgs/MoveBaseAction.h"
 #include "mongodb_store/message_store.h"
 #include "geometry_msgs/PoseStamped.h"
@@ -27,6 +28,9 @@ namespace KCL_rosplan {
 			// create the action clients
 			ROS_INFO("KCL: (PerceptionAction) waiting for action server to start on %s", actionserver.c_str());
 			action_client.waitForServer();
+		} else {
+			// create add object client
+			add_object_client = nh.serviceClient<squirrel_planning_knowledge_msgs::AddObjectService>("/kcl_rosplan/add_object");
 		}
 		
 		// create the action feedback publisher
@@ -118,6 +122,23 @@ namespace KCL_rosplan {
 			}
 
 		} else {
+
+			// ask user if there is a new object
+			int i;
+			std::cout << "Is there an object? (y/N)";
+			std::cin >> i;
+			if('y' == i) {
+				squirrel_planning_knowledge_msgs::AddObjectService aos;
+				aos.request.id = "simulated_object";
+				aos.request.category = "ghost";
+				aos.request.pose.position.x = results[0]->pose.position.x;
+				aos.request.pose.position.y = results[0]->pose.position.y;
+				aos.request.pose.position.z = results[0]->pose.position.z;
+				aos.request.pose.orientation.w = 1;
+				if(add_object_client.call(aos))
+					ROS_INFO("KCL: (PerceptionAction) added object");
+			}
+
 			// publish feedback (achieved)
 			ROS_INFO("KCL: (PerceptionAction) simulated action finished");
 			publishFeedback(msg->action_id, "action achieved");
