@@ -36,6 +36,8 @@
 	<node name="squirrel_interface_perception" pkg="squirrel_interface_perception" type="rpperceptionServer" respawn="false" output="screen">
 	    <param name="simulate" type="bool" value="true" />
 	</node>
+	<node name="squirrel_object_server" pkg="squirrel_interface_perception" type="rpObjectPerception" respawn="false" output="screen">
+	</node>
 	<node name="squirrel_interface_hri" pkg="squirrel_interface_hri" type="rppointingServer" respawn="false" output="screen">
 	    <param name="simulate" type="bool" value="true" />
 	</node>

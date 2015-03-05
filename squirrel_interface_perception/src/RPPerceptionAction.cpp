@@ -127,7 +127,7 @@ namespace KCL_rosplan {
 			int i;
 			std::cout << "Is there an object? (y/N)";
 			std::cin >> i;
-			if('y' == i) {
+			if('y' == i || true) {
 				geometry_msgs::PoseStamped &pose = *results[0];
 				squirrel_planning_knowledge_msgs::AddObjectService aos;
 				aos.request.id = "simulated_object";
@@ -141,6 +141,10 @@ namespace KCL_rosplan {
 				*/
 				if(add_object_client.call(aos))
 					ROS_INFO("KCL: (PerceptionAction) added object");
+				else
+					ROS_INFO("KCL: (PerceptionAction) Failed to add object");
+			} else {
+				
 			}
 
 			// publish feedback (achieved)
@@ -174,7 +178,7 @@ namespace KCL_rosplan {
 		nh.param("action_server", actionserver, std::string("/look_for_objects"));
 
 		// create PDDL action subscriber
-		KCL_rosplan::RPPerceptionAction rppa(nh, actionserver, simulate);
+		KCL_rosplan::RPPerceptionAction rppa(nh, actionserver, true);
 	
 		// listen for action dispatch
 		ros::Subscriber ds = nh.subscribe("/kcl_rosplan/action_dispatch", 1000, &KCL_rosplan::RPPerceptionAction::dispatchCallback, &rppa);
