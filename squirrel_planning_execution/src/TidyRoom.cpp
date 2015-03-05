@@ -5,7 +5,7 @@
 #include <rosplan_knowledge_msgs/GetAttributeService.h>
 #include <rosplan_knowledge_msgs/KnowledgeUpdateService.h>
 #include <rosplan_knowledge_msgs/KnowledgeItem.h>
-
+#include <rosplan_knowledge_msgs/Filter.h>
 
 int main(int argc, char **argv) {
 
@@ -18,9 +18,23 @@ int main(int argc, char **argv) {
 	ros::ServiceClient get_instance_client = nh.serviceClient<rosplan_knowledge_msgs::GetInstanceService>("/kcl_rosplan/get_instances");
 	ros::ServiceClient get_attribute_client = nh.serviceClient<rosplan_knowledge_msgs::GetAttributeService>("/kcl_rosplan/get_instances_attributes");
 	ros::ServiceClient knowledge_update_client = nh.serviceClient<rosplan_knowledge_msgs::KnowledgeUpdateService>("/kcl_rosplan/update_knowledge_base");
-	
+	ros::Publisher filter_publisher = nh.advertise<rosplan_knowledge_msgs::Filter>("/kcl_rosplan/mission_filter", 10, true);
+
 	// Planner control.
 	ros::ServiceClient run_planner_client = nh.serviceClient<std_srvs::Empty>("/kcl_rosplan/planning_server");
+
+	// clear the old filter
+	rosplan_knowledge_msgs::Filter filterMessage;
+	filterMessage.function = rosplan_knowledge_msgs::Filter::CLEAR;
+	filter_publisher.publish(filterMessage);
+
+	// push the new filter
+	filterMessage.function = rosplan_knowledge_msgs::Filter::ADD;
+	rosplan_knowledge_msgs::KnowledgeItem object_filter;
+	object_filter.knowledge_type = rosplan_knowledge_msgs::KnowledgeItem::INSTANCE;
+	object_filter.instance_name = "object";
+	filterMessage.knowledge_items.push_back(object_filter);
+	filter_publisher.publish(filterMessage);
 	
 	// Keep running forever.
 	bool room_is_tidy = false;
