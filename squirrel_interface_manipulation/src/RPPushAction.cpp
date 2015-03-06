@@ -143,7 +143,7 @@ namespace KCL_rosplan {
 		ros::NodeHandle nh;
 
 		bool simulate;
-		nh.getParam("simulate", simulate);
+		nh.getParam("simulate_pushing", simulate);
 
 		std::string actionserver;
 		nh.param("action_server", actionserver, std::string("/push"));

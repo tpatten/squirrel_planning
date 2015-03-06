@@ -27,8 +27,6 @@ namespace KCL_rosplan {
 
 	private:
 		
-		bool simulate_;
-
 		// Scene database
 		mongodb_store::MessageStoreProxy message_store;
 
@@ -52,7 +50,7 @@ namespace KCL_rosplan {
 	public:
 
 		/* constructor */
-		RPPointingServer(ros::NodeHandle &nh, bool simulate);
+		RPPointingServer(ros::NodeHandle &nh);
 
 		void dispatchCallback(const rosplan_dispatch_msgs::ActionDispatch::ConstPtr& msg);
 
