@@ -72,6 +72,20 @@ namespace KCL_rosplan {
 			return false;
 		}
 		
+		// Add tidy_location_unknown to hte knowledge base for this object.
+		rosplan_knowledge_msgs::KnowledgeUpdateService tidyLocationUnknownSrv;
+		tidyLocationUnknownSrv.request.update_type = rosplan_knowledge_msgs::KnowledgeUpdateService::Request::ADD_KNOWLEDGE;
+		tidyLocationUnknownSrv.request.knowledge.knowledge_type = rosplan_knowledge_msgs::KnowledgeItem::DOMAIN_ATTRIBUTE;
+		tidyLocationUnknownSrv.request.knowledge.attribute_name = "tidy_location_unknown";
+		oPair.key = "o";
+		oPair.value = req.id;
+		tidyLocationUnknownSrv.request.knowledge.values.push_back(oPair);
+		if (!update_knowledge_client.call(tidyLocationUnknownSrv)) {
+			ROS_ERROR("KCL: (ObjectPerception) error adding tidy_location_unknown predicate");
+			res.result = squirrel_planning_knowledge_msgs::AddObjectService::Response::FAILURE;
+			return false;
+		}
+		
 		id = message_store.insertNamed("simulated_object_wp", req.pose);
 		mongo_id_mapping.insert(std::make_pair("simulated_object_wp", id));
 		
