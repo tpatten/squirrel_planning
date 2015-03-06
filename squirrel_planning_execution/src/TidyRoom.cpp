@@ -50,18 +50,21 @@ int main(int argc, char **argv) {
 	bool room_is_tidy = false;
 	while (!room_is_tidy) {
 		ros::spinOnce();
+		ROS_ERROR("KCL: (TidyRoom) Start the loop!");
 		
 		// Start by generating some waypoints.
 		rosplan_knowledge_msgs::CreatePRM create_prm;
 		create_prm.request.nr_waypoints = 10;
-		create_prm.request.min_distance = 1;
-		create_prm.request.casting_distance = 10;
-		create_prm.request.connecting_distance = 10;
+		create_prm.request.min_distance = 0.5;
+		create_prm.request.casting_distance = 1;
+		create_prm.request.connecting_distance = 5;
 		create_prm.request.occupancy_threshold = 20;
+		create_prm.request.total_attempts = 1000;
 		if (!roadmap_service.call(create_prm)) {
 			ROS_ERROR("KCL: (TidyRoom) Failed to call the road map service.");
 			return -1;
 		}
+		ROS_ERROR("KCL: (TidyRoom) Road map service returned.");
 		
 		// Retreive the waypoints and add an observation goal to them.
 		rosplan_knowledge_msgs::GetInstanceService get_instances;
@@ -71,6 +74,7 @@ int main(int argc, char **argv) {
 			ROS_ERROR("KCL: (TidyRoom) Failed to get all the waypoint instances.");
 			return -1;
 		}
+		ROS_ERROR("KCL: (TidyRoom) Received all the waypoint instances.");
 		
 		// Generate a new goal for every waypoint we have received.
 		for (std::vector<std::string>::const_iterator ci = get_instances.response.instances.begin(); ci != get_instances.response.instances.end(); ++ci)
@@ -95,6 +99,7 @@ int main(int argc, char **argv) {
 				ROS_ERROR("KCL: (TidyRoom) Could not add the goal for waypoint %s to the knowledge base.", (*ci).c_str());
 				exit(-1);
 			}
+			ROS_ERROR("KCL: (TidyRoom) Added the goal for waypoint %s to the knowledge base.", (*ci).c_str());
 		}
 		
 		// Run the planner.
@@ -103,6 +108,7 @@ int main(int argc, char **argv) {
 			ROS_ERROR("KCL: (TidyRoom) Failed to run the planning system.");
 			exit(-1);
 		}
+		ROS_ERROR("KCL: (TidyRoom) Planning system returned.");
 	}
 	return 0;
 }
