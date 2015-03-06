@@ -27,6 +27,8 @@ namespace KCL_rosplan {
 
 	private:
 		
+		bool simulate_;
+
 		// Scene database
 		mongodb_store::MessageStoreProxy message_store;
 
@@ -35,14 +37,22 @@ namespace KCL_rosplan {
 		
 		// action topics
 		ros::Publisher action_feedback_pub;
+		ros::Publisher head_tilt_pub;
+		ros::Publisher head_nod_pub;
 		ros::Subscriber pointing_pose_sub;
 
+		// points
 		geometry_msgs::PointStamped received_point_;
 		bool has_received_point_;
+
+		// head tilt
+		float head_down_angle;
+		float head_up_angle;
+
 	public:
 
 		/* constructor */
-		RPPointingServer(ros::NodeHandle &nh);
+		RPPointingServer(ros::NodeHandle &nh, bool simulate);
 
 		void dispatchCallback(const rosplan_dispatch_msgs::ActionDispatch::ConstPtr& msg);
 

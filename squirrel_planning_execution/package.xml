@@ -1,11 +1,11 @@
 <?xml version="1.0"?>
 <package>
-  <name>squirrel_interface_perception</name>
+  <name>squirrel_planning_execution</name>
   <version>0.0.0</version>
-  <description>ROSPlan interface for the SQUIRREL perception package.</description>
+  <description>Interface to the Human Robotics Interface, we receive the messages and store them in the knowledge base to be used by the planner.</description>
   <maintainer email="michael.cashmore@kcl.ac.uk">michael</maintainer>
   <license>BSD</license>
-  <url type="website">http://www.squirrel-project.eu/</url>
+  <url type="website">/http://www.squirrel-project.eu/</url>
 
   <buildtool_depend>catkin</buildtool_depend>
 
@@ -20,10 +20,8 @@
   <build_depend>mongodb_store</build_depend>
   <build_depend>rosplan_knowledge_msgs</build_depend>
   <build_depend>rosplan_dispatch_msgs</build_depend>
-  <build_depend>squirrel_object_perception_msgs</build_depend>
   <build_depend>tf</build_depend>
-  <build_depend>squirrel_planning_knowledge_msgs</build_depend>
- 
+
   <run_depend>rospy</run_depend>
   <run_depend>roscpp</run_depend>
   <run_depend>rostest</run_depend>
@@ -35,9 +33,7 @@
   <run_depend>mongodb_store</run_depend>
   <run_depend>rosplan_knowledge_msgs</run_depend>
   <run_depend>rosplan_dispatch_msgs</run_depend>
-  <run_depend>squirrel_object_perception_msgs</run_depend>
   <run_depend>tf</run_depend>
-  <run_depend>squirrel_planning_knowledge_msgs</run_depend>
 
   <export></export>
 </package>
