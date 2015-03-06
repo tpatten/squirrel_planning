@@ -23,3 +23,5 @@
 # Temporary data files
 plan.pddl
 problem.pddl
+*.kde4
+*~
