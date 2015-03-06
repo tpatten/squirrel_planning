@@ -114,6 +114,17 @@ namespace KCL_rosplan {
 		if (!knowledgeInterface.call(tlSrv))
 			ROS_ERROR("KCL: (PointingServer) error adding knowledge");
 		
+		// Remove tidy_location_unknown for this object.
+		rosplan_knowledge_msgs::KnowledgeUpdateService tidyLocationUnknownSrv;
+		tidyLocationUnknownSrv.request.update_type = rosplan_knowledge_msgs::KnowledgeUpdateService::Request::REMOVE_KNOWLEDGE;
+		tidyLocationUnknownSrv.request.knowledge.knowledge_type = rosplan_knowledge_msgs::KnowledgeItem::DOMAIN_ATTRIBUTE;
+		tidyLocationUnknownSrv.request.knowledge.attribute_name = "tidy_location_unknown";
+		object.key = "o";
+		object.value = obID;
+		tidyLocationUnknownSrv.request.knowledge.values.push_back(object);
+		if (!knowledgeInterface.call(tidyLocationUnknownSrv)) 
+			ROS_ERROR("KCL: (PointingServer) error removing tidy_location_unknown predicate");
+		
 		// publish feedback (achieved)
 		fb.action_id = msg->action_id;
 		fb.status = "action achieved";
@@ -133,12 +144,12 @@ int main(int argc, char **argv) {
 
 	bool simulate;
 	nh.getParam("simulate", simulate);
-
+	simulate = false;
 	// create PDDL action subscriber
 	KCL_rosplan::RPPointingServer rpps(nh, simulate);
 
 	// listen for pointing
-	if(!simulate)
+	//if(!simulate)
 		ros::Subscriber pointing_pose_sub = nh.subscribe("/squirrel_person_tracker/pointing_pose", 1, &KCL_rosplan::RPPointingServer::receivePointLocation, &rpps);
 
 	// listen for action dispatch
