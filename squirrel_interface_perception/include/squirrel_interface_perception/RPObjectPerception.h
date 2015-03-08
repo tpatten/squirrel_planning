@@ -33,6 +33,9 @@ namespace KCL_rosplan {
 
 		// Knowledge base
 		ros::ServiceClient update_knowledge_client;
+
+		// ROSPlan interface roadmap
+		ros::ServiceClient add_waypoint_client;
 		
 		// Clients for object services.
 		ros::ServiceServer add_object_service;
