@@ -16,6 +16,7 @@
 ;;	(classified ?o - object)
 	(tidy ?o - object)
 	(tidy_location ?o - object ?wp -waypoint)
+        (tidy_location_unknown ?o - object)
 )
 
 (:functions
@@ -88,10 +89,13 @@
 	:condition (and
 		(at start (robot_at ?v ?wp))
 		(at start (object_at ?ob ?wp))
+                (at start (tidy_location_unknown ?ob))
 ;;		(at start (classified ?ob)))
         )
 
 	:effect (and
-		(at end (tidy ?ob)))
+		(at end (tidy ?ob))
+                (at end (not (tidy_location_unknown ?ob)))
+                )
 )
 )
