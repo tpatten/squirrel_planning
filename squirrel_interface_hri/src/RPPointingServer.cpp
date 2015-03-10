@@ -19,10 +19,10 @@ namespace KCL_rosplan {
 	 : message_store(nh), has_received_point_(false), simulate_(simulate) {
 		knowledgeInterface = nh.serviceClient<rosplan_knowledge_msgs::KnowledgeUpdateService>("/kcl_rosplan/update_knowledge_base");
 		action_feedback_pub = nh.advertise<rosplan_dispatch_msgs::ActionFeedback>("/kcl_rosplan/action_feedback", 10, true);
-		head_tilt_pub = nh.advertise<std_msgs::Float64>("/joint_conroller/command", 10, true);
+		head_tilt_pub = nh.advertise<std_msgs::Float64>("/tilt_controller/command", 10, true);
 		head_nod_pub = nh.advertise<std_msgs::String>("/expression", 10, true);
-		head_down_angle = 0.7;
-		head_up_angle = 0.0;
+		head_down_angle = 0.6;
+		head_up_angle = -0.3;
 	}
 	
 	void RPPointingServer::receivePointLocation(const geometry_msgs::PointStamped::ConstPtr& ptr) {
@@ -138,8 +138,7 @@ int main(int argc, char **argv) {
 	KCL_rosplan::RPPointingServer rpps(nh, simulate);
 
 	// listen for pointing
-	if(!simulate)
-		ros::Subscriber pointing_pose_sub = nh.subscribe("/squirrel_person_tracker/pointing_pose", 1, &KCL_rosplan::RPPointingServer::receivePointLocation, &rpps);
+	ros::Subscriber pointing_pose_sub = nh.subscribe("/squirrel_person_tracker/pointing_pose", 1, &KCL_rosplan::RPPointingServer::receivePointLocation, &rpps);
 
 	// listen for action dispatch
 	ros::Subscriber ds = nh.subscribe("/kcl_rosplan/action_dispatch", 1000, &KCL_rosplan::RPPointingServer::dispatchCallback, &rpps);
