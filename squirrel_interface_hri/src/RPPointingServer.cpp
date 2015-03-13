@@ -18,8 +18,9 @@ namespace KCL_rosplan {
 	RPPointingServer::RPPointingServer(ros::NodeHandle &nh)
 	 : message_store(nh), has_received_point_(false) {
 		knowledgeInterface = nh.serviceClient<rosplan_knowledge_msgs::KnowledgeUpdateService>("/kcl_rosplan/update_knowledge_base");
+		add_waypoint_client = nh.serviceClient<rosplan_knowledge_msgs::AddWaypoint>("/kcl_rosplan/roadmap_server/add_waypoint");
 		action_feedback_pub = nh.advertise<rosplan_dispatch_msgs::ActionFeedback>("/kcl_rosplan/action_feedback", 10, true);
-		head_tilt_pub = nh.advertise<std_msgs::Float64>("/joint_conroller/command", 10, true);
+		head_tilt_pub = nh.advertise<std_msgs::Float64>("/tilt_conroller/command", 10, true);
 		head_nod_pub = nh.advertise<std_msgs::String>("/expression", 10, true);
 		head_down_angle = 0.6;
 		head_up_angle = -0.3;
@@ -84,20 +85,30 @@ namespace KCL_rosplan {
 		ht.data = head_down_angle;
 		head_tilt_pub.publish(ht);
 
-		// Store the found point in the database.
+		// convert point to pose
+		geometry_msgs::PoseStamped pose;
+		pose.pose.position.x = received_point_.point.x;
+		pose.pose.position.y = received_point_.point.y;
+		pose.pose.position.z = received_point_.point.z;
+		pose.pose.orientation.x = 0;
+		pose.pose.orientation.y = 0;
+		pose.pose.orientation.z = 0;
+		pose.pose.orientation.w = 1;
+
+		// create new waypoint
+		rosplan_knowledge_msgs::AddWaypoint addWPSrv;
 		std::stringstream ss;
 		ss << "point_location_" << obID;
-		std::string id(message_store.insertNamed(ss.str(), received_point_));
-		
-		// Store it in the knowledge base.
-		rosplan_knowledge_msgs::KnowledgeUpdateService wpSrv;
-		wpSrv.request.update_type = rosplan_knowledge_msgs::KnowledgeUpdateService::Request::ADD_KNOWLEDGE;
-		wpSrv.request.knowledge.knowledge_type = rosplan_knowledge_msgs::KnowledgeItem::INSTANCE;
-		wpSrv.request.knowledge.instance_type = "waypoint";
-		wpSrv.request.knowledge.instance_name = ss.str();
-		if (!knowledgeInterface.call(wpSrv))
-			ROS_ERROR("KCL: (PointingServer) error adding knowledge");
-		
+		addWPSrv.request.id = ss.str();
+		addWPSrv.request.waypoint = pose;
+		addWPSrv.request.connecting_distance = 5;
+		addWPSrv.request.occupancy_threshold = 20;
+		if (!add_waypoint_client.call(addWPSrv)) {
+			ROS_ERROR("KCL: (ObjectPerception) Failed to add a new waypoint for the object");
+		}
+		ROS_INFO("KCL: (ObjectPerception) Road map service returned");
+
+		// add PREDICATE tidy_location
 		rosplan_knowledge_msgs::KnowledgeUpdateService tlSrv;
 		tlSrv.request.update_type = rosplan_knowledge_msgs::KnowledgeUpdateService::Request::ADD_KNOWLEDGE;
 		tlSrv.request.knowledge.knowledge_type = rosplan_knowledge_msgs::KnowledgeItem::DOMAIN_ATTRIBUTE;
