@@ -20,7 +20,7 @@ namespace KCL_rosplan {
 		knowledgeInterface = nh.serviceClient<rosplan_knowledge_msgs::KnowledgeUpdateService>("/kcl_rosplan/update_knowledge_base");
 		add_waypoint_client = nh.serviceClient<rosplan_knowledge_msgs::AddWaypoint>("/kcl_rosplan/roadmap_server/add_waypoint");
 		action_feedback_pub = nh.advertise<rosplan_dispatch_msgs::ActionFeedback>("/kcl_rosplan/action_feedback", 10, true);
-		head_tilt_pub = nh.advertise<std_msgs::Float64>("/joint_conroller/command", 10, true);
+		head_tilt_pub = nh.advertise<std_msgs::Float64>("/tilt_conroller/command", 10, true);
 		head_nod_pub = nh.advertise<std_msgs::String>("/expression", 10, true);
 		head_down_angle = 0.6;
 		head_up_angle = -0.3;
