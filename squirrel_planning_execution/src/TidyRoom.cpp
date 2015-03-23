@@ -54,7 +54,7 @@ int main(int argc, char **argv) {
 		
 		// Start by generating some waypoints.
 		rosplan_knowledge_msgs::CreatePRM create_prm;
-		create_prm.request.nr_waypoints = 10;
+		create_prm.request.nr_waypoints = 4;
 		create_prm.request.min_distance = 0.5;
 		create_prm.request.casting_distance = 1;
 		create_prm.request.connecting_distance = 5;

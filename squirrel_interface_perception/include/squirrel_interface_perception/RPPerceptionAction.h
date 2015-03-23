@@ -30,6 +30,7 @@ namespace KCL_rosplan {
 		ros::ServiceClient add_object_client;
 		ros::Publisher action_feedback_pub;
 		void publishFeedback(int action_id, std::string feedback);
+		ros::ServiceClient update_knowledge_client;
 
 	public:
 
