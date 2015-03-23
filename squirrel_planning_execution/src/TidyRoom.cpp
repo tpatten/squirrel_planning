@@ -13,7 +13,7 @@ int main(int argc, char **argv) {
 	ros::init(argc, argv, "tidy_room_execution");
 	ros::NodeHandle nh;
 
-	ros::ServiceClient roadmap_service = nh.serviceClient<rosplan_knowledge_msgs::CreatePRM>("/kcl_rosplan/roadmap_server");
+	ros::ServiceClient roadmap_service = nh.serviceClient<rosplan_knowledge_msgs::CreatePRM>("/kcl_rosplan/roadmap_server/create_prm");
 	
 	// Get access to the knowledge base.
 	ros::ServiceClient get_instance_client = nh.serviceClient<rosplan_knowledge_msgs::GetInstanceService>("/kcl_rosplan/get_instances");
@@ -54,7 +54,7 @@ int main(int argc, char **argv) {
 		
 		// Start by generating some waypoints.
 		rosplan_knowledge_msgs::CreatePRM create_prm;
-		create_prm.request.nr_waypoints = 10;
+		create_prm.request.nr_waypoints = 4;
 		create_prm.request.min_distance = 0.5;
 		create_prm.request.casting_distance = 1;
 		create_prm.request.connecting_distance = 5;
