@@ -58,11 +58,12 @@
 ;; Push an object between two waypoints in an unobstructed straight line
 (:durative-action push_object
 	:parameters (?v - robot ?ob - object ?from ?to - waypoint)
-	:duration ( = ?duration 180);;(* (distance ?from ?to) 120))
+	:duration ( = ?duration 80);;(* (distance ?from ?to) 120))
 	:condition (and
 		(at start (robot_at ?v ?from))
 		(at start (object_at ?ob ?from))
-		(at start (connected ?from ?to)))
+		;;(at start (connected ?from ?to))
+		)
 	:effect (and
 		(at start (not (robot_at ?v ?from)))
 		(at start (not (object_at ?ob ?from)))
