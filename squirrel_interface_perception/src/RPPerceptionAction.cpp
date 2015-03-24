@@ -108,19 +108,19 @@ namespace KCL_rosplan {
 		if(!simulate_) {
 
 			bool success = true;
-			for(int i=0; i<3; i++) {
+			for(int i=0; i<2; i++) {
 
 				// rotate to angle
-				ROS_INFO("KCL: (PerceptionAction) rotate to angle: %f", (i*2.7));
+				ROS_INFO("KCL: (PerceptionAction) rotate to angle: %f", (i*3.14));
 
 				// dispatch MoveBase action
 				move_base_msgs::MoveBaseGoal goal;
 				geometry_msgs::PoseStamped &pose = *results[0];
 				goal.target_pose = pose;
-				goal.target_pose.pose.orientation.w = (i*0.33);
+				goal.target_pose.pose.orientation.w = (i*3.14);
 				goal.target_pose.pose.orientation.x = 0;
 				goal.target_pose.pose.orientation.y = 0;
-				goal.target_pose.pose.orientation.z = sqrt(1-(i*0.33)*(i*0.33));
+				goal.target_pose.pose.orientation.z = sqrt(1 - (3.14 * 3.14) * (i * i));
 				movebase_client.sendGoal(goal);
 
 				bool rotatedToAngle = movebase_client.waitForResult(ros::Duration(5*msg->duration));

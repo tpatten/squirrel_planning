@@ -31,7 +31,7 @@ namespace KCL_rosplan {
 		squirrel_planning_knowledge_msgs::AddObjectService::Request &req,
 		squirrel_planning_knowledge_msgs::AddObjectService::Response &res) {
 		
-		ROS_INFO("KCL: (RPObjectPerception::addObjects) %s", req.id);
+		ROS_INFO("KCL: (RPObjectPerception::addObjects) %s", req.id.c_str());
 		
 		// store object in mongodb
 		std::string id = message_store.insertNamed(req.id, req.cloud);
