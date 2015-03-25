@@ -18,7 +18,8 @@ namespace KCL_rosplan {
 	/* constructor */
 	RPPushAction::RPPushAction(ros::NodeHandle &nh, std::string &actionserver, bool simulate)
 	 : message_store(nh), action_client(actionserver, true), simulate_client("/move_base", true), simulate_(simulate) {
-		
+		simulate_ = false;
+		simulate = false;
 		// create the action client
 		if(!simulate) {
 			ROS_INFO("KCL: (PushAction) waiting for action server to start on %s", actionserver.c_str());
@@ -75,8 +76,12 @@ namespace KCL_rosplan {
 				squirrel_manipulation_msgs::PushGoal goal;
 				goal.pose.position.x = results[0]->pose.position.x;
 				goal.pose.position.y = results[0]->pose.position.y;
+				goal.pose.position.z = 0.0;
+				goal.pose.orientation.x = 0.0;
+				goal.pose.orientation.y = 0.0;
+				goal.pose.orientation.z = 0.0;
 				goal.pose.orientation.w = 1;
-				goal.object_id = objectID;
+				goal.object_id ="lump"; // objectID;
 				action_client.sendGoal(goal);
 			} else {
 				// dispatch MoveBase action
