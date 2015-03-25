@@ -3,7 +3,7 @@
 (:requirements :strips :typing :fluents :disjunctive-preconditions :negative-preconditions :durative-actions)
 
 (:types
-	waypoint 
+	waypoint
 	robot
 	object
 )
@@ -15,8 +15,9 @@
 	(connected ?from ?to - waypoint)
 ;;	(classified ?o - object)
 	(tidy ?o - object)
+	(tidy_location_unknown ?o - object)
 	(tidy_location ?o - object ?wp -waypoint)
-        (tidy_location_unknown ?o - object)
+	(push_location ?o - object ?wp -waypoint)
 )
 
 (:functions
@@ -62,6 +63,7 @@
 	:condition (and
 		(at start (robot_at ?v ?from))
 		(at start (object_at ?ob ?from))
+		(at start (push_location ?ob ?from))
 		;;(at start (connected ?from ?to))
 		)
 	:effect (and
@@ -90,7 +92,7 @@
 	:condition (and
 		(at start (robot_at ?v ?wp))
 		(at start (object_at ?ob ?wp))
-                (at start (tidy_location_unknown ?ob))
+		(at start (tidy_location_unknown ?ob))
 ;;		(at start (classified ?ob)))
         )
 
