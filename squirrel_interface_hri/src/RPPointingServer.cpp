@@ -135,6 +135,65 @@ namespace KCL_rosplan {
 		if (!knowledgeInterface.call(tidyLocationUnknownSrv)) 
 			ROS_ERROR("KCL: (PointingServer) error removing tidy_location_unknown predicate");
 		
+		// fetch position of object from message store
+		std::vector< boost::shared_ptr<geometry_msgs::PoseStamped> > results;
+		if(message_store.queryNamed<geometry_msgs::PoseStamped>(obID, results)) {
+			if(results.size()<1) {
+				ROS_INFO("KCL: (PointingServer) aborting pushing location; no matching obID %s", wpID.c_str());
+				publishFeedback(msg->action_id,"action failed");
+				return;
+			}
+			if(results.size()>1)
+				ROS_ERROR("KCL: (PointingServer) multiple waypoints share the same wpID");
+		} else {
+			ROS_ERROR("KCL: (PointingServer) could not query message store to fetch object pose");
+		}
+
+		// calculate pushing pose for object and new point
+		geometry_msgs::PoseStamped &objPose = *results[0];
+		float d = sqrt(
+			(objPose.pose.position.x - pose.pose.position.x)*(objPose.pose.position.x - pose.pose.position.x) +
+			(objPose.pose.position.y - pose.pose.position.y)*(objPose.pose.position.y - pose.pose.position.y));
+		geometry_msgs::PoseStamped pushingPose;
+		pushingPose.header.frame_id = "/map";
+		float startDistance = 0.30;
+		pushingPose.pose.position.x = objPose.pose.position.x + startDistance*(objPose.pose.position.x - pose.pose.position.x)/d;
+		pushingPose.pose.position.y = objPose.pose.position.y + startDistance*(objPose.pose.position.y - pose.pose.position.y)/d;
+
+		float angle = atan2(pose.pose.position.y - objPose.pose.position.y, pose.pose.position.x - objPose.pose.position.x);
+		//if(angle > 3.14) angle = angle - 3.14;
+		//if(angle < -3.14) angle = angle + 3.14;
+		if(isnan(angle)) angle = 0;
+
+		pushingPose.pose.orientation.x = 0;
+		pushingPose.pose.orientation.y = 0;
+		pushingPose.pose.orientation.z = sqrt(1 - (angle*angle));
+		pushingPose.pose.orientation.w = angle;
+
+		// add pushing location for this object
+		rosplan_knowledge_msgs::AddWaypoint addWPSrv;
+		std::stringstream ss_pp;
+		ss_pp << "push_start_location" << obID;
+		addWPSrv.request.id = ss_pp.str();
+		addWPSrv.request.waypoint = pushingPose;
+		addWPSrv.request.connecting_distance = 5;
+		addWPSrv.request.occupancy_threshold = 20;
+		if (!add_waypoint_client.call(addWPSrv)) {
+			ROS_ERROR("KCL: (PointingServer) Failed to add a new waypoint for the object");
+		}
+		ROS_INFO("KCL: (PointingServer) Road map service returned");
+
+		// add PREDICATE tidy_location
+		rosplan_knowledge_msgs::KnowledgeUpdateService ppSrv;
+		ppSrv.request.update_type = rosplan_knowledge_msgs::KnowledgeUpdateService::Request::ADD_KNOWLEDGE;
+		ppSrv.request.knowledge.knowledge_type = rosplan_knowledge_msgs::KnowledgeItem::DOMAIN_ATTRIBUTE;
+		ppSrv.request.knowledge.attribute_name = "push_location";
+		ppSrv.request.knowledge.values.push_back(object);
+		location.value = ss_pp.str();
+		ppSrv.request.knowledge.values.push_back(location);
+		if (!knowledgeInterface.call(ppSrv))
+			ROS_ERROR("KCL: (PointingServer) error adding knowledge");
+
 		// publish feedback (achieved)
 		fb.action_id = msg->action_id;
 		fb.status = "action achieved";
