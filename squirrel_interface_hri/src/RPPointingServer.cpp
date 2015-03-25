@@ -108,6 +108,28 @@ namespace KCL_rosplan {
 		}
 		ROS_INFO("KCL: (ObjectPerception) Road map service returned");
 
+		// fetch position of object from message store
+		std::vector< boost::shared_ptr<geometry_msgs::PoseStamped> > results;
+		if(message_store.queryNamed<geometry_msgs::PoseStamped>(obID, results)) {
+			if(results.size()<1) {
+				ROS_INFO("KCL: (PointingServer) aborting pushing location; no matching obID %s", obID.c_str());
+				// publish feedback (achieved)
+				fb.action_id = msg->action_id;
+				fb.status = "action achieved";
+				action_feedback_pub.publish(fb);
+				return;
+			}
+			if(results.size()>1)
+				ROS_ERROR("KCL: (PointingServer) multiple waypoints share the same wpID");
+		} else {
+			ROS_ERROR("KCL: (PointingServer) could not query message store to fetch object pose");
+			// publish feedback (achieved)
+			fb.action_id = msg->action_id;
+			fb.status = "action achieved";
+			action_feedback_pub.publish(fb);
+			return;
+		}
+
 		// add PREDICATE tidy_location
 		rosplan_knowledge_msgs::KnowledgeUpdateService tlSrv;
 		tlSrv.request.update_type = rosplan_knowledge_msgs::KnowledgeUpdateService::Request::ADD_KNOWLEDGE;
@@ -134,20 +156,6 @@ namespace KCL_rosplan {
 		tidyLocationUnknownSrv.request.knowledge.values.push_back(object);
 		if (!knowledgeInterface.call(tidyLocationUnknownSrv)) 
 			ROS_ERROR("KCL: (PointingServer) error removing tidy_location_unknown predicate");
-		
-		// fetch position of object from message store
-		std::vector< boost::shared_ptr<geometry_msgs::PoseStamped> > results;
-		if(message_store.queryNamed<geometry_msgs::PoseStamped>(obID, results)) {
-			if(results.size()<1) {
-				ROS_INFO("KCL: (PointingServer) aborting pushing location; no matching obID %s", wpID.c_str());
-				publishFeedback(msg->action_id,"action failed");
-				return;
-			}
-			if(results.size()>1)
-				ROS_ERROR("KCL: (PointingServer) multiple waypoints share the same wpID");
-		} else {
-			ROS_ERROR("KCL: (PointingServer) could not query message store to fetch object pose");
-		}
 
 		// calculate pushing pose for object and new point
 		geometry_msgs::PoseStamped &objPose = *results[0];
@@ -171,7 +179,6 @@ namespace KCL_rosplan {
 		pushingPose.pose.orientation.w = angle;
 
 		// add pushing location for this object
-		rosplan_knowledge_msgs::AddWaypoint addWPSrv;
 		std::stringstream ss_pp;
 		ss_pp << "push_start_location" << obID;
 		addWPSrv.request.id = ss_pp.str();
