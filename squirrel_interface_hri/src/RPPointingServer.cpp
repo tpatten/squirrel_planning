@@ -12,6 +12,9 @@
 #include "std_msgs/String.h"
 #include "mongodb_store/message_store.h"
 
+#include <tf/transform_listener.h>
+#include <tf/tf.h>
+	
 namespace KCL_rosplan {
 
 	/* constructor */
@@ -86,14 +89,24 @@ namespace KCL_rosplan {
 		head_tilt_pub.publish(ht);
 
 		// convert point to pose
-		geometry_msgs::PoseStamped pose;
-		pose.pose.position.x = received_point_.point.x;
-		pose.pose.position.y = received_point_.point.y;
-		pose.pose.position.z = received_point_.point.z;
-		pose.pose.orientation.x = 0;
-		pose.pose.orientation.y = 0;
-		pose.pose.orientation.z = 0;
-		pose.pose.orientation.w = 1;
+		geometry_msgs::PoseStamped pose_bl, pose;
+		pose_bl.header.frame_id = "/base_link";
+		pose_bl.pose.position.x = received_point_.point.x;
+		pose_bl.pose.position.y = received_point_.point.y;
+		pose_bl.pose.position.z = received_point_.point.z;
+		pose_bl.pose.orientation.x = 0;
+		pose_bl.pose.orientation.y = 0;
+		pose_bl.pose.orientation.z = 0;
+		pose_bl.pose.orientation.w = 1;
+
+		tf::TransformListener tfl;
+		try {
+			tfl.waitForTransform("/base_link", "/map", ros::Time::now(), ros::Duration(0.5));
+			tfl.transformPose("/map", pose_bl, pose);
+		} catch ( tf::TransformException& ex ) {
+			ROS_ERROR("%s: error while transforming point", ros::this_node::getName().c_str(), ex.what());
+			return;
+		}	
 
 		// create new waypoint
 		rosplan_knowledge_msgs::AddWaypoint addWPSrv;
