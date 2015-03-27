@@ -27,11 +27,15 @@ namespace KCL_rosplan {
 		head_nod_pub = nh.advertise<std_msgs::String>("/expression", 10, true);
 		head_down_angle = 0.6;
 		head_up_angle = -0.3;
+		count = 0;
 	}
 	
 	void RPPointingServer::receivePointLocation(const geometry_msgs::PointStamped::ConstPtr& ptr) {
-		received_point_ = *ptr;
-		has_received_point_ = true;
+		count++;
+		if(count>20) {
+			received_point_ = *ptr;
+			has_received_point_ = true;
+		}
 	}
 	
 	/* action dispatch callback; parameters (?ob - object) */
@@ -90,7 +94,7 @@ namespace KCL_rosplan {
 
 		// convert point to pose
 		geometry_msgs::PoseStamped pose_bl, pose;
-		pose_bl.header.frame_id = "/base_link";
+		pose_bl.header.frame_id = "/kinect_depth_optical_frame";
 		pose_bl.pose.position.x = received_point_.point.x;
 		pose_bl.pose.position.y = received_point_.point.y;
 		pose_bl.pose.position.z = received_point_.point.z;
@@ -101,7 +105,7 @@ namespace KCL_rosplan {
 
 		tf::TransformListener tfl;
 		try {
-			tfl.waitForTransform("/base_link", "/map", ros::Time::now(), ros::Duration(0.5));
+			tfl.waitForTransform("/map","/kinect_depth_optical_frame", ros::Time::now(), ros::Duration(1.0));
 			tfl.transformPose("/map", pose_bl, pose);
 		} catch ( tf::TransformException& ex ) {
 			ROS_ERROR("%s: error while transforming point", ros::this_node::getName().c_str(), ex.what());
@@ -182,18 +186,13 @@ namespace KCL_rosplan {
 		pushingPose.pose.position.y = objPose.pose.position.y + startDistance*(objPose.pose.position.y - pose.pose.position.y)/d;
 
 		float angle = atan2(pose.pose.position.y - objPose.pose.position.y, pose.pose.position.x - objPose.pose.position.x);
-		//if(angle > 3.14) angle = angle - 3.14;
-		//if(angle < -3.14) angle = angle + 3.14;
 		if(isnan(angle)) angle = 0;
 
-		pushingPose.pose.orientation.x = 0;
-		pushingPose.pose.orientation.y = 0;
-		pushingPose.pose.orientation.z = sqrt(1 - (angle*angle));
-		pushingPose.pose.orientation.w = angle;
+		pushingPose.pose.orientation = tf::createQuaternionMsgFromYaw(angle);
 
 		// add pushing location for this object
 		std::stringstream ss_pp;
-		ss_pp << "push_start_location" << obID;
+		ss_pp << "push_start_location_" << obID;
 		addWPSrv.request.id = ss_pp.str();
 		addWPSrv.request.waypoint = pushingPose;
 		addWPSrv.request.connecting_distance = 5;
