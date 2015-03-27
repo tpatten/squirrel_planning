@@ -18,8 +18,8 @@ namespace KCL_rosplan {
 	/* constructor */
 	RPPushAction::RPPushAction(ros::NodeHandle &nh, std::string &actionserver, bool simulate)
 	 : message_store(nh), action_client(actionserver, true), simulate_client("/move_base", true), simulate_(simulate) {
-		simulate_ = false;
-		simulate = false;
+		// simulate_ = false;
+		// simulate = false;
 		// create the action client
 		if(!simulate) {
 			ROS_INFO("KCL: (PushAction) waiting for action server to start on %s", actionserver.c_str());
@@ -147,7 +147,7 @@ namespace KCL_rosplan {
 		ros::init(argc, argv, "rosplan_interface_pushaction");
 		ros::NodeHandle nh;
 
-		bool simulate;
+		bool simulate = false;
 		nh.getParam("simulate_pushing", simulate);
 
 		std::string actionserver;

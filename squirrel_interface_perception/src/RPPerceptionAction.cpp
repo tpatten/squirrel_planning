@@ -186,7 +186,7 @@ namespace KCL_rosplan {
 		ros::init(argc, argv, "rosplan_interface_perception");
 		ros::NodeHandle nh;
 
-		bool simulate;
+		bool simulate = false;
 		nh.getParam("simulate_perception", simulate);
 
 		std::string actionserver;
