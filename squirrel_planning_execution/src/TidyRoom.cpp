@@ -41,7 +41,7 @@ int main(int argc, char **argv) {
 	filterMessage.knowledge_items.push_back(waypoint_filter);
 	filter_publisher.publish(filterMessage);
 	rosplan_knowledge_msgs::KnowledgeItem tidy_location;
-	tidy_location.knowledge_type = rosplan_knowledge_msgs::KnowledgeItem::DOMAIN_ATTRIBUTE;
+	tidy_location.knowledge_type = rosplan_knowledge_msgs::KnowledgeItem::FACT;
 	tidy_location.attribute_name = "tidy_location";
 	filterMessage.knowledge_items.push_back(tidy_location);
 	filter_publisher.publish(filterMessage);
@@ -83,7 +83,7 @@ int main(int argc, char **argv) {
 			
 			// Setup the goal.
 			rosplan_knowledge_msgs::KnowledgeItem waypoint_goal;
-			waypoint_goal.knowledge_type = rosplan_knowledge_msgs::KnowledgeItem::DOMAIN_ATTRIBUTE;
+			waypoint_goal.knowledge_type = rosplan_knowledge_msgs::KnowledgeItem::FACT;
 			waypoint_goal.attribute_name = "explored";
 			diagnostic_msgs::KeyValue kv;
 			kv.key = "wp";

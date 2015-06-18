@@ -63,7 +63,7 @@ namespace KCL_rosplan {
 		}
 
 		rosplan_knowledge_msgs::KnowledgeItem explored_predicate;
-		explored_predicate.knowledge_type = rosplan_knowledge_msgs::KnowledgeItem::DOMAIN_ATTRIBUTE;
+		explored_predicate.knowledge_type = rosplan_knowledge_msgs::KnowledgeItem::FACT;
 		explored_predicate.attribute_name = "explored";
 		diagnostic_msgs::KeyValue kv;
 		kv.key = "wp";
