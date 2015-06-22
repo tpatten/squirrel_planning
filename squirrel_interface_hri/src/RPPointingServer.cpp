@@ -111,7 +111,7 @@ namespace KCL_rosplan {
 		// add PREDICATE tidy_location
 		rosplan_knowledge_msgs::KnowledgeUpdateService tlSrv;
 		tlSrv.request.update_type = rosplan_knowledge_msgs::KnowledgeUpdateService::Request::ADD_KNOWLEDGE;
-		tlSrv.request.knowledge.knowledge_type = rosplan_knowledge_msgs::KnowledgeItem::DOMAIN_ATTRIBUTE;
+		tlSrv.request.knowledge.knowledge_type = rosplan_knowledge_msgs::KnowledgeItem::FACT;
 		tlSrv.request.knowledge.attribute_name = "tidy_location";
 		diagnostic_msgs::KeyValue object;
 		object.key = "o";
@@ -127,7 +127,7 @@ namespace KCL_rosplan {
 		// Remove tidy_location_unknown for this object.
 		rosplan_knowledge_msgs::KnowledgeUpdateService tidyLocationUnknownSrv;
 		tidyLocationUnknownSrv.request.update_type = rosplan_knowledge_msgs::KnowledgeUpdateService::Request::REMOVE_KNOWLEDGE;
-		tidyLocationUnknownSrv.request.knowledge.knowledge_type = rosplan_knowledge_msgs::KnowledgeItem::DOMAIN_ATTRIBUTE;
+		tidyLocationUnknownSrv.request.knowledge.knowledge_type = rosplan_knowledge_msgs::KnowledgeItem::FACT;
 		tidyLocationUnknownSrv.request.knowledge.attribute_name = "tidy_location_unknown";
 		object.key = "o";
 		object.value = obID;
