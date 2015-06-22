@@ -49,7 +49,7 @@ namespace KCL_rosplan {
 		// head tilt
 		float head_down_angle;
 		float head_up_angle;
-
+		int count;
 	public:
 
 		/* constructor */
