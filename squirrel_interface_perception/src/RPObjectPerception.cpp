@@ -61,11 +61,11 @@ namespace KCL_rosplan {
 		ss << req.id << "_wp";
 		addWPSrv.request.id = ss.str();
 		addWPSrv.request.waypoint = req.pose;
-		addWPSrv.request.waypoint.pose.position.x += 0.28;
+		// addWPSrv.request.waypoint.pose.position.x += 35;
 		addWPSrv.request.waypoint.pose.orientation.x = 0;
 		addWPSrv.request.waypoint.pose.orientation.y = 0;
-		addWPSrv.request.waypoint.pose.orientation.z = 1;
-		addWPSrv.request.waypoint.pose.orientation.w = 0;
+		addWPSrv.request.waypoint.pose.orientation.z = (1 - 3.14*3.14);
+		addWPSrv.request.waypoint.pose.orientation.w = 3.14;
 		addWPSrv.request.connecting_distance = 5;
 		addWPSrv.request.occupancy_threshold = 20;
 		if (!add_waypoint_client.call(addWPSrv)) {
@@ -76,7 +76,7 @@ namespace KCL_rosplan {
 		// Add PREDICATE at_object
 		rosplan_knowledge_msgs::KnowledgeUpdateService atObjectSrv;
 		atObjectSrv.request.update_type = rosplan_knowledge_msgs::KnowledgeUpdateService::Request::ADD_KNOWLEDGE;
-		atObjectSrv.request.knowledge.knowledge_type = rosplan_knowledge_msgs::KnowledgeItem::DOMAIN_ATTRIBUTE;
+		atObjectSrv.request.knowledge.knowledge_type = rosplan_knowledge_msgs::KnowledgeItem::FACT;
 		atObjectSrv.request.knowledge.attribute_name = "object_at";
 		diagnostic_msgs::KeyValue oPair;
 		oPair.key = "o";
@@ -94,7 +94,7 @@ namespace KCL_rosplan {
 		// Add PREDICATE tidy_location_unknown
 		rosplan_knowledge_msgs::KnowledgeUpdateService tidyLocationUnknownSrv;
 		tidyLocationUnknownSrv.request.update_type = rosplan_knowledge_msgs::KnowledgeUpdateService::Request::ADD_KNOWLEDGE;
-		tidyLocationUnknownSrv.request.knowledge.knowledge_type = rosplan_knowledge_msgs::KnowledgeItem::DOMAIN_ATTRIBUTE;
+		tidyLocationUnknownSrv.request.knowledge.knowledge_type = rosplan_knowledge_msgs::KnowledgeItem::FACT;
 		tidyLocationUnknownSrv.request.knowledge.attribute_name = "tidy_location_unknown";
 		oPair.key = "o";
 		oPair.value = req.id;
@@ -108,7 +108,7 @@ namespace KCL_rosplan {
 		// Add GOAL tidy_object
 		rosplan_knowledge_msgs::KnowledgeUpdateService toSrv;
 		toSrv.request.update_type = rosplan_knowledge_msgs::KnowledgeUpdateService::Request::ADD_GOAL;
-		toSrv.request.knowledge.knowledge_type = rosplan_knowledge_msgs::KnowledgeItem::DOMAIN_ATTRIBUTE;
+		toSrv.request.knowledge.knowledge_type = rosplan_knowledge_msgs::KnowledgeItem::FACT;
 		toSrv.request.knowledge.attribute_name = "tidy";
 		oPair.key = "o";
 		oPair.value = req.id;
