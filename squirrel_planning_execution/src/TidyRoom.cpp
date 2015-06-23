@@ -16,8 +16,8 @@ int main(int argc, char **argv) {
 	ros::ServiceClient roadmap_service = nh.serviceClient<rosplan_knowledge_msgs::CreatePRM>("/kcl_rosplan/roadmap_server/create_prm");
 	
 	// Get access to the knowledge base.
-	ros::ServiceClient get_instance_client = nh.serviceClient<rosplan_knowledge_msgs::GetInstanceService>("/kcl_rosplan/get_instances");
-	ros::ServiceClient get_attribute_client = nh.serviceClient<rosplan_knowledge_msgs::GetAttributeService>("/kcl_rosplan/get_instances_attributes");
+	ros::ServiceClient get_instance_client = nh.serviceClient<rosplan_knowledge_msgs::GetInstanceService>("/kcl_rosplan/get_current_instances");
+	ros::ServiceClient get_attribute_client = nh.serviceClient<rosplan_knowledge_msgs::GetAttributeService>("/kcl_rosplan/get_current_knowledge");
 	ros::ServiceClient knowledge_update_client = nh.serviceClient<rosplan_knowledge_msgs::KnowledgeUpdateService>("/kcl_rosplan/update_knowledge_base");
 	ros::Publisher filter_publisher = nh.advertise<rosplan_knowledge_msgs::Filter>("/kcl_rosplan/mission_filter", 10, true);
 
