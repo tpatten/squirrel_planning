@@ -2,13 +2,13 @@
 #include <vector>
 #include <iostream>
 #include <fstream>
+#include <geometry_msgs/PointStamped.h>
 #include "rosplan_knowledge_msgs/KnowledgeUpdateService.h"
 #include "rosplan_knowledge_msgs/KnowledgeItem.h"
+#include "rosplan_knowledge_msgs/AddWaypoint.h"
 #include "rosplan_dispatch_msgs/ActionFeedback.h"
 #include "rosplan_dispatch_msgs/ActionDispatch.h"
 #include "mongodb_store/message_store.h"
-
-#include <geometry_msgs/PointStamped.h>
 
 #ifndef KCL_pointing_server
 #define KCL_pointing_server
@@ -32,6 +32,9 @@ namespace KCL_rosplan {
 
 		// Knowledge base
 		ros::ServiceClient knowledgeInterface;
+
+		// ROSPlan roadmap
+		ros::ServiceClient add_waypoint_client;
 		
 		// action topics
 		ros::Publisher action_feedback_pub;
@@ -46,7 +49,7 @@ namespace KCL_rosplan {
 		// head tilt
 		float head_down_angle;
 		float head_up_angle;
-
+		int count;
 	public:
 
 		/* constructor */

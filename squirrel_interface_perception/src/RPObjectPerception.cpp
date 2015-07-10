@@ -7,11 +7,10 @@
 #include <ctime>
 #include <stdlib.h> 
 #include <algorithm> 
-#include "rosplan_knowledge_msgs/KnowledgeItem.h"
 #include "mongodb_store/message_store.h"
-
 #include "rosplan_knowledge_msgs/KnowledgeItem.h"
 #include "rosplan_knowledge_msgs/KnowledgeUpdateService.h"
+#include "rosplan_knowledge_msgs/AddWaypoint.h"
 
 namespace KCL_rosplan {
 
@@ -20,6 +19,7 @@ namespace KCL_rosplan {
 	 : message_store(nh), dataPath(dp) {
 
 		update_knowledge_client = nh.serviceClient<rosplan_knowledge_msgs::KnowledgeUpdateService>("/kcl_rosplan/update_knowledge_base");
+		add_waypoint_client = nh.serviceClient<rosplan_knowledge_msgs::AddWaypoint>("/kcl_rosplan/roadmap_server/add_waypoint");
 		
 		add_object_service = nh.advertiseService("/kcl_rosplan/add_object", &RPObjectPerception::addObjects, this);
 		update_object_service = nh.advertiseService("/kcl_rosplan/update_object", &RPObjectPerception::updateObjects, this);
@@ -31,10 +31,11 @@ namespace KCL_rosplan {
 		squirrel_planning_knowledge_msgs::AddObjectService::Request &req,
 		squirrel_planning_knowledge_msgs::AddObjectService::Response &res) {
 		
-		// Store the objects to mongodb.
+		ROS_INFO("KCL: (RPObjectPerception::addObjects) %s", req.id.c_str());
+		
+		// store object in mongodb
 		std::string id = message_store.insertNamed(req.id, req.cloud);
 		mongo_id_mapping.insert(std::make_pair(req.id, id));
-		
 		std_msgs::String ros_string_category;
 		ros_string_category.data = req.category;
 		id = message_store.insertNamed(req.id, ros_string_category);
@@ -42,7 +43,7 @@ namespace KCL_rosplan {
 		id = message_store.insertNamed(req.id, req.pose);
 		mongo_id_mapping.insert(std::make_pair(req.id, id));
 		
-		// Store the mappings to the knowledge base.
+		// Add INSTANCE object
 		rosplan_knowledge_msgs::KnowledgeUpdateService obSrv;
 		obSrv.request.update_type = rosplan_knowledge_msgs::KnowledgeUpdateService::Request::ADD_KNOWLEDGE;
 		obSrv.request.knowledge.knowledge_type = rosplan_knowledge_msgs::KnowledgeItem::INSTANCE;
@@ -53,18 +54,36 @@ namespace KCL_rosplan {
 			res.result = squirrel_planning_knowledge_msgs::AddObjectService::Response::FAILURE;
 			return false;
 		}
+
+		// create new waypoint
+		rosplan_knowledge_msgs::AddWaypoint addWPSrv;
+		std::stringstream ss;
+		ss << req.id << "_wp";
+		addWPSrv.request.id = ss.str();
+		addWPSrv.request.waypoint = req.pose;
+		// addWPSrv.request.waypoint.pose.position.x += 35;
+		addWPSrv.request.waypoint.pose.orientation.x = 0;
+		addWPSrv.request.waypoint.pose.orientation.y = 0;
+		addWPSrv.request.waypoint.pose.orientation.z = (1 - 3.14*3.14);
+		addWPSrv.request.waypoint.pose.orientation.w = 3.14;
+		addWPSrv.request.connecting_distance = 5;
+		addWPSrv.request.occupancy_threshold = 20;
+		if (!add_waypoint_client.call(addWPSrv)) {
+			ROS_ERROR("KCL: (ObjectPerception) Failed to add a new waypoint for the object");
+		}
+		ROS_INFO("KCL: (ObjectPerception) Road map service returned");
 		
-		// Add at_object predicate to the knowledge base and database 
+		// Add PREDICATE at_object
 		rosplan_knowledge_msgs::KnowledgeUpdateService atObjectSrv;
 		atObjectSrv.request.update_type = rosplan_knowledge_msgs::KnowledgeUpdateService::Request::ADD_KNOWLEDGE;
-		atObjectSrv.request.knowledge.knowledge_type = rosplan_knowledge_msgs::KnowledgeItem::DOMAIN_ATTRIBUTE;
+		atObjectSrv.request.knowledge.knowledge_type = rosplan_knowledge_msgs::KnowledgeItem::FACT;
 		atObjectSrv.request.knowledge.attribute_name = "object_at";
 		diagnostic_msgs::KeyValue oPair;
 		oPair.key = "o";
 		oPair.value = req.id;
 		atObjectSrv.request.knowledge.values.push_back(oPair);
 		oPair.key = "wp";
-		oPair.value = "simulated_object_wp";
+		oPair.value = ss.str();
 		atObjectSrv.request.knowledge.values.push_back(oPair);
 		if (!update_knowledge_client.call(atObjectSrv)) {
 			ROS_ERROR("KCL: (ObjectPerception) error adding object_at predicate");
@@ -72,10 +91,10 @@ namespace KCL_rosplan {
 			return false;
 		}
 		
-		// Add tidy_location_unknown to hte knowledge base for this object.
+		// Add PREDICATE tidy_location_unknown
 		rosplan_knowledge_msgs::KnowledgeUpdateService tidyLocationUnknownSrv;
 		tidyLocationUnknownSrv.request.update_type = rosplan_knowledge_msgs::KnowledgeUpdateService::Request::ADD_KNOWLEDGE;
-		tidyLocationUnknownSrv.request.knowledge.knowledge_type = rosplan_knowledge_msgs::KnowledgeItem::DOMAIN_ATTRIBUTE;
+		tidyLocationUnknownSrv.request.knowledge.knowledge_type = rosplan_knowledge_msgs::KnowledgeItem::FACT;
 		tidyLocationUnknownSrv.request.knowledge.attribute_name = "tidy_location_unknown";
 		oPair.key = "o";
 		oPair.value = req.id;
@@ -86,24 +105,10 @@ namespace KCL_rosplan {
 			return false;
 		}
 		
-		id = message_store.insertNamed("simulated_object_wp", req.pose);
-		mongo_id_mapping.insert(std::make_pair("simulated_object_wp", id));
-		
-		rosplan_knowledge_msgs::KnowledgeUpdateService wpSrv;
-		wpSrv.request.update_type = rosplan_knowledge_msgs::KnowledgeUpdateService::Request::ADD_KNOWLEDGE;
-		wpSrv.request.knowledge.knowledge_type = rosplan_knowledge_msgs::KnowledgeItem::INSTANCE;
-		wpSrv.request.knowledge.instance_type = "waypoint";
-		wpSrv.request.knowledge.instance_name = "simulated_object_wp";
-		if (!update_knowledge_client.call(wpSrv)) {
-			ROS_ERROR("KCL: (ObjectPerception) error adding knowledge");
-			res.result = squirrel_planning_knowledge_msgs::AddObjectService::Response::FAILURE;
-			return false;
-		}
-
-		// Add "tidy object" goal to the knowledge base "(tidy ?o - object)"
+		// Add GOAL tidy_object
 		rosplan_knowledge_msgs::KnowledgeUpdateService toSrv;
 		toSrv.request.update_type = rosplan_knowledge_msgs::KnowledgeUpdateService::Request::ADD_GOAL;
-		toSrv.request.knowledge.knowledge_type = rosplan_knowledge_msgs::KnowledgeItem::DOMAIN_ATTRIBUTE;
+		toSrv.request.knowledge.knowledge_type = rosplan_knowledge_msgs::KnowledgeItem::FACT;
 		toSrv.request.knowledge.attribute_name = "tidy";
 		oPair.key = "o";
 		oPair.value = req.id;
@@ -171,6 +176,12 @@ namespace KCL_rosplan {
 		message_store.updateNamed((*update_ci).second, ros_string_category); ++update_ci;
 		message_store.updateNamed((*update_ci).second, req.pose);
 		
+		// update waypoint in mongodb
+		std::stringstream ss;
+		ss << req.id << "_wp";
+		message_store.updateNamed(ss.str(), req.pose);
+
+		// TODO ensure that updating waypoint position is OK
 		res.result = squirrel_planning_knowledge_msgs::UpdateObjectService::Response::SUCCESS;
 		return true;
 	}

@@ -13,16 +13,30 @@ int main(int argc, char **argv) {
 	ros::init(argc, argv, "tidy_room_execution");
 	ros::NodeHandle nh;
 
-	ros::ServiceClient roadmap_service = nh.serviceClient<rosplan_knowledge_msgs::CreatePRM>("/kcl_rosplan/roadmap_server");
+	ros::ServiceClient roadmap_service = nh.serviceClient<rosplan_knowledge_msgs::CreatePRM>("/kcl_rosplan/roadmap_server/create_prm");
 	
 	// Get access to the knowledge base.
-	ros::ServiceClient get_instance_client = nh.serviceClient<rosplan_knowledge_msgs::GetInstanceService>("/kcl_rosplan/get_instances");
-	ros::ServiceClient get_attribute_client = nh.serviceClient<rosplan_knowledge_msgs::GetAttributeService>("/kcl_rosplan/get_instances_attributes");
+	ros::ServiceClient get_instance_client = nh.serviceClient<rosplan_knowledge_msgs::GetInstanceService>("/kcl_rosplan/get_current_instances");
+	ros::ServiceClient get_attribute_client = nh.serviceClient<rosplan_knowledge_msgs::GetAttributeService>("/kcl_rosplan/get_current_knowledge");
 	ros::ServiceClient knowledge_update_client = nh.serviceClient<rosplan_knowledge_msgs::KnowledgeUpdateService>("/kcl_rosplan/update_knowledge_base");
 	ros::Publisher filter_publisher = nh.advertise<rosplan_knowledge_msgs::Filter>("/kcl_rosplan/mission_filter", 10, true);
 
 	// Planner control.
 	ros::ServiceClient run_planner_client = nh.serviceClient<std_srvs::Empty>("/kcl_rosplan/planning_server");
+
+	// Add kenny
+	rosplan_knowledge_msgs::KnowledgeUpdateService add_kenny;
+	add_kenny.request.update_type = rosplan_knowledge_msgs::KnowledgeUpdateService::Request::ADD_KNOWLEDGE;
+	rosplan_knowledge_msgs::KnowledgeItem kenny_knowledge;
+	kenny_knowledge.knowledge_type = rosplan_knowledge_msgs::KnowledgeItem::INSTANCE;
+	kenny_knowledge.instance_type = "robot";
+	kenny_knowledge.instance_name = "kenny";
+	add_kenny.request.knowledge = kenny_knowledge;
+	if (!knowledge_update_client.call(add_kenny)) {
+		ROS_ERROR("KCL: (TidyRoom) Could not add kenny to the knowledge base.");
+		exit(-1);
+	}
+	ROS_INFO("KCL: (TidyRoom) Added kenny to the knowledge base.");
 
 	// clear the old filter
 	rosplan_knowledge_msgs::Filter filterMessage;
@@ -41,7 +55,7 @@ int main(int argc, char **argv) {
 	filterMessage.knowledge_items.push_back(waypoint_filter);
 	filter_publisher.publish(filterMessage);
 	rosplan_knowledge_msgs::KnowledgeItem tidy_location;
-	tidy_location.knowledge_type = rosplan_knowledge_msgs::KnowledgeItem::DOMAIN_ATTRIBUTE;
+	tidy_location.knowledge_type = rosplan_knowledge_msgs::KnowledgeItem::FACT;
 	tidy_location.attribute_name = "tidy_location";
 	filterMessage.knowledge_items.push_back(tidy_location);
 	filter_publisher.publish(filterMessage);
@@ -54,9 +68,9 @@ int main(int argc, char **argv) {
 		
 		// Start by generating some waypoints.
 		rosplan_knowledge_msgs::CreatePRM create_prm;
-		create_prm.request.nr_waypoints = 10;
+		create_prm.request.nr_waypoints = 4;
 		create_prm.request.min_distance = 0.5;
-		create_prm.request.casting_distance = 1;
+		create_prm.request.casting_distance = 1.6;
 		create_prm.request.connecting_distance = 5;
 		create_prm.request.occupancy_threshold = 20;
 		create_prm.request.total_attempts = 1000;
@@ -83,7 +97,7 @@ int main(int argc, char **argv) {
 			
 			// Setup the goal.
 			rosplan_knowledge_msgs::KnowledgeItem waypoint_goal;
-			waypoint_goal.knowledge_type = rosplan_knowledge_msgs::KnowledgeItem::DOMAIN_ATTRIBUTE;
+			waypoint_goal.knowledge_type = rosplan_knowledge_msgs::KnowledgeItem::FACT;
 			waypoint_goal.attribute_name = "explored";
 			diagnostic_msgs::KeyValue kv;
 			kv.key = "wp";

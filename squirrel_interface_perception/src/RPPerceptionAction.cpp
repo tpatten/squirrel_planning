@@ -12,6 +12,8 @@
 #include "move_base_msgs/MoveBaseAction.h"
 #include "mongodb_store/message_store.h"
 #include "geometry_msgs/PoseStamped.h"
+#include "rosplan_knowledge_msgs/KnowledgeUpdateService.h"
+#include "rosplan_knowledge_msgs/KnowledgeItem.h"
 
 /* The implementation of RPMoveBase.h */
 namespace KCL_rosplan {
@@ -35,6 +37,7 @@ namespace KCL_rosplan {
 		
 		// create the action feedback publisher
 		action_feedback_pub = nh.advertise<rosplan_dispatch_msgs::ActionFeedback>("/kcl_rosplan/action_feedback", 10, true);
+		update_knowledge_client = nh.serviceClient<rosplan_knowledge_msgs::KnowledgeUpdateService>("/kcl_rosplan/update_knowledge_base");
 	}
 
 	/* action dispatch callback; parameters (?v - robot ?wp - waypoint) */
@@ -56,6 +59,23 @@ namespace KCL_rosplan {
 		}
 		if(!found) {
 			ROS_INFO("KCL: (PerceptionAction) aborting action dispatch; malformed parameters");
+			return;
+		}
+
+		rosplan_knowledge_msgs::KnowledgeItem explored_predicate;
+		explored_predicate.knowledge_type = rosplan_knowledge_msgs::KnowledgeItem::FACT;
+		explored_predicate.attribute_name = "explored";
+		diagnostic_msgs::KeyValue kv;
+		kv.key = "wp";
+		kv.value = wpID; 
+		explored_predicate.values.push_back(kv);
+
+		rosplan_knowledge_msgs::KnowledgeUpdateService add_predicate;
+		add_predicate.request.update_type = rosplan_knowledge_msgs::KnowledgeUpdateService::Request::ADD_KNOWLEDGE;
+		add_predicate.request.knowledge = explored_predicate;
+			
+		if (!update_knowledge_client.call(add_predicate)) {
+			ROS_ERROR("Failed to add the explored predicate to the knowledge base.");
 			return;
 		}
 
@@ -88,19 +108,19 @@ namespace KCL_rosplan {
 		if(!simulate_) {
 
 			bool success = true;
-			for(int i=0; i<3; i++) {
+			for(int i=0; i<2; i++) {
 
 				// rotate to angle
-				ROS_INFO("KCL: (PerceptionAction) rotate to angle: %f", (i*2.7));
+				ROS_INFO("KCL: (PerceptionAction) rotate to angle: %f", (i*3.14));
 
 				// dispatch MoveBase action
 				move_base_msgs::MoveBaseGoal goal;
 				geometry_msgs::PoseStamped &pose = *results[0];
 				goal.target_pose = pose;
-				goal.target_pose.pose.orientation.w = (i*0.33);
+				goal.target_pose.pose.orientation.w = (i*3.14);
 				goal.target_pose.pose.orientation.x = 0;
 				goal.target_pose.pose.orientation.y = 0;
-				goal.target_pose.pose.orientation.z = sqrt(1-(i*0.33)*(i*0.33));
+				goal.target_pose.pose.orientation.z = sqrt(1 - (3.14 * 3.14) * (i * i));
 				movebase_client.sendGoal(goal);
 
 				bool rotatedToAngle = movebase_client.waitForResult(ros::Duration(5*msg->duration));
@@ -166,7 +186,7 @@ namespace KCL_rosplan {
 		ros::init(argc, argv, "rosplan_interface_perception");
 		ros::NodeHandle nh;
 
-		bool simulate;
+		bool simulate = false;
 		nh.getParam("simulate_perception", simulate);
 
 		std::string actionserver;
