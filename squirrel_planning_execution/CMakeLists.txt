@@ -47,8 +47,10 @@ set(tidyroom_SOURCES
 
 ## Declare cpp executables
 add_executable(tidyroom ${tidyroom_SOURCES})
+add_executable(simpledemo src/ShortDemo.cpp)
 
 target_link_libraries(tidyroom ${catkin_LIBRARIES})
+target_link_libraries(simpledemo ${catkin_LIBRARIES})
 
 ##########
 ## Test ##
