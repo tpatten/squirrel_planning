@@ -3,17 +3,48 @@
 
 #include <Python.h>
 
+#include <wordexp.h>
+
+#include <string>
+#include <limits.h>
+#include <unistd.h>
+
+
 using namespace std;
+
+std::string getexepath()
+{
+  char result[ PATH_MAX ];
+  ssize_t count = readlink( "/proc/self/exe", result, PATH_MAX );
+  return std::string( result, (count > 0) ? count : 0 );
+}
+
+std::string resolvePath(std::string path) {
+
+    wordexp_t p;
+    wordexp(path.c_str(), &p, 0 );
+    char** w = p.we_wordv;
+    string ret = string(*w);
+    wordfree( &p );
+
+    return ret;
+
+}
+
 
 int callRecommender(std::string pythonPath, std::string pythonFile, std::string pythonFun, std::string trainedPath, std::string passedFilePath);
 
- bool uibk_recommend(squirrel_prediction_msgs::RecommendRelations::Request  &req,
-          squirrel_prediction_msgs::RecommendRelations::Response &res){
+bool uibk_recommend(squirrel_prediction_msgs::RecommendRelations::Request  &req, squirrel_prediction_msgs::RecommendRelations::Response &res){
+    
+   string path = getexepath();
+   std::string p = "devel/lib/squirrel_recommender/recommender";
+   std::string base = path.substr(0, path.length() - p.length());
+ 
 
-   int classifierRes = callRecommender("/home/c7031098/squirrel_ws/src/squirrel_planning/squirrel_recommender/scripts/mmr_mmmvr",
+   int classifierRes = callRecommender(resolvePath(base+"src/squirrel_planning/squirrel_recommender/scripts/mmr_mmmvr"),
                                        "kingsc_main", "runRecommender",
-                                         "/home/c7031098/squirrel_ws/src/squirrel_planning/squirrel_recommender/scripts/mmr_mmmvr",
-                                          "/home/c7031098/squirrel_ws/src/squirrel_planning/squirrel_recommender/scripts/mmr_mmmvr");
+                                         "../scripts/mmr_mmmvr",
+                                          "../scripts/mmr_mmmvr");
 
    //res.sum = req.a + req.b;
    //ROS_INFO("request: x=%ld, y=%ld", (long int)req.a, (long int)req.b);
@@ -34,6 +65,8 @@ int main( int argc, char *argv[] ){
 }
 
 int callRecommender(std::string pythonPath, std::string pythonFile, std::string pythonFun, std::string trainedPath, std::string passedFilePath) {
+     
+cout<<"passed path "<< pythonPath<<endl;
 
     int retVal = -1;
     string mName = pythonFile;
@@ -111,5 +144,7 @@ int callRecommender(std::string pythonPath, std::string pythonFile, std::string 
     return retVal;
 
 }
+
+
 
 
