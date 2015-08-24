@@ -7,10 +7,12 @@ find_package(catkin REQUIRED COMPONENTS
   std_msgs
   squirrel_prediction_msgs
 )
+find_package(cmake_modules REQUIRED)
 
 find_package(Boost REQUIRED COMPONENTS
   filesystem
 )
+find_package(PythonLibs 3.4 REQUIRED)
 
 catkin_package(
   CATKIN_DEPENDS
@@ -27,12 +29,17 @@ catkin_package(
 ## include_directories(include)
 include_directories(
   ${catkin_INCLUDE_DIRS}
-  include
+  /usr/include/python3.4m
 )
+
+#include_directories(${PYTHON_INCLUDE_DIRS})
+
+## python definitions
+link_directories(/usr/lib/python3.4/config-3.4m-x86_64-linux-gnu /usr/lib)
 
 
 add_executable(recommender src/RecommenderNode.cpp)
-target_link_libraries(recommender ${catkin_LIBRARIES})
+target_link_libraries(recommender ${catkin_LIBRARIES} python3.4m)
 
 
 
