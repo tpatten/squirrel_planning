@@ -20,6 +20,8 @@ sudo apt-get install flex
 sudo apt-get install mongodb
 sudo apt-get install ros-hydro-mongodb-store
 ```
+Finally check the requirements in 
+https://github.com/m312z/squirrel_planning/tree/indigo_dev/squirrel_recommender
 
 Running everything
 ==================
