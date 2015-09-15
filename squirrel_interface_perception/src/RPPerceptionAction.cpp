@@ -3,6 +3,8 @@
 #include <iostream>
 #include <fstream>
 #include <boost/foreach.hpp>
+#include <tf/LinearMath/Vector3.h>
+#include <tf/LinearMath/Quaternion.h>
 #include <actionlib/client/simple_action_client.h>
 #include "rosplan_dispatch_msgs/ActionDispatch.h"
 #include "rosplan_dispatch_msgs/ActionFeedback.h"
@@ -117,11 +119,12 @@ namespace KCL_rosplan {
 				move_base_msgs::MoveBaseGoal goal;
 				geometry_msgs::PoseStamped &pose = *results[0];
 				goal.target_pose = pose;
-				goal.target_pose.pose.orientation.w = (i*3.14);
-				goal.target_pose.pose.orientation.x = 0;
-				goal.target_pose.pose.orientation.y = 0;
-				goal.target_pose.pose.orientation.z = sqrt(1 - (3.14 * 3.14) * (i * i));
-				movebase_client.sendGoal(goal);
+        tf::Quaternion quat(tf::Vector3(0., 0., 1.), i*M_PI);
+				goal.target_pose.pose.orientation.w = quat.w();
+				goal.target_pose.pose.orientation.x = quat.x();
+				goal.target_pose.pose.orientation.y = quat.y();
+				goal.target_pose.pose.orientation.z = quat.z();
+        movebase_client.sendGoal(goal);
 
 				bool rotatedToAngle = movebase_client.waitForResult(ros::Duration(5*msg->duration));
 				if(!rotatedToAngle) success = false;
