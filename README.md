@@ -18,7 +18,7 @@ Additionally you will require Flex and MongoDB.
 ```
 sudo apt-get install flex
 sudo apt-get install mongodb
-sudo apt-get install ros-hydro-mongodb-store
+sudo apt-get install ros-indigo-mongodb-store
 ```
 
 Running everything

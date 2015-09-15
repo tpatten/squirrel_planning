@@ -1,5 +1,8 @@
 <launch>
 
+	<!-- domain file -->
+	<param name="domain_path" value="$(find squirrel_planning_launch)/common/domain_push.pddl" />
+
 	<!-- knowledge base -->
 	<node name="rosplan_knowledge_base" pkg="rosplan_knowledge_base" type="knowledgeBase" respawn="false" output="screen">
 	</node>
@@ -15,7 +18,6 @@
 	<node name="rosplan_planning_system" pkg="rosplan_planning_system" type="planner" respawn="false" output="screen">
 		<!-- directory for generated files -->
 	    <param name="data_path" value="$(find squirrel_planning_launch)/common/" />
-	    <param name="domain_path" value="$(find squirrel_planning_launch)/common/domain_push.pddl" />
 	    <param name="problem_path" value="$(find squirrel_planning_launch)/common/problem.pddl" />
 		<!-- to run the planner -->
 	    <param name="planner_command" value="timeout 10 $(find rosplan_planning_system)/common/bin/popf -n" />
