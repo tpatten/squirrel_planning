@@ -273,7 +273,7 @@ def test_mvm_main(workmode):
 
 def runRecommender(trainingBase, evalFile):
   iworkmode = 0
-  return 0
+  return test_mvm_main(iworkmode)
 
 ## ################################################################
 if __name__ == "__main__":

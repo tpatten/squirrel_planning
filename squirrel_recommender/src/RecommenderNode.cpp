@@ -66,7 +66,7 @@ int main( int argc, char *argv[] ){
 
 int callRecommender(std::string pythonPath, std::string pythonFile, std::string pythonFun, std::string trainedPath, std::string passedFilePath) {
      
-cout<<"passed path "<< pythonPath<<endl;
+    cout<<"passed path "<< pythonPath<<endl;
 
     int retVal = -1;
     string mName = pythonFile;
@@ -81,9 +81,13 @@ cout<<"passed path "<< pythonPath<<endl;
     PyRun_SimpleString(string(string("sys.path.append('") + pythonPath + string("')")).c_str());
     PyRun_SimpleString("import kingsc_main");
 
+    //cout<<"here 1"<<endl;
+
     pName = PyUnicode_FromString(mName.c_str());
     pModule = PyImport_Import(pName);
     Py_DECREF(pName);
+
+    //cout<<"here 1"<<endl;
 
     if (pModule != NULL) {
 

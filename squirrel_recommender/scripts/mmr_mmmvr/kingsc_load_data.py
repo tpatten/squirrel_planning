@@ -8,6 +8,7 @@ import scipy.stats
 ## import scipy.linalg as sp_linalg
 import mvm_prepare
 ## import tensor_decomp
+import os
 ## ###################################################
 
 ## ##################################################
