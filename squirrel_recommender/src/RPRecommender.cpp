@@ -29,6 +29,12 @@ namespace KCL_rosplan {
 	 */
 	bool RPRecommender::initialiseDatabase(std_srvs::Empty::Request &req, std_srvs::Empty::Response &res) {
 
+		domain_types.clear();
+		domain_attributes.clear();
+		current_instances.clear();
+		all_instances.clear();
+		current_attributes.clear();
+
 		ros::NodeHandle nh("~");
 
 		// fetch knowledge
@@ -70,7 +76,7 @@ namespace KCL_rosplan {
 		ROS_INFO("KCL: (RPRecommender) Creating file");
 
 		std::stringstream ss;
-		ss << data_path << "input.csv" << std::endl;
+		ss << data_path << "input.csv";
 		std::ofstream pFile;
 		pFile.open(ss.str().c_str());
 
@@ -101,7 +107,7 @@ namespace KCL_rosplan {
 		squirrel_prediction_msgs::RecommendRelations rrSrv;
 		rrSrv.request.inputFile = ss.str();
 		std::stringstream outputFileName;
-		outputFileName << data_path << "output.csv" << std::endl;
+		outputFileName << data_path << "output.csv";
 		rrSrv.request.outputFile = ss.str();
 		rrSrv.request.initilization = true;
 		
