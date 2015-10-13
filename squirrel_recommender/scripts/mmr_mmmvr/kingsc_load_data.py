@@ -8,7 +8,6 @@ import scipy.stats
 ## import scipy.linalg as sp_linalg
 import mvm_prepare
 ## import tensor_decomp
-import os
 ## ###################################################
 
 ## ##################################################
@@ -21,21 +20,18 @@ class cls_label_files:
 
   def __init__(self):
 
-    path = os.path.realpath(__file__)     #get path to this script file
-    path = os.path.dirname(path)          #strip file name of this script from path
-
-    self.sbasedir=path+'/data/'
+    self.sbasedir='data/'
     self.listfull=['full','full_20','full_40','full_60']
     self.listknown=['known','known_20','known_40','known_60']
     self.fileext='.csv'
     self.csv_delimiter=','
     self.headerline=1
-    self.listrel=['in','on','belongs_in','belongs_on','is_a']
+    self.listrel=['can_fit_inside','can_pickup','can_push','can_stack_on','inside','object_at','on','push_location','tidy_location']
  
     self.test_predicted_data='test_prediction.txt'
     self.full_predicted_data='full_prediction.txt'
 
-    self.nfeature=5   ## number of features assigned to each pair of objects
+    self.nfeature=9   ## number of features assigned to each pair of objects
     self.feature_orig=2
 
     self.dobject={}   ## object name -> object index

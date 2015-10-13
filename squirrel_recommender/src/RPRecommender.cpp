@@ -76,25 +76,49 @@ namespace KCL_rosplan {
 		ROS_INFO("KCL: (RPRecommender) Creating file");
 
 		std::stringstream ss;
-		ss << data_path << "input.csv";
+		ss << data_path << "known.csv";
 		std::ofstream pFile;
 		pFile.open(ss.str().c_str());
 
-		pFile << "object1, object2";
-		for(int i=0; i<domain_attributes.size(); i++)
-			pFile << ", " << domain_attributes[i].name;
+		pFile << "'object1','object2'";
+		for(int i=0; i<domain_attributes.size(); i++) {
+			if(domain_attributes[i].name=="object_at"
+					|| domain_attributes[i].name=="box_at"
+					|| domain_attributes[i].name=="connected"
+					|| domain_attributes[i].name=="tidy_location"
+					|| domain_attributes[i].name=="robot_at"
+					|| domain_attributes[i].name=="push_location")
+				continue;
+			pFile << ",'" << domain_attributes[i].name << "'";
+		}
 		pFile << std::endl;
 
 		for(int i=0; i<all_instances.size(); i++) {
+
+			if(all_instances[i].substr(0,2)!="ob") continue;
+
 		for(int j=0; j<all_instances.size(); j++) {
-			pFile << all_instances[i] << ", " << all_instances[j];
+
+			if(all_instances[j].substr(0,2)!="ob") continue;
+
+			pFile << "'" << all_instances[i] << "','" << all_instances[j] << "'";
 			for(int k=0; k<domain_attributes.size(); k++) {
+
+				// 'holding','inside','on' ??
+				if(domain_attributes[k].name=="object_at"
+						|| domain_attributes[k].name=="box_at"
+						|| domain_attributes[k].name=="connected"
+						|| domain_attributes[k].name=="tidy_location"
+						|| domain_attributes[k].name=="robot_at"
+						|| domain_attributes[k].name=="push_location")
+					continue;
+
 				if(attributeFalse(current_instances[all_instances[i]], current_instances[all_instances[j]], domain_attributes[k]))
-					pFile << ", 0";
+					pFile << ",0";
 				else if(attributeTrue(all_instances[i], all_instances[j], domain_attributes[k].name))
-					pFile << ", 1";
+					pFile << ",1";
 				else
-					pFile << ", ";
+					pFile << ",";
 			}
 			pFile << std::endl;
 		}};
@@ -107,7 +131,7 @@ namespace KCL_rosplan {
 		squirrel_prediction_msgs::RecommendRelations rrSrv;
 		rrSrv.request.inputFile = ss.str();
 		std::stringstream outputFileName;
-		outputFileName << data_path << "output.csv";
+		outputFileName << data_path << "predicted_missing_known_full.csv";
 		rrSrv.request.outputFile = ss.str();
 		rrSrv.request.initilization = true;
 		

@@ -51,6 +51,6 @@
 	</node>
 
 	<node name="squirrel_interface_recommender" pkg="squirrel_recommender" type="rprecommender" respawn="false" output="screen">
-	    <param name="data_path" value="/home/michael/Desktop/recommender/common/" />
+	    <param name="data_path" value="$(find squirrel_recommender)/scripts/mmr_mmmvr/data/" />
 	</node>
 </launch>

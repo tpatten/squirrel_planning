@@ -47,6 +47,7 @@ set(RPPointingService_SOURCES
 
 ## Declare cpp executables
 add_executable(rppointingServer ${RPPointingService_SOURCES})
+add_dependencies(rppointingServer ${catkin_EXPORTED_TARGETS})
 
 ## Specify libraries against which to link a library or executable target
 target_link_libraries(rppointingServer ${catkin_LIBRARIES})

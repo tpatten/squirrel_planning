@@ -51,8 +51,10 @@ set(ROP_SOURCES
 
 ## Declare cpp executables
 add_executable(rpperceptionServer ${SIP_SOURCES})
+add_dependencies(rpperceptionServer ${catkin_EXPORTED_TARGETS})
 
 add_executable(rpObjectPerception ${ROP_SOURCES})
+add_dependencies(rpObjectPerception ${catkin_EXPORTED_TARGETS})
 
 ## Specify libraries against which to link a library or executable target
 target_link_libraries(rpperceptionServer ${catkin_LIBRARIES})

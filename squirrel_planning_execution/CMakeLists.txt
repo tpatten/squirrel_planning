@@ -49,6 +49,9 @@ set(tidyroom_SOURCES
 add_executable(tidyroom ${tidyroom_SOURCES})
 add_executable(simpledemo src/ShortDemo.cpp)
 
+add_dependencies(tidyroom ${catkin_EXPORTED_TARGETS})
+add_dependencies(simpledemo ${catkin_EXPORTED_TARGETS})
+
 target_link_libraries(tidyroom ${catkin_LIBRARIES})
 target_link_libraries(simpledemo ${catkin_LIBRARIES})
 
