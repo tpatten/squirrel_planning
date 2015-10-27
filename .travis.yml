@@ -19,14 +19,20 @@ install:
   - sudo apt-get install -qq -y python-rosdep python-catkin-tools
   - sudo rosdep init
   - rosdep update
+  - sudo apt-get install ros-indigo-desktop
+  - sudo apt-get install flex
+  - sudo apt-get install mongodb
   # Use rosdep to install all dependencies (including ROS itself)
-  - rosdep install --from-paths ./ -i -y --rosdistro $CI_ROS_DISTRO
 script:
   - source /opt/ros/$CI_ROS_DISTRO/setup.bash
   - mkdir -p $CATKIN_WS_SRC
   - ln -s $TRAVIS_BUILD_DIR $CATKIN_WS_SRC
   - cd $CATKIN_WS
+  - git clone git@github.com:squirrel-project/squirrel_common.git ~/catkin_ws/src/squirrel_common
+  - git clone git@github.com:clearpathrobotics/occupancy_grid_utils.git ~/catkin_ws/src/occupancy_grid_utils
+  - git clone git@github.com:kcl-planning/ROSPlan.git ~/catkin_ws/src/ROSPlan
   - catkin init
+  - rosdep install --from-paths src/ -i -y --rosdistro $CI_ROS_DISTRO
   # Enable install space
   #- catkin config --install
   # Build [and Install] packages
