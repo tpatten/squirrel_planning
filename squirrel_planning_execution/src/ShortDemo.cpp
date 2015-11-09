@@ -127,6 +127,20 @@ namespace KCL_rosplan {
 
 		ros::NodeHandle nh;
 
+		// Add kenny
+		rosplan_knowledge_msgs::KnowledgeUpdateService add_kenny;
+		add_kenny.request.update_type = rosplan_knowledge_msgs::KnowledgeUpdateService::Request::ADD_KNOWLEDGE;
+		rosplan_knowledge_msgs::KnowledgeItem kenny_knowledge;
+		kenny_knowledge.knowledge_type = rosplan_knowledge_msgs::KnowledgeItem::INSTANCE;
+		kenny_knowledge.instance_type = "robot";
+		kenny_knowledge.instance_name = "kenny";
+		add_kenny.request.knowledge = kenny_knowledge;
+		if (!knowledge_update_client.call(add_kenny)) {
+			ROS_ERROR("KCL: (TidyRoom) Could not add kenny to the knowledge base.");
+			exit(-1);
+		}
+		ROS_INFO("KCL: (TidyRoom) Added kenny to the knowledge base.");
+
 		// clear the old filter
 		rosplan_knowledge_msgs::Filter filterMessage;
 		filterMessage.function = rosplan_knowledge_msgs::Filter::CLEAR;
