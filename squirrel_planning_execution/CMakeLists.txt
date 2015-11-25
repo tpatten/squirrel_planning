@@ -45,15 +45,23 @@ include_directories(
 set(tidyroom_SOURCES
 	src/TidyRoom.cpp)
 
+## map sources
+set(rpsquirrelroadmap_SOURCES
+  src/RPSquirrelRoadmap.cpp
+  src/RPSimpleMapVisualization.cpp)
+
 ## Declare cpp executables
 add_executable(tidyroom ${tidyroom_SOURCES})
 add_executable(simpledemo src/ShortDemo.cpp)
+add_executable(rpsquirrelRoadmap ${rpsquirrelroadmap_SOURCES})
 
 add_dependencies(tidyroom ${catkin_EXPORTED_TARGETS})
 add_dependencies(simpledemo ${catkin_EXPORTED_TARGETS})
+add_dependencies(rpsquirrelRoadmap ${catkin_EXPORTED_TARGETS})
 
 target_link_libraries(tidyroom ${catkin_LIBRARIES})
 target_link_libraries(simpledemo ${catkin_LIBRARIES})
+target_link_libraries(rpsquirrelRoadmap ${catkin_LIBRARIES})
 
 ##########
 ## Test ##
