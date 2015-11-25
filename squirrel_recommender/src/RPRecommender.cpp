@@ -20,12 +20,88 @@ namespace KCL_rosplan {
 		recommender_client = nh.serviceClient<squirrel_prediction_msgs::RecommendRelations>("/recommender");
 	}
 
+	/*----------*/
+	/* read CSV */
+	/*----------*/
+
+	/**
+	 * Read from a CSV file and write new facts to the KMS
+	 */
+	bool RPRecommender::readDatabase(std_srvs::Empty::Request &req, std_srvs::Empty::Response &res) {
+
+		domain_types.clear();
+		domain_attributes.clear();
+		current_instances.clear();
+		all_instances.clear();
+		current_attributes.clear();
+
+		ros::NodeHandle nh("~");
+
+		// fetch knowledge
+		ROS_INFO("KCL: (RPRecommender) Reading database");
+
+		std::stringstream ss;
+		ss << data_path << "predicted_missing_known_full.csv";
+		std::ifstream pFile;
+		pFile.open(ss.str().c_str());
+
+		std::string line;
+		std::vector<std::string> str_list;
+		std::string preds[] = {"can_fit_inside","can_pickup","can_push","can_stack_on"};
+		std::string vars[][2] = {{"o","b"},{"v","o"},{"v","o"},{"o1","o2"}};
+
+		if (pFile.is_open()) {
+
+			// header line # object1, object2, features, confidences
+			if(!pFile.eof()) std::getline(pFile,line);	
+
+			while(!pFile.eof()) {
+
+				// parse line
+				str_list.clear();
+				for(int i=0;i<6;i++) {
+					std::getline(pFile,line,',');
+					str_list.push_back(line);
+				}
+				std::getline(pFile,line);
+
+				// 'object1','object2','can_fit_inside','can_pickup','can_push','can_stack_on','confidences'
+				for(int i=0;i<6;i++) {
+
+					if("1" == str_list[i]) {
+						// Add proposition TODO check confidence
+						rosplan_knowledge_msgs::KnowledgeUpdateService propSrv;
+						propSrv.request.update_type = rosplan_knowledge_msgs::KnowledgeUpdateService::Request::ADD_KNOWLEDGE;
+						propSrv.request.knowledge.knowledge_type = rosplan_knowledge_msgs::KnowledgeItem::FACT;
+						propSrv.request.knowledge.attribute_name = preds[(i-2)];
+						diagnostic_msgs::KeyValue oPair;
+						oPair.key = vars[(i-2)][0];
+						oPair.value = str_list[0].substr(1,str_list[0].length()-2);
+						propSrv.request.knowledge.values.push_back(oPair);
+						diagnostic_msgs::KeyValue oPair2;
+						oPair2.key = vars[(i-2)][1];
+						oPair2.value = str_list[1].substr(1,str_list[1].length()-2);
+						propSrv.request.knowledge.values.push_back(oPair2);
+						if (!update_knowledge_client.call(propSrv)) {
+							ROS_ERROR("KCL: (ObjectPerception) error adding object_at predicate");
+							return false;
+						}
+					}
+				}
+			}
+		}
+		pFile.close();
+
+		ROS_INFO("KCL: (RPRecommender) done");
+		return true;
+	}
+
 	/*-----------*/
-	/* build PRM */
+	/* build CSV */
 	/*-----------*/
 	
 	/**
-	 * Generates waypoints and stores them in the knowledge base and scene database
+	 * Read from the KMS and generate a csv file for the learning
 	 */
 	bool RPRecommender::initialiseDatabase(std_srvs::Empty::Request &req, std_srvs::Empty::Response &res) {
 
@@ -83,6 +159,9 @@ namespace KCL_rosplan {
 		pFile << "'object1','object2'";
 		for(int i=0; i<domain_attributes.size(); i++) {
 			if(domain_attributes[i].name=="object_at"
+					|| domain_attributes[i].name=="on"
+					|| domain_attributes[i].name=="holding"
+					|| domain_attributes[i].name=="inside"
 					|| domain_attributes[i].name=="box_at"
 					|| domain_attributes[i].name=="connected"
 					|| domain_attributes[i].name=="tidy_location"
@@ -95,17 +174,20 @@ namespace KCL_rosplan {
 
 		for(int i=0; i<all_instances.size(); i++) {
 
-			if(all_instances[i].substr(0,2)!="ob") continue;
+			if(all_instances[i].substr(0,2)=="wp") continue;
 
 		for(int j=0; j<all_instances.size(); j++) {
 
-			if(all_instances[j].substr(0,2)!="ob") continue;
+			if(all_instances[j].substr(0,2)=="wp") continue;
 
 			pFile << "'" << all_instances[i] << "','" << all_instances[j] << "'";
 			for(int k=0; k<domain_attributes.size(); k++) {
 
 				// 'holding','inside','on' ??
 				if(domain_attributes[k].name=="object_at"
+						|| domain_attributes[k].name=="on"
+						|| domain_attributes[k].name=="holding"
+						|| domain_attributes[k].name=="inside"
 						|| domain_attributes[k].name=="box_at"
 						|| domain_attributes[k].name=="connected"
 						|| domain_attributes[k].name=="tidy_location"
@@ -171,6 +253,7 @@ namespace KCL_rosplan {
 		// init
 		KCL_rosplan::RPRecommender rrm(nh);
 		ros::ServiceServer initdbService = nh.advertiseService("/kcl_rosplan/recommender/init_db", &KCL_rosplan::RPRecommender::initialiseDatabase, &rrm);
+		ros::ServiceServer readdbService = nh.advertiseService("/kcl_rosplan/recommender/read_db", &KCL_rosplan::RPRecommender::readDatabase, &rrm);
 
 		ROS_INFO("KCL: (RPRecommender) Ready to receive.");
 		ros::spin();

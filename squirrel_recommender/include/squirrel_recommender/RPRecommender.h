@@ -58,6 +58,7 @@ namespace KCL_rosplan {
 
 		/* database access */
 		bool initialiseDatabase(std_srvs::Empty::Request &req, std_srvs::Empty::Response &res);
+		bool readDatabase(std_srvs::Empty::Request &req, std_srvs::Empty::Response &res);
 	};
 }
 #endif
