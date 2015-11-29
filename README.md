@@ -20,6 +20,7 @@ sudo apt-get install flex
 sudo apt-get install mongodb
 sudo apt-get install ros-indigo-mongodb-store
 ```
+Finally check the requirements in squirrel_recommender.
 
 Running everything
 ==================
