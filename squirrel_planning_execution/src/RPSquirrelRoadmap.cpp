@@ -13,6 +13,7 @@ namespace KCL_rosplan {
 		nh.param("data_path", data_path, dataPath);
 		nh.param("static_map_service", static_map_service, staticMapService);
 		nh.param("use_static_map", use_static_map, false);
+		nh.param("occupancy_threshold", occupancy_threshold, 20.0);
 
 		// knowledge interface
 		get_instance_client = nh.serviceClient<rosplan_knowledge_msgs::GetInstanceService>("/kcl_rosplan/get_instances");
@@ -23,7 +24,7 @@ namespace KCL_rosplan {
 
 		// request topics
 		std::string manipulationTopic("/squirrel_manipulation/waypoint_service");
-		nh.param("data_path", manipulationTopic, manipulationTopic);
+		nh.param("manipulation_service_topic", manipulationTopic, manipulationTopic);
 		manipulation_client = nh.serviceClient<squirrel_planning_knowledge_msgs::TaskPoseService>(manipulationTopic);
 
 		// map interface
@@ -143,8 +144,7 @@ namespace KCL_rosplan {
 					tf::poseMsgToTF (map.info.origin, world_to_map);
 					tf::Point p2 = world_to_map.inverse()*p1;
 					int index = floor(p2.x()/map.info.resolution) + floor(p2.y()/map.info.resolution)*map.info.width;
-					if (map.data[index] > 20) {
-						// this point is colliding
+					if (map.data[index] > occupancy_threshold) {
 						std::cout << "DEBUG: collision detected, ignoring waypoint" << std::endl;
 					} else {
 

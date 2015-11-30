@@ -50,6 +50,7 @@ namespace KCL_rosplan {
 		std::string data_path;
 		std::string static_map_service;
 		bool use_static_map;
+		double occupancy_threshold;
 
 		// Scene database
 		mongodb_store::MessageStoreProxy message_store;
