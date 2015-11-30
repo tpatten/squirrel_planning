@@ -26,6 +26,13 @@
 	<!-- standard ROS interfaces -->
 	<node name="rosplan_interface_movebase" pkg="rosplan_interface_movebase" type="rpmovebase" respawn="false" output="screen">
 	</node>
+	<node name="rosplan_interface_mapping" pkg="rosplan_interface_mapping" type="rproadmapServer" respawn="false" output="screen">
+	    <param name="data_path" value="$(find squirrel_planning_launch)/common/" />
+	    <param name="cost_map_topic" value="/move_base/global_costmap/costmap" />
+	    <param name="odom_topic" value="/odom" />
+	    <param name="use_static_map" value="false" />
+	    <param name="static_map_service" value="/static_map" />
+	</node>
 
 	<!-- SQUIRREL interfaces -->
 	<node name="squirrel_object_server" pkg="squirrel_interface_perception" type="rpObjectPerception" respawn="false" output="screen"></node>

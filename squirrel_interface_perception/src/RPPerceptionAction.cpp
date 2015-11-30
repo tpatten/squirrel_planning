@@ -119,12 +119,12 @@ namespace KCL_rosplan {
 				move_base_msgs::MoveBaseGoal goal;
 				geometry_msgs::PoseStamped &pose = *results[0];
 				goal.target_pose = pose;
-        tf::Quaternion quat(tf::Vector3(0., 0., 1.), i*M_PI);
+				tf::Quaternion quat(tf::Vector3(0., 0., 1.), i*M_PI);
 				goal.target_pose.pose.orientation.w = quat.w();
 				goal.target_pose.pose.orientation.x = quat.x();
 				goal.target_pose.pose.orientation.y = quat.y();
 				goal.target_pose.pose.orientation.z = quat.z();
-        movebase_client.sendGoal(goal);
+				movebase_client.sendGoal(goal);
 
 				bool rotatedToAngle = movebase_client.waitForResult(ros::Duration(5*msg->duration));
 				if(!rotatedToAngle) success = false;
