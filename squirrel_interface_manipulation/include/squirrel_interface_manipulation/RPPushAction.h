@@ -2,12 +2,15 @@
 #include <vector>
 #include <iostream>
 #include <fstream>
-#include <actionlib/client/simple_action_client.h>
+#include <boost/foreach.hpp>
 #include <tf/LinearMath/Vector3.h>
 #include <tf/LinearMath/Quaternion.h>
+#include <actionlib/client/simple_action_client.h>
 #include "rosplan_dispatch_msgs/ActionDispatch.h"
 #include "rosplan_dispatch_msgs/ActionFeedback.h"
 #include "squirrel_manipulation_msgs/PushAction.h"
+#include "squirrel_manipulation_msgs/SmashAction.h"
+#include "move_base_msgs/MoveBaseAction.h"
 #include "mongodb_store/message_store.h"
 #include "geometry_msgs/PoseStamped.h"
 

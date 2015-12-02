@@ -1,15 +1,3 @@
-#include <ros/ros.h>
-#include <vector>
-#include <iostream>
-#include <fstream>
-#include <boost/foreach.hpp>
-#include <actionlib/client/simple_action_client.h>
-#include "rosplan_dispatch_msgs/ActionDispatch.h"
-#include "rosplan_dispatch_msgs/ActionFeedback.h"
-#include "squirrel_manipulation_msgs/PushAction.h"
-#include "move_base_msgs/MoveBaseAction.h"
-#include "mongodb_store/message_store.h"
-#include "geometry_msgs/PoseStamped.h"
 #include "squirrel_interface_manipulation/RPPushAction.h"
 
 /* The implementation of RPPushAction.h */
@@ -22,9 +10,9 @@ namespace KCL_rosplan {
 
 		// create the push action client
 		if(!simulate) {
-			ROS_INFO("KCL: (PushAction) waiting for action server to start on %s", actionserver.c_str());
+			ROS_INFO("KCL: (PushAction) waiting for action server to start on %s", pushactionserver.c_str());
 			push_action_client.waitForServer();
-			ROS_INFO("KCL: (PushAction) waiting for action server to start on %s", actionserver.c_str());
+			ROS_INFO("KCL: (PushAction) waiting for action server to start on %s", smashactionserver.c_str());
 			smash_action_client.waitForServer();
 		} else {
 			ROS_INFO("KCL: (PushAction) waiting for action server to start on /move_base");
@@ -49,15 +37,15 @@ namespace KCL_rosplan {
 		ROS_INFO("KCL: (PushAction) smash action recieved");
 
 		// get waypoint ID from action dispatch
-		std::string objectID;
-		bool foundObject = false;
+		std::string wpID;
+		bool foundWP = false;
 		for(size_t i=0; i<msg->parameters.size(); i++) {
-			if(0==msg->parameters[i].key.compare("ob")) {
-				objectID = msg->parameters[i].value;
-				foundObject = true;
+			if(0==msg->parameters[i].key.compare("wp")) {
+				wpID = msg->parameters[i].value;
+				foundWP = true;
 			}
 		}
-		if(!foundWP || !foundObject) {
+		if(!foundWP) {
 			ROS_INFO("KCL: (PushAction) aborting action dispatch; malformed parameters");
 			return;
 		}
@@ -85,7 +73,7 @@ namespace KCL_rosplan {
 				goal.pose.orientation.x = quat.x();
 				goal.pose.orientation.y = quat.y();
 				goal.pose.orientation.z = quat.z();
-				goal.radius = 0.3;
+				goal.radius.data = 0.3f;
 				smash_action_client.sendGoal(goal);
 
 			} else {
