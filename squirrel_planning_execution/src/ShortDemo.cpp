@@ -22,7 +22,7 @@ namespace KCL_rosplan {
 	 : message_store(nh), has_received_point_(false) {
 
 		// access to the knowledge base.
-		get_instance_client = nh.serviceClient<rosplan_knowledge_msgs::GetInstanceService>("/kcl_rosplan/get_instances");
+		get_instance_client = nh.serviceClient<rosplan_knowledge_msgs::GetInstanceService>("/kcl_rosplan/get_current_instances");
 		get_attribute_client = nh.serviceClient<rosplan_knowledge_msgs::GetAttributeService>("/kcl_rosplan/get_instances_attributes");
 		knowledge_update_client = nh.serviceClient<rosplan_knowledge_msgs::KnowledgeUpdateService>("/kcl_rosplan/update_knowledge_base");
 		filter_publisher = nh.advertise<rosplan_knowledge_msgs::Filter>("/kcl_rosplan/mission_filter", 10, true);
@@ -47,6 +47,7 @@ namespace KCL_rosplan {
 		if(count>20) {
 			received_point_ = *ptr;
 			has_received_point_ = true;
+			count = 0;
 		}
 	}
 	
@@ -85,10 +86,11 @@ namespace KCL_rosplan {
 		pose_bl.pose.position.x = received_point_.point.x;
 		pose_bl.pose.position.y = received_point_.point.y;
 		pose_bl.pose.position.z = received_point_.point.z;
-		pose_bl.pose.orientation.x = 0;
-		pose_bl.pose.orientation.y = 0;
-		pose_bl.pose.orientation.z = 0;
-		pose_bl.pose.orientation.w = 1;
+      		tf::Quaternion quat(tf::Vector3(0., 0., 1.), M_PI);
+		pose_bl.pose.orientation.w = quat.w();
+		pose_bl.pose.orientation.x = quat.x();
+		pose_bl.pose.orientation.y = quat.y();
+		pose_bl.pose.orientation.z = quat.z();
 
 		tf::TransformListener tfl;
 		try {
@@ -99,15 +101,20 @@ namespace KCL_rosplan {
 			return;
 		}
 
+		pose.pose.orientation.w = quat.w();
+		pose.pose.orientation.x = quat.x();
+		pose.pose.orientation.y = quat.y();
+		pose.pose.orientation.z = quat.z();
+
 		// set goal pose
 		goal_pose.header.frame_id = pose.header.frame_id;
 		goal_pose.pose.position.x = pose.pose.position.x;
 		goal_pose.pose.position.y = pose.pose.position.y;
 		goal_pose.pose.position.z = pose.pose.position.z;
-		goal_pose.pose.orientation.x = pose.pose.orientation.x;
-		goal_pose.pose.orientation.y = pose.pose.orientation.y;
-		goal_pose.pose.orientation.z = pose.pose.orientation.z;
-		goal_pose.pose.orientation.w = pose.pose.orientation.w;
+		goal_pose.pose.orientation.x = quat.x();
+		goal_pose.pose.orientation.y = quat.y();
+		goal_pose.pose.orientation.z = quat.z();
+		goal_pose.pose.orientation.w = quat.w();
 
 		// create new waypoint
 		rosplan_knowledge_msgs::AddWaypoint addWPSrv;
