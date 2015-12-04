@@ -97,13 +97,6 @@ namespace KCL_rosplan {
 			return;
 		}
 
-		if(!simulate_) {
-			// dispatch Perception action
-			squirrel_object_perception_msgs::LookForObjectsGoal goal;
-			goal.look_for_object = squirrel_object_perception_msgs::LookForObjectsGoal::EXPLORE;
-			action_client.sendGoal(goal);
-		}
-
 		// publish feedback (enabled)
 		publishFeedback(msg->action_id,"action enabled");
 
@@ -129,7 +122,11 @@ namespace KCL_rosplan {
 				bool rotatedToAngle = movebase_client.waitForResult(ros::Duration(5*msg->duration));
 				if(!rotatedToAngle) success = false;
 
-				// observe
+				// dispatch Perception action
+				squirrel_object_perception_msgs::LookForObjectsGoal perceptionGoal;
+				perceptionGoal.look_for_object = squirrel_object_perception_msgs::LookForObjectsGoal::EXPLORE;
+				action_client.sendGoal(perceptionGoal);
+
 				bool finished_before_timeout = action_client.waitForResult(ros::Duration(msg->duration));
 				actionlib::SimpleClientGoalState state = action_client.getState();
 				if(!finished_before_timeout) success = false;
