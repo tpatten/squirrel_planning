@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 2.8.3)
 project(squirrel_recommender)
 
-# set(Python_ADDITIONAL_VERSIONS 3.4)
+set(Python_ADDITIONAL_VERSIONS 3.4)
 find_package(catkin REQUIRED COMPONENTS
   roscpp
   rospy
