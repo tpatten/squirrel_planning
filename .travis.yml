@@ -23,6 +23,7 @@ install:
   - sudo apt-get install ros-indigo-desktop
   - sudo apt-get install flex freeglut3-dev
   - sudo apt-get install mongodb
+  - sudo apt-get install python3-catkin-tools python3-catkin-pkg
   # Use rosdep to install all dependencies (including ROS itself)
 script:
   - source /opt/ros/$CI_ROS_DISTRO/setup.bash
