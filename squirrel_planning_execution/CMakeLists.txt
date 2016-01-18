@@ -57,7 +57,7 @@ set(rpsquirrelRecursion_SOURCES
 
 ## Declare cpp executables
 add_executable(tidyroom ${tidyroom_SOURCES})
-add_executable(simpledemo src/ShortDemo.cpp)
+add_executable(simpledemo src/TidyRoomGrasping.cpp)
 add_executable(rpsquirrelRoadmap ${rpsquirrelroadmap_SOURCES})
 add_executable(rpsquirrelRecursion ${rpsquirrelRecursion_SOURCES})
 
