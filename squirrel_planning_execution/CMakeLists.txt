@@ -8,6 +8,7 @@ find_package(catkin REQUIRED COMPONENTS
   std_msgs
   rosplan_knowledge_msgs
   rosplan_dispatch_msgs
+  rosplan_planning_system
   nav_msgs
   mongodb_store
   geometry_msgs
@@ -26,8 +27,8 @@ find_package(Boost REQUIRED COMPONENTS
 
 ## Declare things to be passed to dependent projects
 catkin_package(
-  LIBRARIES squirrel_knowledge_base
-  CATKIN_DEPENDS roscpp rospy std_msgs rosplan_knowledge_msgs nav_msgs mongodb_store geometry_msgs diagnostic_msgs visualization_msgs tf
+  INCLUDE_DIRS include ${catkin_INCLUDE_DIRS}
+  CATKIN_DEPENDS roscpp rospy std_msgs rosplan_knowledge_msgs rosplan_planning_system nav_msgs mongodb_store geometry_msgs diagnostic_msgs visualization_msgs tf
   DEPENDS
 )
 
@@ -50,18 +51,25 @@ set(rpsquirrelroadmap_SOURCES
   src/RPSquirrelRoadmap.cpp
   src/RPSimpleMapVisualization.cpp)
 
+## recurse sources
+set(rpsquirrelRecursion_SOURCES
+  src/RPSquirrelRecursion.cpp)
+
 ## Declare cpp executables
 add_executable(tidyroom ${tidyroom_SOURCES})
-add_executable(simpledemo src/ShortDemo.cpp)
+add_executable(simpledemo src/TidyRoomGrasping.cpp)
 add_executable(rpsquirrelRoadmap ${rpsquirrelroadmap_SOURCES})
+add_executable(rpsquirrelRecursion ${rpsquirrelRecursion_SOURCES})
 
 add_dependencies(tidyroom ${catkin_EXPORTED_TARGETS})
 add_dependencies(simpledemo ${catkin_EXPORTED_TARGETS})
 add_dependencies(rpsquirrelRoadmap ${catkin_EXPORTED_TARGETS})
+add_dependencies(rpsquirrelRecursion ${catkin_EXPORTED_TARGETS})
 
 target_link_libraries(tidyroom ${catkin_LIBRARIES})
 target_link_libraries(simpledemo ${catkin_LIBRARIES})
 target_link_libraries(rpsquirrelRoadmap ${catkin_LIBRARIES})
+target_link_libraries(rpsquirrelRecursion ${catkin_LIBRARIES})
 
 ##########
 ## Test ##
