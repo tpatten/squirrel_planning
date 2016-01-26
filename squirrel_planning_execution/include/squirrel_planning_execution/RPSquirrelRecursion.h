@@ -4,7 +4,9 @@
 #include <fstream>
 #include <boost/foreach.hpp>
 #include "mongodb_store/message_store.h"
+#include "geometry_msgs/PoseStamped.h"
 #include "std_srvs/Empty.h"
+#include "diagnostic_msgs/KeyValue.h"
 
 #include "rosplan_dispatch_msgs/ActionDispatch.h"
 #include "rosplan_dispatch_msgs/ActionFeedback.h"
@@ -15,6 +17,8 @@
 #include "rosplan_knowledge_msgs/GetAttributeService.h"
 
 #include "rosplan_planning_system/PlanningSystem.h"
+
+#include "squirrel_planning_knowledge_msgs/TaskPoseService.h"
 
 #ifndef KCL_recursion
 #define KCL_recursion
@@ -35,6 +39,12 @@ namespace KCL_rosplan {
 		mongodb_store::MessageStoreProxy message_store;
 		ros::ServiceClient update_knowledge_client;
 		ros::Publisher action_feedback_pub;
+		
+		ros::ServiceClient get_instance_client;
+		ros::ServiceClient get_attribute_client;
+		
+		// waypoint request services
+		ros::ServiceClient classify_object_waypoint_client;
 
 	public:
 
