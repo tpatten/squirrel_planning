@@ -54,7 +54,8 @@ set(rpsquirrelroadmap_SOURCES
 ## recurse sources
 set(rpsquirrelRecursion_SOURCES
   src/RPSquirrelRecursion.cpp
-  src/ContingentPDDLGenerator.cpp)
+  src/ContingentTacticalClassifyPDDLGenerator.cpp
+  src/ContingentStrategicClassifyPDDLGenerator.cpp)
 
 ## Declare cpp executables
 add_executable(tidyroom ${tidyroom_SOURCES})

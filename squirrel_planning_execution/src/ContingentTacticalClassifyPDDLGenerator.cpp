@@ -8,11 +8,11 @@
 #include <set>
 #include <string>
 
-#include "squirrel_planning_execution/ContingentPDDLGenerator.h"
+#include "squirrel_planning_execution/ContingentTacticalClassifyPDDLGenerator.h"
 
 namespace KCL_rosplan {
 
-void ContingentPDDLGenerator::generateClassifyObjectTacticalProblem(const std::string& file_name, const KnowledgeBase& current_knowledge_base, const std::vector<const KnowledgeBase*>& knowledge_base, const Location& robot_location, const std::vector<const Location*>& locations, const std::vector<const Object*>& objects)
+void ContingentTacticalClassifyPDDLGenerator::generateProblemFile(const std::string& file_name, const KnowledgeBase& current_knowledge_base, const std::vector<const KnowledgeBase*>& knowledge_base, const Location& robot_location, const std::vector<Location*>& locations, const std::vector<Object*>& objects)
 {
 	std::vector<const State*> states;
 	for (std::vector<const KnowledgeBase*>::const_iterator ci = knowledge_base.begin(); ci != knowledge_base.end(); ++ci)
@@ -54,7 +54,7 @@ void ContingentPDDLGenerator::generateClassifyObjectTacticalProblem(const std::s
 		//myfile << "\t(gripper_empty robot " << " " << state->state_name_ << ")" << std::endl;
 		
 		// All the objects are clear inially.
-		for (std::vector<const Object*>::const_iterator ci = objects.begin(); ci != objects.end(); ++ci)
+		for (std::vector<Object*>::const_iterator ci = objects.begin(); ci != objects.end(); ++ci)
 		{
 			const Object* object = *ci;
 			//myfile << "\t(cleared " << object->name_ << " " << state->state_name_ << ")" << std::endl;
@@ -69,7 +69,7 @@ void ContingentPDDLGenerator::generateClassifyObjectTacticalProblem(const std::s
 		}
 	}
 	
-	for (std::vector<const Location*>::const_iterator ci = locations.begin(); ci != locations.end(); ++ci)
+	for (std::vector<Location*>::const_iterator ci = locations.begin(); ci != locations.end(); ++ci)
 	{
 		const Location* location = *ci;
 		for (std::vector<const Location*>::const_iterator ci = location->connected_locations_.begin(); ci != location->connected_locations_.end(); ++ci)
@@ -118,7 +118,7 @@ void ContingentPDDLGenerator::generateClassifyObjectTacticalProblem(const std::s
 	}
 	myfile << ")" << std::endl;
 	myfile << "(:goal (and" << std::endl;
-	for (std::vector<const Object*>::const_iterator ci = objects.begin(); ci != objects.end(); ++ci)
+	for (std::vector<Object*>::const_iterator ci = objects.begin(); ci != objects.end(); ++ci)
 	{
 		const Object* object = *ci;
 		for (std::vector<const State*>::const_iterator ci = current_knowledge_base.states_.begin(); ci != current_knowledge_base.states_.end(); ++ci)
@@ -132,7 +132,7 @@ void ContingentPDDLGenerator::generateClassifyObjectTacticalProblem(const std::s
 	myfile.close();
 }
 
-void ContingentPDDLGenerator::generateClassifyObjectTacticalDomain(const std::string& file_name, const KnowledgeBase& current_knowledge_base, const std::vector<const KnowledgeBase*>& knowledge_bases, const Location& robot_location, const std::vector<const Location*>& locations, const std::vector<const Object*>& objects)
+void ContingentTacticalClassifyPDDLGenerator::generateDomainFile(const std::string& file_name, const KnowledgeBase& current_knowledge_base, const std::vector<const KnowledgeBase*>& knowledge_bases, const Location& robot_location, const std::vector<Location*>& locations, const std::vector<Object*>& objects)
 {
 	std::vector<const State*> states;
 	for (std::vector<const KnowledgeBase*>::const_iterator ci = knowledge_bases.begin(); ci != knowledge_bases.end(); ++ci)
@@ -197,13 +197,13 @@ void ContingentPDDLGenerator::generateClassifyObjectTacticalDomain(const std::st
 	myfile << "(:constants" << std::endl;
 	myfile << "\t; All the waypoints." << std::endl;
 	
-	for (std::vector<const Location*>::const_iterator ci = locations.begin(); ci != locations.end(); ++ci)
+	for (std::vector<Location*>::const_iterator ci = locations.begin(); ci != locations.end(); ++ci)
 	{
 		myfile << "\t" << (*ci)->name_ << " - waypoint" << std::endl;
 	}
 
 	myfile << "\t; The objects." << std::endl;
-	for (std::vector<const Object*>::const_iterator ci = objects.begin(); ci != objects.end(); ++ci)
+	for (std::vector<Object*>::const_iterator ci = objects.begin(); ci != objects.end(); ++ci)
 	{
 		myfile << "\t" << (*ci)->name_ << " - object" << std::endl;
 	}
@@ -449,7 +449,7 @@ void ContingentPDDLGenerator::generateClassifyObjectTacticalDomain(const std::st
 		myfile << "\t\t\t(not (Rgripper_empty robot " << state->state_name_ << "))" << std::endl;
 		myfile << "\t\t)" << std::endl;
 		*/
-		for (std::vector<const Location*>::const_iterator ci = locations.begin(); ci != locations.end(); ++ci)
+		for (std::vector<Location*>::const_iterator ci = locations.begin(); ci != locations.end(); ++ci)
 		{
 			const Location* location = *ci;
 			
@@ -462,7 +462,7 @@ void ContingentPDDLGenerator::generateClassifyObjectTacticalDomain(const std::st
 			myfile << "\t\t)" << std::endl;
 		}
 		
-		for (std::vector<const Object*>::const_iterator ci = objects.begin(); ci != objects.end(); ++ci)
+		for (std::vector<Object*>::const_iterator ci = objects.begin(); ci != objects.end(); ++ci)
 		{
 			const Object* object = *ci;
 			/*
@@ -490,7 +490,7 @@ void ContingentPDDLGenerator::generateClassifyObjectTacticalDomain(const std::st
 			myfile << "\t\t\t(not (Rclassified " << object->name_ << " " << state->state_name_ << "))" << std::endl;
 			myfile << "\t\t)" << std::endl;
 			
-			for (std::vector<const Location*>::const_iterator ci = locations.begin(); ci != locations.end(); ++ci)
+			for (std::vector<Location*>::const_iterator ci = locations.begin(); ci != locations.end(); ++ci)
 			{
 				const Location* location = *ci;
 				
@@ -501,7 +501,7 @@ void ContingentPDDLGenerator::generateClassifyObjectTacticalDomain(const std::st
 				myfile << "\t\t(when (and (not (object_at " << object->name_ << " " << location->name_ << " " << state->state_name_ << ")) (m " << state->state_name_ << "))" << std::endl;
 				myfile << "\t\t\t(not (Robject_at " << object->name_ << " " << location->name_ << " " << state->state_name_ << "))" << std::endl;
 				myfile << "\t\t)" << std::endl;
-				for (std::vector<const Location*>::const_iterator ci = locations.begin(); ci != locations.end(); ++ci)
+				for (std::vector<Location*>::const_iterator ci = locations.begin(); ci != locations.end(); ++ci)
 				{
 					const Location* other_location = *ci;
 					/*
@@ -573,7 +573,7 @@ void ContingentPDDLGenerator::generateClassifyObjectTacticalDomain(const std::st
 			myfile << "\t\t\t)" << std::endl;
 			myfile << "\t\t)" << std::endl;
 			*/
-			for (std::vector<const Object*>::const_iterator ci = objects.begin(); ci != objects.end(); ++ci)
+			for (std::vector<Object*>::const_iterator ci = objects.begin(); ci != objects.end(); ++ci)
 			{
 				const Object* object = *ci;
 				/*
@@ -605,7 +605,7 @@ void ContingentPDDLGenerator::generateClassifyObjectTacticalDomain(const std::st
 				myfile << "\t\t)" << std::endl;
 			}
 			
-			for (std::vector<const Location*>::const_iterator ci = locations.begin(); ci != locations.end(); ++ci)
+			for (std::vector<Location*>::const_iterator ci = locations.begin(); ci != locations.end(); ++ci)
 			{
 				const Location* location = *ci;
 				
@@ -618,7 +618,7 @@ void ContingentPDDLGenerator::generateClassifyObjectTacticalDomain(const std::st
 				myfile << "\t\t\t)" << std::endl;
 				myfile << "\t\t)" << std::endl;
 				
-				for (std::vector<const Object*>::const_iterator ci = objects.begin(); ci != objects.end(); ++ci)
+				for (std::vector<Object*>::const_iterator ci = objects.begin(); ci != objects.end(); ++ci)
 				{
 					const Object* object = *ci;
 					myfile << "\t\t(when (and (part-of " << state->state_name_ << " ?old_kb) (object_at " << object->name_ << " " << location->name_ << " " << state->state_name_ << ") (part-of " << state2->state_name_ << " ?new_kb))" << std::endl;
@@ -655,7 +655,7 @@ void ContingentPDDLGenerator::generateClassifyObjectTacticalDomain(const std::st
 	
 	// Make sure the robot is in the same location.
 	myfile << "\t\t(or" << std::endl;
-	for (std::vector<const Location*>::const_iterator ci = locations.begin(); ci != locations.end(); ++ci)
+	for (std::vector<Location*>::const_iterator ci = locations.begin(); ci != locations.end(); ++ci)
 	{
 		const Location* location = *ci;
 		myfile << "\t\t\t(and" << std::endl;
@@ -772,7 +772,7 @@ void ContingentPDDLGenerator::generateClassifyObjectTacticalDomain(const std::st
 		myfile << "\t\t)" << std::endl;
 	}
 	*/
-	for (std::vector<const Object*>::const_iterator ci = objects.begin(); ci != objects.end(); ++ci)
+	for (std::vector<Object*>::const_iterator ci = objects.begin(); ci != objects.end(); ++ci)
 	{
 		const Object* object = *ci;
 		for (std::vector<const State*>::const_iterator ci = states.begin(); ci != states.end(); ++ci)
@@ -865,7 +865,7 @@ void ContingentPDDLGenerator::generateClassifyObjectTacticalDomain(const std::st
 	}
 	
 	// Location of the agent.
-	for (std::vector<const Location*>::const_iterator ci = locations.begin(); ci != locations.end(); ++ci)
+	for (std::vector<Location*>::const_iterator ci = locations.begin(); ci != locations.end(); ++ci)
 	{
 		const Location* location = *ci;
 		for (std::vector<const State*>::const_iterator ci = states.begin(); ci != states.end(); ++ci)
@@ -902,7 +902,7 @@ void ContingentPDDLGenerator::generateClassifyObjectTacticalDomain(const std::st
 			myfile << "\t\t)" << std::endl;
 			
 			// The locations of the objects.
-			for (std::vector<const Object*>::const_iterator ci = objects.begin(); ci != objects.end(); ++ci)
+			for (std::vector<Object*>::const_iterator ci = objects.begin(); ci != objects.end(); ++ci)
 			{
 				const Object* object = *ci;
 				
@@ -945,27 +945,42 @@ void ContingentPDDLGenerator::generateClassifyObjectTacticalDomain(const std::st
 	myfile.close();
 }
 
-void ContingentPDDLGenerator::createClassifyObjectTacticalPDDL(const std::string& path, const std::string& domain_file, const std::string& problem_file, const std::string& robot_location_predicate, const std::vector<std::string>& location_predicates, const std::string& object_name_predicate, const std::string& object_location_predicate)
+void ContingentTacticalClassifyPDDLGenerator::createPDDL(const std::string& path, const std::string& domain_file, const std::string& problem_file, const std::string& robot_location_predicate, const std::vector<std::string>& location_predicates, const std::string& object_predicate, const std::string& object_location_predicate)
 {
 	// Now generate the waypoints / boxes / toys / etc.
-	std::vector<const Location*> locations;
-	std::vector<const Location*> observable_locations;
-	std::vector<const Object*> objects;
-	Location* robot_location = new Location(robot_location_predicate, false);
+	std::vector<Location*> locations;
+	std::vector<Object*> objects;
 	
+	// Initialise the robot's location.
+	Location* robot_location = new Location(robot_location_predicate, false);
+	locations.push_back(robot_location);
+	
+	// Initialise the object's location.
+	Location* location = new Location(object_location_predicate, false);
+	locations.push_back(location);
+	Object* object = new Object(object_predicate, *location);
+	objects.push_back(object);
+	
+	// Add the observation waypoints from where we want to classify the object.
 	for (std::vector<std::string>::const_iterator ci = location_predicates.begin(); ci != location_predicates.end(); ++ci)
 	{
 		const std::string& location_predicate = *ci;
 		Location* location = new Location(location_predicate, true);
 		locations.push_back(location);
+		object->observable_locations_.push_back(location);
 	}
-	observable_locations = locations;
 	
-	
-	Location* location = new Location(object_location_predicate, false);
-	locations.push_back(location);
-	Object* object = new Object(object_name_predicate, *location, observable_locations);
-	objects.push_back(object);
+	// Make all locations fully connected.
+	for (std::vector<Location*>::const_iterator ci = locations.begin(); ci != locations.end(); ++ci)
+	{
+		Location* location = *ci;
+		for (std::vector<Location*>::const_iterator ci = locations.begin(); ci != locations.end(); ++ci)
+		{
+			Location* other_location = *ci;
+			location->connected_locations_.push_back(other_location);
+			other_location->connected_locations_.push_back(location);
+		}
+	}
 	
 	std::cout << "Creating all possible states..." << std::endl;
 
@@ -981,7 +996,7 @@ void ContingentPDDLGenerator::createClassifyObjectTacticalPDDL(const std::string
 	
 	// Create a new knowledge base for each object.
 	std::stringstream ss;
-	for (std::vector<const Object*>::const_iterator ci = objects.begin(); ci != objects.end(); ++ci)
+	for (std::vector<Object*>::const_iterator ci = objects.begin(); ci != objects.end(); ++ci)
 	{
 		const Object* object = *ci;
 		ss.str(std::string());
@@ -994,7 +1009,7 @@ void ContingentPDDLGenerator::createClassifyObjectTacticalPDDL(const std::string
 		std::map<const Object*, const Location*> stacked_objects_mapping;
 		
 		// Create a new knowledge base for each object.
-		for (std::vector<const Object*>::const_iterator ci = objects.begin(); ci != objects.end(); ++ci)
+		for (std::vector<Object*>::const_iterator ci = objects.begin(); ci != objects.end(); ++ci)
 		{
 			const Object* object = *ci;
 			ss.str(std::string());
@@ -1023,16 +1038,11 @@ void ContingentPDDLGenerator::createClassifyObjectTacticalPDDL(const std::string
 	ss.str(std::string());
 	ss << path << domain_file;
 	std::cout << "Generate domain... " << ss.str() << std::endl;
-	generateClassifyObjectTacticalDomain(ss.str(), basis_kb, knowledge_bases, *robot_location, locations, objects);
+	generateDomainFile(ss.str(), basis_kb, knowledge_bases, *robot_location, locations, objects);
 	ss.str(std::string());
 	ss << path  << problem_file;
 	std::cout << "Generate problem... " << ss.str() << std::endl;
-	generateClassifyObjectTacticalProblem(ss.str(), basis_kb, knowledge_bases, *robot_location,locations, objects);
+	generateProblemFile(ss.str(), basis_kb, knowledge_bases, *robot_location,locations, objects);
 }
-/*
-void ContingentPDDLGenerator::createClassifyMultipleObjectsPDDL(const std::string& path, const std::string& domain_file, const std::string& problem_file, const std::string& robot_location_predicate, const std::vector<std::string>& location_predicates, const std::vector<std::pair<std::string, std::string> >& object_location_predicates)
-{
-	
-}
-*/
+
 };

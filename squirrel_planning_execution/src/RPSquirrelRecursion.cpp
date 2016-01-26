@@ -1,5 +1,6 @@
 #include "squirrel_planning_execution/RPSquirrelRecursion.h"
-#include "squirrel_planning_execution/ContingentPDDLGenerator.h"
+#include "squirrel_planning_execution/ContingentStrategicClassifyPDDLGenerator.h"
+#include "squirrel_planning_execution/ContingentTacticalClassifyPDDLGenerator.h"
 
 /* The implementation of RPSquirrelRecursion.h */
 namespace KCL_rosplan {
@@ -206,7 +207,7 @@ namespace KCL_rosplan {
 			std::string problem_name = "classify_problem.pddl";
 			std::string path = "";
 			
-			ContingentPDDLGenerator::createClassifyObjectTacticalPDDL(path, domain_name, problem_name, robot_location, observation_location_predicates, object_name, object_location);
+			ContingentTacticalClassifyPDDLGenerator::createPDDL(path, domain_name, problem_name, robot_location, observation_location_predicates, object_name, object_location);
 			
 			// Run planner
 			planningSystem.system_status = READY;
