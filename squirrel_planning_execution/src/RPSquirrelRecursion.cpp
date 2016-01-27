@@ -62,21 +62,18 @@ namespace KCL_rosplan {
 		action_feedback_pub.publish(fb);
 		
 		// create new planning system
-		PlanningSystem planningSystem(*node_handle);
-		SimplePlanDispatcher spd;
-		planningSystem.plan_dispatcher = &spd;
-		
-		// publishers and such
-		planningSystem.state_publisher = node_handle->advertise<std_msgs::String>("/kcl_rosplan/system_state", 5, true);
-		planningSystem.plan_publisher = node_handle->advertise<rosplan_dispatch_msgs::CompletePlan>("/kcl_rosplan/plan", 5, true);
-		planningSystem.plan_dispatcher->action_publisher = node_handle->advertise<rosplan_dispatch_msgs::ActionDispatch>("/kcl_rosplan/action_dispatch", 1000, true);
-		planningSystem.plan_dispatcher->action_feedback_pub = node_handle->advertise<rosplan_dispatch_msgs::ActionFeedback>("/kcl_rosplan/action_feedback", 5, true);
-		ros::Subscriber feedback_sub = node_handle->subscribe("/kcl_rosplan/action_feedback", 10, &KCL_rosplan::PlanDispatcher::feedbackCallback, planningSystem.plan_dispatcher);
-		ros::Subscriber command_sub = node_handle->subscribe("/kcl_rosplan/planning_commands", 10, &KCL_rosplan::PlanningSystem::commandCallback, &planningSystem);
-		planningSystem.filter_publisher = node_handle->advertise<rosplan_knowledge_msgs::Filter>("/kcl_rosplan/planning_filter", 10, true);
-		ros::Subscriber notification_sub = node_handle->subscribe("/kcl_rosplan/notification", 10, &KCL_rosplan::PlanningSystem::notificationCallBack, &planningSystem);
-		
-		// HERE GOES PROBLEM CONSTRUCTION AND CALLING RUNPLAN
+		std::stringstream nspace;
+		nspace << msg->name << "_" << msg->action_id;
+		std::stringstream commandLine;
+		commandLine << "rosrun rosplan_planning_system planner ";
+		commandLine << "/rosplan_planning_system:=/" << nspace.str() << "/rosplan_planning_system ";
+		commandLine << "/kcl_rosplan/plan:=/kcl_rosplan" << nspace.str() << "/plan ";
+		commandLine << "/kcl_rosplan/system_state:=/kcl_rosplan" << nspace.str() << "/system_state ";
+		commandLine << "/kcl_rosplan/planning_commands:=/kcl_rosplan" << nspace.str() << "/planning_commands ";
+		commandLine << "/kcl_rosplan/planning_server:=/kcl_rosplan" << nspace.str() << "/planning_server ";
+		system(commandLine.str().c_str());
+
+		// Problem Construction and planning
 		if (msg->name == "classify_object") {
 			domain_name = "classify_domain.pddl";
 			problem_name = "classify_problem.pddl";
@@ -85,8 +82,16 @@ namespace KCL_rosplan {
 			ROS_INFO("KCL: (RPSquirrelRecursion) process the action: %s", msg->name.c_str());
 			
 			// Run planner
-			planningSystem.system_status = READY;
-			actionAchieved = planningSystem.runPlanningServer(domain_name,problem_name,path,"ff -o DOMAIN -f PROBLEM");
+			std::stringstream commandPub;
+			commandPub << "/kcl_rosplan" << nspace.str() << "/planning_commands";
+
+			std_msgs::String commandMsg;
+			commandMsg.data = "plan " + (msg->action_id*1000);
+
+			ros::NodeHandle nh;
+			ros::Publisher planningPub = nh.advertise<std_msgs::String>(commandPub.str(), 10, true);
+			planningPub.publish(commandMsg);
+			ros::spinOnce();
 		}
 
 		ROS_INFO("KCL: (RPSquirrelRecursion) Ended: %s", msg->name.c_str());
