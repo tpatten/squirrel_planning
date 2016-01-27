@@ -16,10 +16,9 @@
 #include "rosplan_knowledge_msgs/GetInstanceService.h"
 #include "rosplan_knowledge_msgs/GetAttributeService.h"
 #include "rosplan_knowledge_msgs/GenerateProblemService.h"
+#include "rosplan_dispatch_msgs/PlanningService.h"
 
-#include "rosplan_planning_system/PlanningSystem.h"
-
-#include "squirrel_planning_knowledge_msgs/TaskPoseService.h"
+#include "squirrel_waypoint_msgs/ExamineWaypoint.h"
 
 #ifndef KCL_recursion
 #define KCL_recursion
@@ -51,7 +50,7 @@ namespace KCL_rosplan {
 		ros::ServiceServer pddl_generation_service;
 		
 		// Cache the last message sent.
-		rosplan_dispatch_msgs::ActionDispatch last_received_msg;
+		std::vector<rosplan_dispatch_msgs::ActionDispatch> last_received_msg;
 		
 		// The file names and the path for the domain and problem files.
 		std::string domain_name;
