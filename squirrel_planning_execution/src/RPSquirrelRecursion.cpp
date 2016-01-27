@@ -245,7 +245,7 @@ namespace KCL_rosplan {
 			
 			// TODO Change it to the strategic contingency plan generator.
 			ContingentTacticalClassifyPDDLGenerator::createPDDL(path, domain_name, problem_name, robot_location, observation_location_predicates, object_name, object_location);
-		} else if (last_received_msg.name == "tidy_area") {
+		} else if (last_received_msg.back().name == "tidy_area") {
 			// Get all the objects in the knowledge base that are in this area. 
 			// TODO For now we assume there is only one area, so all objects in the knowledge base are relevant (unless already tidied).
 			// Get the location of the objects.
