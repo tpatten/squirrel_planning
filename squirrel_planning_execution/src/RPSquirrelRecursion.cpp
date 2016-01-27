@@ -292,8 +292,9 @@ namespace KCL_rosplan {
 				}
 			}
 			
-			std_msgs::Int8 nr_untidied_objects = object_to_location_mapping.size();
-			ROS_INFO("KCL: (RPSquirrelRecursion) Found %d untidied objects.", nr_untidied_objects);
+			std_msgs::Int8 nr_untidied_objects;
+			nr_untidied_objects.data = object_to_location_mapping.size();
+			ROS_INFO("KCL: (RPSquirrelRecursion) Found %d untidied objects.", nr_untidied_objects.data);
 			
 			// Fetch the types of the untidied objects.
 			// (is_of_type ?o - object ?t -type)
