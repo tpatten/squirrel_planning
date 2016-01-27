@@ -21,6 +21,7 @@
 	    <param name="problem_path" value="$(find squirrel_planning_launch)/common/problem.pddl" />
 		<!-- to run the planner -->
 	    <param name="planner_command" value="timeout 10 $(find rosplan_planning_system)/common/bin/popf -n" />
+            <param name="generate_default_problem" value="false" />
 	</node>
 
 	<!-- standard ROS interfaces -->

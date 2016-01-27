@@ -120,11 +120,30 @@ namespace KCL_rosplan {
 			std::vector<const KnowledgeBase*> children_;
 		};
 		
-		static void generateProblemFile(const std::string& file_name, const KnowledgeBase& current_knowledge_base, const std::vector<const KnowledgeBase*>& knowledge_base, const Location& robot_location, const std::vector<Location*>& locations, const std::vector<Object*>& objects);
+		/**
+		 * Generate the problem file given the set of objects, locations, etc.
+		 * @param file_name The path and file name of where the problem file should be written to.
+		 * @param current_knowledge_base The global knowledge base that is active in the initial state.
+		 * @param knowledge_bases All the knowledge bases the planning problem is factorised in.
+		 * @param robot_location The initial location of the robot.
+		 * @param locations All the locations that exist in the domain.
+		 * @param objects All the objects that exist in the domain that must be classified.
+		 */
+		static void generateProblemFile(const std::string& file_name, const KnowledgeBase& current_knowledge_base, const std::vector<const KnowledgeBase*>& knowledge_bases, const Location& robot_location, const std::vector<Location*>& locations, const std::vector<Object*>& objects);
+		
+		/**
+		 * Generate the domain file given the set of objects, locations, etc.
+		 * @param file_name The path and file name of where the domain file should be written to.
+		 * @param current_knowledge_base The global knowledge base that is active in the initial state.
+		 * @param knowledge_base All the knowledge bases the planning problem is factorised in.
+		 * @param robot_location The initial location of the robot.
+		 * @param locations All the locations that exist in the domain.
+		 * @param objects All the objects that exist in the domain that must be classified.
+		 */
 		static void generateDomainFile(const std::string& file_name, const KnowledgeBase& current_knowledge_base, const std::vector<const KnowledgeBase*>& knowledge_bases, const Location& robot_location, const std::vector<Location*>& locations, const std::vector<Object*>& objects);
 
 	public:
-
+		
 		/**
 		 * Create the PDDL domain and problem file, the name of the domain file is @ref{path}/@ref{domain_file} and the 
 		 * name of the problem file is @ref{path}/@ref{problem_path}.
