@@ -15,6 +15,7 @@
 #include "rosplan_knowledge_msgs/KnowledgeUpdateService.h"
 #include "rosplan_knowledge_msgs/GetInstanceService.h"
 #include "rosplan_knowledge_msgs/GetAttributeService.h"
+#include "rosplan_knowledge_msgs/GenerateProblemService.h"
 
 #include "rosplan_planning_system/PlanningSystem.h"
 
@@ -35,7 +36,7 @@ namespace KCL_rosplan {
 	{
 
 	private:
-
+		ros::NodeHandle* node_handle;
 		mongodb_store::MessageStoreProxy message_store;
 		ros::ServiceClient update_knowledge_client;
 		ros::Publisher action_feedback_pub;
@@ -45,6 +46,17 @@ namespace KCL_rosplan {
 		
 		// waypoint request services
 		ros::ServiceClient classify_object_waypoint_client;
+		
+		// call back function for the planning system that generates the PDDL domain and problem files.
+		ros::ServiceServer pddl_generation_service;
+		
+		// Cache the last message sent.
+		rosplan_dispatch_msgs::ActionDispatch last_received_msg;
+		
+		// The file names and the path for the domain and problem files.
+		std::string domain_name;
+		std::string problem_name;
+		std::string path;
 
 	public:
 
@@ -53,6 +65,9 @@ namespace KCL_rosplan {
 
 		/* listen to and process action_dispatch topic */
 		void dispatchCallback(const rosplan_dispatch_msgs::ActionDispatch::ConstPtr& msg);
+		
+		/* callback function from the ROSPlan planning system to generate the PDDL problem file (and domain in our case) */
+		bool generatePDDLProblemFile(rosplan_knowledge_msgs::GenerateProblemService::Request &req, rosplan_knowledge_msgs::GenerateProblemService::Response &res);
 	};
 }
 #endif
