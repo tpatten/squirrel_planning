@@ -21,7 +21,7 @@ namespace KCL_rosplan {
 		
 		std::string classifyTopic("/squirrel_perception_examine_waypoint");
 		nh.param("squirrel_perception_classify_waypoint_service_topic", classifyTopic, classifyTopic);
-		classify_object_waypoint_client = nh.serviceClient<squirrel_planning_knowledge_msgs::TaskPoseService>(classifyTopic);
+		classify_object_waypoint_client = nh.serviceClient<squirrel_waypoint_msgs::ExamineWaypoint>(classifyTopic);
 		
 		pddl_generation_service = nh.advertiseService("/kcl_rosplan/generate_planning_problem", &KCL_rosplan::RPSquirrelRecursion::generatePDDLProblemFile, this);
 		
@@ -45,7 +45,7 @@ namespace KCL_rosplan {
 	void RPSquirrelRecursion::dispatchCallback(const rosplan_dispatch_msgs::ActionDispatch::ConstPtr& msg) {
 
 		bool actionAchieved = false;
-		last_received_msg = *msg;
+		last_received_msg.push_back(*msg);
 		
 		ROS_INFO("KCL: (RPSquirrelRecursion) action recieved %s", msg->name.c_str());
 
@@ -55,7 +55,8 @@ namespace KCL_rosplan {
 				&& 0!=msg->name.compare("explore_area")
 				&& 0!=msg->name.compare("tidy_area"))
 			return;
-		
+
+		// publish feedback (enabled)
 		rosplan_dispatch_msgs::ActionFeedback fb;
 		fb.action_id = msg->action_id;
 		fb.status = "action enabled";
@@ -71,26 +72,33 @@ namespace KCL_rosplan {
 		commandLine << "/kcl_rosplan/system_state:=/kcl_rosplan" << nspace.str() << "/system_state ";
 		commandLine << "/kcl_rosplan/planning_commands:=/kcl_rosplan" << nspace.str() << "/planning_commands ";
 		commandLine << "/kcl_rosplan/planning_server:=/kcl_rosplan" << nspace.str() << "/planning_server ";
+		commandLine << "/kcl_rosplan/planning_server_params:=/kcl_rosplan" << nspace.str() << "/planning_server_params ";
 		system(commandLine.str().c_str());
 
 		// Problem Construction and planning
 		if (msg->name == "classify_object") {
-			domain_name = "classify_domain.pddl";
-			problem_name = "classify_problem.pddl";
-			path = "";
 			
 			ROS_INFO("KCL: (RPSquirrelRecursion) process the action: %s", msg->name.c_str());
 			
 			// Run planner
-			std::stringstream commandPub;
-			commandPub << "/kcl_rosplan" << nspace.str() << "/planning_commands";
-
-			std_msgs::String commandMsg;
-			commandMsg.data = "plan " + (msg->action_id*1000);
-
 			ros::NodeHandle nh;
-			ros::Publisher planningPub = nh.advertise<std_msgs::String>(commandPub.str(), 10, true);
-			planningPub.publish(commandMsg);
+			std::stringstream commandPub;
+			commandPub << "/kcl_rosplan" << nspace.str() << "/planning_server_params";
+			ros::ServiceClient planningClient = nh.serviceClient<rosplan_dispatch_msgs::PlanningService>(commandPub.str());
+			
+			domain_name = "classify_domain.pddl";
+			problem_name = "classify_problem.pddl";
+			path = "";
+
+			rosplan_dispatch_msgs::PlanningService psrv;
+			psrv.request.domain_path = domain_name;
+			psrv.request.problem_path = problem_name;
+			psrv.request.data_path = path;
+			psrv.request.planner_command = "ff -o DOMAIN -p PROBLEM";
+
+			if(planningClient.call(psrv)) {
+				actionAchieved = true;
+			}
 			ros::spinOnce();
 		}
 
@@ -100,22 +108,22 @@ namespace KCL_rosplan {
 		else
 			fb.status = "action failed";
 		action_feedback_pub.publish(fb);
+
+		last_received_msg.pop_back();
 	}
 	
 	/* Callback function that gets called by ROSPlan, we construct a domain and problem file */
 	bool RPSquirrelRecursion::generatePDDLProblemFile(rosplan_knowledge_msgs::GenerateProblemService::Request &req, rosplan_knowledge_msgs::GenerateProblemService::Response &res)
 	{
-		ROS_INFO("RPSquirrelRecursion::generatePDDLProblemFile %s, with last msg: %s.", req.problem_path.c_str(), last_received_msg.name.c_str());
+		ROS_INFO("RPSquirrelRecursion::generatePDDLProblemFile %s, with last msg: %s.", req.problem_path.c_str(), last_received_msg.back().name.c_str());
 		// Create the classify_object contingent domain and problem files.
-		if (last_received_msg.name == "classify_object") {
+		if (last_received_msg.back().name == "classify_object") {
 		
 			// Find the object that needs to be classified.
+			ROS_INFO("KCL: (RPSquirrelRecursion) Started: %s", last_received_msg.back().name.c_str());
 			std::string object_name;
 			
-			// publish feedback (enabled)
-			ROS_INFO("KCL: (RPSquirrelRecursion) Started: %s", last_received_msg.name.c_str());
-			
-			for (std::vector<diagnostic_msgs::KeyValue>::const_iterator ci = last_received_msg.parameters.begin(); ci != last_received_msg.parameters.end(); ++ci) {
+			for (std::vector<diagnostic_msgs::KeyValue>::const_iterator ci = last_received_msg.back().parameters.begin(); ci != last_received_msg.back().parameters.end(); ++ci) {
 				if ("o" == (*ci).key) {
 					object_name = (*ci).value;
 				}
@@ -174,21 +182,14 @@ namespace KCL_rosplan {
 			geometry_msgs::PoseStamped &objPose = *results[0];
 
 			// TODO Change to actual service type.
-			squirrel_planning_knowledge_msgs::TaskPoseService getTaskPose;
-			getTaskPose.request.target.header = objPose.header;
-			getTaskPose.request.target.point = objPose.pose.position;
+			squirrel_waypoint_msgs::ExamineWaypoint getTaskPose;
+			getTaskPose.request.object_pose.header = objPose.header;
+			getTaskPose.request.object_pose.pose = objPose.pose;
 			if (!classify_object_waypoint_client.call(getTaskPose)) {
 				ROS_ERROR("KCL: (RPSquirrelRoadmap) Failed to recieve classification waypoints for %s.", object_name.c_str());
 				return false;
 			}
-			// Dummy test code.
-			/*
-			for (unsigned int i = 0; i < 4; ++i)
-			{
-				geometry_msgs::PoseWithCovariance p;
-				getTaskPose.response.poses.push_back(p);
-			}
-			*/
+
 			std_msgs::Int8 debug_pose_number;
 			debug_pose_number.data = getTaskPose.response.poses.size();
 			ROS_INFO("KCL: (RPSquirrelRecursion) Found %d observation poses", debug_pose_number.data);
@@ -197,7 +198,6 @@ namespace KCL_rosplan {
 			std::stringstream ss;
 			std::vector<std::string> observation_location_predicates;
 			for(int i=0;i<getTaskPose.response.poses.size(); i++) {
-				geometry_msgs::Point p = getTaskPose.response.poses[i].pose.position;
 				
 				ss.str(std::string());
 				ss << object_name << "_observation_wp" << i;
@@ -241,7 +241,7 @@ namespace KCL_rosplan {
 			
 			// TODO Change it to the strategic contingency plan generator.
 			ContingentTacticalClassifyPDDLGenerator::createPDDL(path, domain_name, problem_name, robot_location, observation_location_predicates, object_name, object_location);
-		} /*else if (last_received_msg.name == "tidy_area") {
+		} /*else if (last_received_msg.back().name == "tidy_area") {
 			// Get all the objects in the knowledge base that are in this area. 
 			// TODO For now we assume there is only one area, so all objects in the knowledge base are relevant (unless already tidied).
 			// Get the location of the objects.
