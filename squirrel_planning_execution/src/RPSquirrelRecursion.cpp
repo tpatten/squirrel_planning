@@ -77,32 +77,29 @@ namespace KCL_rosplan {
 		commandLine << "/kcl_rosplan/planning_server_params:=/kcl_rosplan" << nspace.str() << "/planning_server_params ";
 		system(commandLine.str().c_str());
 
-		// Problem Construction and planning
-		if (msg->name == "classify_object") {
-			
-			ROS_INFO("KCL: (RPSquirrelRecursion) process the action: %s", msg->name.c_str());
-			
-			// Run planner
-			ros::NodeHandle nh;
-			std::stringstream commandPub;
-			commandPub << "/kcl_rosplan" << nspace.str() << "/planning_server_params";
-			ros::ServiceClient planningClient = nh.serviceClient<rosplan_dispatch_msgs::PlanningService>(commandPub.str());
-			
-			domain_name = "classify_domain.pddl";
-			problem_name = "classify_problem.pddl";
-			path = "";
+		// Problem Construction and planning		
+		ROS_INFO("KCL: (RPSquirrelRecursion) process the action: %s", msg->name.c_str());
+		
+		// Run planner
+		ros::NodeHandle nh;
+		std::stringstream commandPub;
+		commandPub << "/kcl_rosplan" << nspace.str() << "/planning_server_params";
+		ros::ServiceClient planningClient = nh.serviceClient<rosplan_dispatch_msgs::PlanningService>(commandPub.str());
+		
+		domain_name = "classify_domain.pddl";
+		problem_name = "classify_problem.pddl";
+		path = "";
 
-			rosplan_dispatch_msgs::PlanningService psrv;
-			psrv.request.domain_path = domain_name;
-			psrv.request.problem_path = problem_name;
-			psrv.request.data_path = path;
-			psrv.request.planner_command = "ff -o DOMAIN -p PROBLEM";
+		rosplan_dispatch_msgs::PlanningService psrv;
+		psrv.request.domain_path = domain_name;
+		psrv.request.problem_path = problem_name;
+		psrv.request.data_path = path;
+		psrv.request.planner_command = "ff -o DOMAIN -p PROBLEM";
 
-			if(planningClient.call(psrv)) {
-				actionAchieved = true;
-			}
-			ros::spinOnce();
+		if(planningClient.call(psrv)) {
+			actionAchieved = true;
 		}
+		ros::spinOnce();
 
 		ROS_INFO("KCL: (RPSquirrelRecursion) Ended: %s", msg->name.c_str());
 		if(actionAchieved)
