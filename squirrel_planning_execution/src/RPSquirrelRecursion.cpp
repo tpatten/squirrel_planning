@@ -3,6 +3,11 @@
 #include "squirrel_planning_execution/RPSquirrelRecursion.h"
 #include "squirrel_planning_execution/ContingentStrategicClassifyPDDLGenerator.h"
 #include "squirrel_planning_execution/ContingentTacticalClassifyPDDLGenerator.h"
+#include "squirrel_planning_execution/ContingentTidyPDDLGenerator.h"
+#include <squirrel_planning_execution/ViewConeGenerator.h>
+#include <rosplan_planning_system/PlanningEnvironment.h>
+#include <rosplan_planning_system/PDDLProblemGenerator.h>
+#include <map>
 
 /* The implementation of RPSquirrelRecursion.h */
 namespace KCL_rosplan {
@@ -24,6 +29,10 @@ namespace KCL_rosplan {
 		classify_object_waypoint_client = nh.serviceClient<squirrel_waypoint_msgs::ExamineWaypoint>(classifyTopic);
 		
 		pddl_generation_service = nh.advertiseService("/kcl_rosplan/generate_planning_problem", &KCL_rosplan::RPSquirrelRecursion::generatePDDLProblemFile, this);
+		
+		std::string occupancyTopic("/squirrel_nav/occupancy_map");
+		nh.param("occupancy_topic", occupancyTopic, occupancyTopic);
+		view_cone_generator = new ViewConeGenerator(nh, occupancyTopic);
 		
 		geometry_msgs::PoseStamped pose;
 		pose.header.frame_id = "map";
@@ -68,25 +77,38 @@ namespace KCL_rosplan {
 		commandLine << "/kcl_rosplan/planning_server:=/kcl_rosplan/" << nspace.str() << "/planning_server ";
 		commandLine << "/kcl_rosplan/planning_server_params:=/kcl_rosplan/" << nspace.str() << "/planning_server_params ";
 		commandLine << "/kcl_rosplan/start_planning:=/kcl_rosplan/" << nspace.str() << "/start_planning ";
-		system(commandLine.str().c_str());
+		int return_value = system(commandLine.str().c_str());
+		
+		std_msgs::Int8 return_value_int8;
+		return_value_int8.data = return_value;
+		ROS_INFO("KCL: (RPSquirrelRecursion) planner returned with value: %d", return_value_int8.data);
 
-		// Problem Construction and planning
-		if (msg->name == "classify_object") {
-			
-			ROS_INFO("KCL: (RPSquirrelRecursion) process the action: %s", msg->name.c_str());
-			
-			// create action client
-			ros::NodeHandle nh;
-			std::stringstream commandPub;
-			commandPub << "/kcl_rosplan" << nspace.str() << "/start_planning";
-			actionlib::SimpleActionClient<rosplan_dispatch_msgs::PlanAction> plan_action_client(commandPub.str(), true);
-			ROS_INFO("KCL: (RPSquirrelRecursion) Waiting for action server to start.");
-			plan_action_client.waitForServer();
-
-			// construct goal
-			domain_name = "classify_domain.pddl";
-			problem_name = "classify_problem.pddl";
+		// Problem Construction and planning		
+		ROS_INFO("KCL: (RPSquirrelRecursion) process the action: %s", msg->name.c_str());
+		
+		// create action client
+		ros::NodeHandle nh;
+		std::stringstream commandPub;
+		commandPub << "/kcl_rosplan" << nspace.str() << "/start_planning";
+		actionlib::SimpleActionClient<rosplan_dispatch_msgs::PlanAction> plan_action_client(commandPub.str(), true);
+		ROS_INFO("KCL: (RPSquirrelRecursion) Waiting for action server to start.");
+		plan_action_client.waitForServer();
+		
+		if(msg->name == "classify_object" ||
+		   msg->name == "examine_area" ||
+		   msg->name == "tidy_area") {
+			std::stringstream ss;
+			ss << msg->name << "_domain.pddl";
+			domain_name = ss.str();
+			ss.str(std::string());
+			ss << msg->name << "_problem.pddl";
+			problem_name = ss.str();
 			path = "";
+		} else if (msg->name == "explore_area") {
+			domain_name = "domain_explore.pddl";
+			problem_name = "problem_explore.pddl";
+			path = "";
+		}
 
 			rosplan_dispatch_msgs::PlanGoal psrv;
 			psrv.domain_path = domain_name;
@@ -134,11 +156,109 @@ namespace KCL_rosplan {
 	bool RPSquirrelRecursion::generatePDDLProblemFile(rosplan_knowledge_msgs::GenerateProblemService::Request &req, rosplan_knowledge_msgs::GenerateProblemService::Response &res)
 	{
 		ROS_INFO("RPSquirrelRecursion::generatePDDLProblemFile %s, with last msg: %s.", req.problem_path.c_str(), last_received_msg.back().name.c_str());
+		
+		ROS_INFO("KCL: (RPSquirrelRecursion) Started: %s", last_received_msg.back().name.c_str());
+		
+		if (last_received_msg.back().name == "explore_area") {
+			
+			std::vector<geometry_msgs::Pose> view_poses = view_cone_generator->createViewCones(10, 5, 30.0f, 2.0f, 100);
+			
+			// Add these poses to the knowledge base.
+			rosplan_knowledge_msgs::KnowledgeUpdateService add_waypoints_service;
+			add_waypoints_service.request.update_type = rosplan_knowledge_msgs::KnowledgeUpdateService::Request::ADD_KNOWLEDGE;
+			
+			unsigned int waypoint_number = 0;
+			std::stringstream ss;
+			for (std::vector<geometry_msgs::Pose>::const_iterator ci = view_poses.begin(); ci != view_poses.end(); ++ci) {
+				
+				ss.str(std::string());
+				ss << "explore_wp" << waypoint_number;
+				rosplan_knowledge_msgs::KnowledgeItem waypoint_knowledge;
+				waypoint_knowledge.knowledge_type = rosplan_knowledge_msgs::KnowledgeItem::INSTANCE;
+				waypoint_knowledge.instance_type = "waypoint";
+				waypoint_knowledge.instance_name = ss.str();
+				add_waypoints_service.request.knowledge = waypoint_knowledge;
+				if (!update_knowledge_client.call(add_waypoints_service)) {
+					ROS_ERROR("KCL: (RPSquirrelRecursion) Could not add an explore wayoint to the knowledge base.");
+					exit(-1);
+				}
+				++waypoint_number;
+			}
+			
+			std_msgs::Int8 nr_waypoint_number_int8;
+			nr_waypoint_number_int8.data = waypoint_number;
+			ROS_INFO("KCL: (RPSquirrelRecursion) Added %d waypoints to the knowledge base.", nr_waypoint_number_int8.data);
+			
+			// Next we need to call the default planner generator.
+			ss.str(std::string());
+			ss << path << "/" << domain_name << ".pddl";
+			
+			PlanningEnvironment planning_environment;
+			planning_environment.parseDomain(ss.str());
+			planning_environment.update(*node_handle);
+			PDDLProblemGenerator pddl_problem_generator;
+			
+			ss.str(std::string());
+			ss << path << "/" << problem_name << ".pddl";
+			std::string test = ss.str();
+			
+			pddl_problem_generator.generatePDDLProblemFile(planning_environment, test);
+		} else if (last_received_msg.back().name == "examine_area") {
+			
+			// Fetch all the objects.
+			rosplan_knowledge_msgs::GetAttributeService get_attribute;
+			get_attribute.request.predicate_name = "object_at";
+			if (!get_attribute_client.call(get_attribute)) {
+				ROS_ERROR("KCL: (RPSquirrelRoadmap) Failed to recieve the attributes of the predicate 'object_at'");
+				return false;
+			}
+			
+			std::map<std::string, std::string> object_to_location_mappings;
+			for (std::vector<rosplan_knowledge_msgs::KnowledgeItem>::const_iterator ci = get_attribute.response.attributes.begin(); ci != get_attribute.response.attributes.end(); ++ci) {
+				const rosplan_knowledge_msgs::KnowledgeItem& knowledge_item = *ci;
+				std::string object_predicate;
+				std::string location_predicate;
+				for (std::vector<diagnostic_msgs::KeyValue>::const_iterator ci = knowledge_item.values.begin(); ci != knowledge_item.values.end(); ++ci) {
+					const diagnostic_msgs::KeyValue& key_value = *ci;
+					if ("o" == key_value.key) {
+						object_predicate = key_value.value;
+					}
+					
+					if ("wp" == key_value.key) {
+						location_predicate = key_value.value;
+					}
+				}
+				
+				object_to_location_mappings[object_predicate] = location_predicate;
+			}
+			std_msgs::Int8 nr_objects;
+			nr_objects.data = object_to_location_mappings.size();
+			ROS_INFO("KCL: (RPSquirrelRecursion) Found %d objects to eximine.", nr_objects.data);
+			
+			std::string robot_location;
+			for (std::vector<diagnostic_msgs::KeyValue>::const_iterator ci = get_attribute.response.attributes[0].values.begin(); ci != get_attribute.response.attributes[0].values.end(); ++ci) {
+				const diagnostic_msgs::KeyValue& knowledge_item = *ci;
+				
+				ROS_INFO("KCL: (RPSquirrelRecursion) Process robot_at attribute: %s %s", knowledge_item.key.c_str(), knowledge_item.value.c_str());
+				
+				if ("wp" == knowledge_item.key) {
+					robot_location = knowledge_item.value;
+				}
+			}
+			
+			if ("" == robot_location) {
+				ROS_ERROR("KCL: (RPSquirrelRoadmap) Failed to recieve the location of Kenny");
+				return false;
+			}
+			
+			ROS_INFO("KCL: (RPSquirrelRecursion) Kenny is at waypoint: %s", robot_location.c_str());
+			
+			ContingentStrategicClassifyPDDLGenerator::createPDDL(path, domain_name, problem_name, robot_location, object_to_location_mappings, 3);
+			
 		// Create the classify_object contingent domain and problem files.
-		if (last_received_msg.back().name == "classify_object") {
+		} else if (last_received_msg.back().name == "classify_object") {
 		
 			// Find the object that needs to be classified.
-			ROS_INFO("KCL: (RPSquirrelRecursion) Started: %s", last_received_msg.back().name.c_str());
 			std::string object_name;
 			
 			for (std::vector<diagnostic_msgs::KeyValue>::const_iterator ci = last_received_msg.back().parameters.begin(); ci != last_received_msg.back().parameters.end(); ++ci) {
@@ -150,6 +270,7 @@ namespace KCL_rosplan {
 			ROS_INFO("KCL: (RPSquirrelRecursion) Object name is: %s", object_name.c_str());
 			
 			// Get the location of the object.
+			// (object_at ?o - object ?wp - location)
 			rosplan_knowledge_msgs::GetAttributeService get_attribute;
 			get_attribute.request.predicate_name = "object_at";
 			if (!get_attribute_client.call(get_attribute)) {
@@ -198,8 +319,7 @@ namespace KCL_rosplan {
 
 			// request classification waypoints for object
 			geometry_msgs::PoseStamped &objPose = *results[0];
-
-			// TODO Change to actual service type.
+			
 			squirrel_waypoint_msgs::ExamineWaypoint getTaskPose;
 			getTaskPose.request.object_pose.header = objPose.header;
 			getTaskPose.request.object_pose.pose = objPose.pose;
@@ -257,12 +377,12 @@ namespace KCL_rosplan {
 			
 			ROS_INFO("KCL: (RPSquirrelRecursion) Kenny is at waypoint: %s", robot_location.c_str());
 			
-			// TODO Change it to the strategic contingency plan generator.
 			ContingentTacticalClassifyPDDLGenerator::createPDDL(path, domain_name, problem_name, robot_location, observation_location_predicates, object_name, object_location);
-		} /*else if (last_received_msg.back().name == "tidy_area") {
+		} else if (last_received_msg.back().name == "tidy_area") {
 			// Get all the objects in the knowledge base that are in this area. 
 			// TODO For now we assume there is only one area, so all objects in the knowledge base are relevant (unless already tidied).
 			// Get the location of the objects.
+			// (object_at ?o - object ?wp - location)
 			rosplan_knowledge_msgs::GetAttributeService get_attribute;
 			get_attribute.request.predicate_name = "object_at";
 			if (!get_attribute_client.call(get_attribute)) {
@@ -270,56 +390,151 @@ namespace KCL_rosplan {
 				return false;
 			}
 			
-			std::vector<rosplan_knowledge_msgs::KnowledgeItem> object_locations = get_attribute.response.attributes;
+			// Create a mapping of each object to its location.
+			std::map<std::string, std::string> object_to_location_mapping;
+			for (std::vector<rosplan_knowledge_msgs::KnowledgeItem>::const_iterator ci = get_attribute.response.attributes.begin(); ci != get_attribute.response.attributes.end(); ++ci) {
+				const rosplan_knowledge_msgs::KnowledgeItem& knowledge_item = *ci;
+				std::string object_predicate;
+				std::string object_location_predicate;
+				for (std::vector<diagnostic_msgs::KeyValue>::const_iterator ci = knowledge_item.values.begin(); ci != knowledge_item.values.end(); ++ci) {
+					const diagnostic_msgs::KeyValue& key_value = *ci;
+					if ("o" == key_value.key) {
+						object_predicate = key_value.value;
+					} else if ("wp" == key_value.key) {
+						object_location_predicate = key_value.value;
+					}
+				}
+			}
 			
 			// Filter those objects that are already tidied.
+			// (tidy ?o - object)
 			get_attribute.request.predicate_name = "tidy";
 			if (!get_attribute_client.call(get_attribute)) {
 				ROS_ERROR("KCL: (RPSquirrelRoadmap) Failed to recieve the attributes of the predicate 'tidy'");
 				return false;
 			}
 			
-			(tidy ?o - object
 			for (std::vector<rosplan_knowledge_msgs::KnowledgeItem>::const_iterator ci = get_attribute.response.attributes.begin(); ci != get_attribute.response.attributes.end(); ++ci) {
 				const rosplan_knowledge_msgs::KnowledgeItem& knowledge_item = *ci;
 				for (std::vector<diagnostic_msgs::KeyValue>::const_iterator ci = knowledge_item.values.begin(); ci != knowledge_item.values.end(); ++ci) {
 					const diagnostic_msgs::KeyValue& key_value = *ci;
 					if ("o" == key_value.key) {
-						found_object_location = true;
+						object_to_location_mapping.erase(key_value.value);
+						break;
 					}
-					
-					if ("wp" == key_value.key) {
-						object_location = key_value.value;
+				}
+			}
+			
+			std_msgs::Int8 nr_untidied_objects;
+			nr_untidied_objects.data = object_to_location_mapping.size();
+			ROS_INFO("KCL: (RPSquirrelRecursion) Found %d untidied objects.", nr_untidied_objects.data);
+			
+			// Fetch the types of the untidied objects.
+			// (is_of_type ?o - object ?t -type)
+			get_attribute.request.predicate_name = "is_of_type";
+			if (!get_attribute_client.call(get_attribute)) {
+				ROS_ERROR("KCL: (RPSquirrelRoadmap) Failed to recieve the attributes of the predicate 'is_of_type'");
+				return false;
+			}
+			
+			std::map<std::string, std::string> object_to_type_mapping;
+			for (std::vector<rosplan_knowledge_msgs::KnowledgeItem>::const_iterator ci = get_attribute.response.attributes.begin(); ci != get_attribute.response.attributes.end(); ++ci) {
+				const rosplan_knowledge_msgs::KnowledgeItem& knowledge_item = *ci;
+				std::string type_predicate;
+				std::string object_predicate;
+				for (std::vector<diagnostic_msgs::KeyValue>::const_iterator ci = knowledge_item.values.begin(); ci != knowledge_item.values.end(); ++ci) {
+					const diagnostic_msgs::KeyValue& key_value = *ci;
+					if ("o" == key_value.key && object_to_location_mapping.count(key_value.value) == 1) {
+						object_predicate = key_value.value;
+					} else if ("t" == key_value.key) {
+						type_predicate = key_value.value;
 					}
 				}
 				
-				if (found_object_location) {
-					break;
+				if ("" != object_predicate) {
+					object_to_type_mapping[object_predicate] = type_predicate;
 				}
 			}
 			
-			if (!found_object_location) {
-				ROS_ERROR("KCL: (RPSquirrelRoadmap) Failed to recieve the location of the object %s", object_name.c_str());
+			// Get the location of the boxes.
+			// (box_at ?b - box ?wp - waypoint)
+			get_attribute.request.predicate_name = "box_at";
+			if (!get_attribute_client.call(get_attribute)) {
+				ROS_ERROR("KCL: (RPSquirrelRoadmap) Failed to recieve the attributes of the predicate 'box_at'");
 				return false;
 			}
 			
-			ROS_INFO("KCL: (RPSquirrelRecursion) Object location is: %s", object_location.c_str());
-			
-			// fetch position of object from message store
-			std::vector< boost::shared_ptr<geometry_msgs::PoseStamped> > results;
-			if(message_store.queryNamed<geometry_msgs::PoseStamped>(object_name, results)) {
-				if(results.size()<1) {
-					ROS_ERROR("KCL: (RPSquirrelRoadmap) aborting waypoint request; no matching obID %s", object_name.c_str());
-					return false;
+			std::map<std::string, std::string> box_to_location_mapping;
+			for (std::vector<rosplan_knowledge_msgs::KnowledgeItem>::const_iterator ci = get_attribute.response.attributes.begin(); ci != get_attribute.response.attributes.end(); ++ci) {
+				const rosplan_knowledge_msgs::KnowledgeItem& knowledge_item = *ci;
+				std::string box_predicate;
+				std::string box_location_predicate;
+				for (std::vector<diagnostic_msgs::KeyValue>::const_iterator ci = knowledge_item.values.begin(); ci != knowledge_item.values.end(); ++ci) {
+					const diagnostic_msgs::KeyValue& key_value = *ci;
+					if ("b" == key_value.key) {
+						box_predicate = key_value.value;
+					} else if ("wp" == key_value.key) {
+						box_location_predicate = key_value.value;
+					}
 				}
-			} else {
-				ROS_ERROR("KCL: (RPSquirrelRoadmap) could not query message store to fetch object pose");
+				
+				box_to_location_mapping[box_predicate] = box_location_predicate;
+			}
+			
+			// Figure out which types of objects fit in each box.
+			// (can_fit_inside ?t - type ?b - box)
+			get_attribute.request.predicate_name = "can_fit_inside";
+			if (!get_attribute_client.call(get_attribute)) {
+				ROS_ERROR("KCL: (RPSquirrelRoadmap) Failed to recieve the attributes of the predicate 'box_at'");
 				return false;
 			}
-
-			// request classification waypoints for object
-			geometry_msgs::PoseStamped &objPose = *results[0];
-		}*/
+			
+			std::map<std::string, std::string> box_to_type_mapping;
+			for (std::vector<rosplan_knowledge_msgs::KnowledgeItem>::const_iterator ci = get_attribute.response.attributes.begin(); ci != get_attribute.response.attributes.end(); ++ci) {
+				const rosplan_knowledge_msgs::KnowledgeItem& knowledge_item = *ci;
+				std::string box_predicate;
+				std::string type_predicate;
+				for (std::vector<diagnostic_msgs::KeyValue>::const_iterator ci = knowledge_item.values.begin(); ci != knowledge_item.values.end(); ++ci) {
+					const diagnostic_msgs::KeyValue& key_value = *ci;
+					if ("b" == key_value.key) {
+						box_predicate = key_value.value;
+					} else if ("t" == key_value.key) {
+						type_predicate = key_value.value;
+					}
+				}
+				
+				box_to_type_mapping[box_predicate] = type_predicate;
+			}
+			
+			// Get the location of kenny.
+			// (robot_at ?r - robot ?wp - waypoint)
+			get_attribute.request.predicate_name = "robot_at";
+			if (!get_attribute_client.call(get_attribute) || get_attribute.response.attributes.size() != 1) {
+				ROS_ERROR("KCL: (RPSquirrelRoadmap) Failed to recieve the attributes of the predicate 'robot_at'");
+				return false;
+			}
+			
+			std::string robot_location;
+			for (std::vector<diagnostic_msgs::KeyValue>::const_iterator ci = get_attribute.response.attributes[0].values.begin(); ci != get_attribute.response.attributes[0].values.end(); ++ci) {
+				const diagnostic_msgs::KeyValue& knowledge_item = *ci;
+				
+				ROS_INFO("KCL: (RPSquirrelRecursion) Process robot_at attribute: %s %s", knowledge_item.key.c_str(), knowledge_item.value.c_str());
+				
+				if ("wp" == knowledge_item.key) {
+					robot_location = knowledge_item.value;
+				}
+			}
+			
+			if ("" == robot_location) {
+				ROS_ERROR("KCL: (RPSquirrelRoadmap) Failed to recieve the location of Kenny");
+				return false;
+			}
+			
+			ROS_INFO("KCL: (RPSquirrelRecursion) Kenny is at waypoint: %s", robot_location.c_str());
+			
+			
+			ContingentTidyPDDLGenerator::createPDDL(path, domain_name, problem_name, robot_location, object_to_location_mapping, object_to_type_mapping, box_to_location_mapping, box_to_type_mapping);
+		}
 		
 		// Domain and problem files are generated!
 		return true;

@@ -16,6 +16,7 @@ find_package(catkin REQUIRED COMPONENTS
   diagnostic_msgs
   visualization_msgs
   tf
+  occupancy_grid_utils
 )
 
 find_package(Boost REQUIRED COMPONENTS
@@ -29,7 +30,7 @@ find_package(Boost REQUIRED COMPONENTS
 ## Declare things to be passed to dependent projects
 catkin_package(
   INCLUDE_DIRS include ${catkin_INCLUDE_DIRS}
-  CATKIN_DEPENDS roscpp rospy std_msgs actionlib rosplan_knowledge_msgs rosplan_planning_system nav_msgs mongodb_store geometry_msgs diagnostic_msgs visualization_msgs tf
+  CATKIN_DEPENDS roscpp rospy std_msgs actionlib rosplan_knowledge_msgs rosplan_planning_system nav_msgs mongodb_store geometry_msgs diagnostic_msgs visualization_msgs tf occupancy_grid_utils
   DEPENDS
 )
 
@@ -56,7 +57,9 @@ set(rpsquirrelroadmap_SOURCES
 set(rpsquirrelRecursion_SOURCES
   src/RPSquirrelRecursion.cpp
   src/ContingentTacticalClassifyPDDLGenerator.cpp
-  src/ContingentStrategicClassifyPDDLGenerator.cpp)
+  src/ContingentStrategicClassifyPDDLGenerator.cpp
+  src/ContingentTidyPDDLGenerator.cpp
+  src/ViewConeGenerator.cpp)
 
 ## Declare cpp executables
 add_executable(tidyroom ${tidyroom_SOURCES})
