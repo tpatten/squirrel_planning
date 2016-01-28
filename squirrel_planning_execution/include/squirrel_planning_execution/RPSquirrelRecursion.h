@@ -7,7 +7,9 @@
 #include "geometry_msgs/PoseStamped.h"
 #include "std_srvs/Empty.h"
 #include "diagnostic_msgs/KeyValue.h"
+#include <actionlib/client/simple_action_client.h>
 
+#include "rosplan_dispatch_msgs/PlanAction.h"
 #include "rosplan_dispatch_msgs/ActionDispatch.h"
 #include "rosplan_dispatch_msgs/ActionFeedback.h"
 
@@ -37,9 +39,10 @@ namespace KCL_rosplan {
 	private:
 		ros::NodeHandle* node_handle;
 		mongodb_store::MessageStoreProxy message_store;
-		ros::ServiceClient update_knowledge_client;
 		ros::Publisher action_feedback_pub;
 		
+		/* knowledge service clients */
+		ros::ServiceClient update_knowledge_client;
 		ros::ServiceClient get_instance_client;
 		ros::ServiceClient get_attribute_client;
 		

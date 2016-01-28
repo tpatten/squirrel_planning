@@ -55,12 +55,6 @@ namespace KCL_rosplan {
 				&& 0!=msg->name.compare("explore_area")
 				&& 0!=msg->name.compare("tidy_area"))
 			return;
-
-		// publish feedback (enabled)
-		rosplan_dispatch_msgs::ActionFeedback fb;
-		fb.action_id = msg->action_id;
-		fb.status = "action enabled";
-		action_feedback_pub.publish(fb);
 		
 		// create new planning system
 		std::stringstream nspace;
@@ -68,11 +62,12 @@ namespace KCL_rosplan {
 		std::stringstream commandLine;
 		commandLine << "rosrun rosplan_planning_system planner ";
 		commandLine << "/rosplan_planning_system:=/" << nspace.str() << "/rosplan_planning_system ";
-		commandLine << "/kcl_rosplan/plan:=/kcl_rosplan" << nspace.str() << "/plan ";
-		commandLine << "/kcl_rosplan/system_state:=/kcl_rosplan" << nspace.str() << "/system_state ";
-		commandLine << "/kcl_rosplan/planning_commands:=/kcl_rosplan" << nspace.str() << "/planning_commands ";
-		commandLine << "/kcl_rosplan/planning_server:=/kcl_rosplan" << nspace.str() << "/planning_server ";
-		commandLine << "/kcl_rosplan/planning_server_params:=/kcl_rosplan" << nspace.str() << "/planning_server_params ";
+		commandLine << "/kcl_rosplan/plan:=/kcl_rosplan/" << nspace.str() << "/plan ";
+		commandLine << "/kcl_rosplan/system_state:=/kcl_rosplan/" << nspace.str() << "/system_state ";
+		commandLine << "/kcl_rosplan/planning_commands:=/kcl_rosplan/" << nspace.str() << "/planning_commands ";
+		commandLine << "/kcl_rosplan/planning_server:=/kcl_rosplan/" << nspace.str() << "/planning_server ";
+		commandLine << "/kcl_rosplan/planning_server_params:=/kcl_rosplan/" << nspace.str() << "/planning_server_params ";
+		commandLine << "/kcl_rosplan/start_planning:=/kcl_rosplan/" << nspace.str() << "/start_planning ";
 		system(commandLine.str().c_str());
 
 		// Problem Construction and planning
@@ -80,35 +75,58 @@ namespace KCL_rosplan {
 			
 			ROS_INFO("KCL: (RPSquirrelRecursion) process the action: %s", msg->name.c_str());
 			
-			// Run planner
+			// create action client
 			ros::NodeHandle nh;
 			std::stringstream commandPub;
-			commandPub << "/kcl_rosplan" << nspace.str() << "/planning_server_params";
-			ros::ServiceClient planningClient = nh.serviceClient<rosplan_dispatch_msgs::PlanningService>(commandPub.str());
-			
+			commandPub << "/kcl_rosplan" << nspace.str() << "/start_planning";
+			actionlib::SimpleActionClient<rosplan_dispatch_msgs::PlanAction> plan_action_client(commandPub.str(), true);
+			ROS_INFO("KCL: (RPSquirrelRecursion) Waiting for action server to start.");
+			plan_action_client.waitForServer();
+
+			// construct goal
 			domain_name = "classify_domain.pddl";
 			problem_name = "classify_problem.pddl";
 			path = "";
 
-			rosplan_dispatch_msgs::PlanningService psrv;
-			psrv.request.domain_path = domain_name;
-			psrv.request.problem_path = problem_name;
-			psrv.request.data_path = path;
-			psrv.request.planner_command = "ff -o DOMAIN -p PROBLEM";
+			rosplan_dispatch_msgs::PlanGoal psrv;
+			psrv.domain_path = domain_name;
+			psrv.problem_path = problem_name;
+			psrv.data_path = path;
+			psrv.planner_command = "ff -o DOMAIN -p PROBLEM";
 
-			if(planningClient.call(psrv)) {
-				actionAchieved = true;
+			// send goal
+			plan_action_client.sendGoal(psrv);
+
+			// publish feedback (enabled)
+			rosplan_dispatch_msgs::ActionFeedback fb;
+			fb.action_id = msg->action_id;
+			fb.status = "action enabled";
+			action_feedback_pub.publish(fb);
+
+			// wait for action to finish
+			ros::Rate loop_rate(1);
+			while (ros::ok() && plan_action_client.getState()==actionlib::SimpleClientGoalState::ACTIVE) {
+				ros::spinOnce();
+				loop_rate.sleep();
 			}
-			ros::spinOnce();
+
+			actionlib::SimpleClientGoalState state = plan_action_client.getState();
+			ROS_INFO("KCL: (RPSquirrelRecursion) action finished: %s, %s", msg->name.c_str(), state.toString().c_str());
+
+			if(state == actionlib::SimpleClientGoalState::SUCCEEDED) {
+				// publish feedback (achieved)
+				rosplan_dispatch_msgs::ActionFeedback fb;
+				fb.action_id = msg->action_id;
+				fb.status = "action achieved";
+				action_feedback_pub.publish(fb);
+			} else {
+				// publish feedback (failed)
+				rosplan_dispatch_msgs::ActionFeedback fb;
+				fb.action_id = msg->action_id;
+				fb.status = "action failed";
+				action_feedback_pub.publish(fb);
+			}
 		}
-
-		ROS_INFO("KCL: (RPSquirrelRecursion) Ended: %s", msg->name.c_str());
-		if(actionAchieved)
-			fb.status = "action achieved";
-		else
-			fb.status = "action failed";
-		action_feedback_pub.publish(fb);
-
 		last_received_msg.pop_back();
 	}
 	
