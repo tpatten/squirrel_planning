@@ -109,7 +109,7 @@ namespace KCL_rosplan {
 			path = "";
 		} else if (msg->name == "explore_area") {
 			domain_name = "domain_explore.pddl";
-			problem_name = "???.pddl";
+			problem_name = "problem_explore.pddl";
 			path = "";
 		}
 

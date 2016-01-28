@@ -178,7 +178,10 @@ std::vector<geometry_msgs::Pose> ViewConeGenerator::createViewCones(unsigned int
 			const occupancy_grid_utils::Cell& cell = *ci;
 			processed_cells[cell.x + cell.y * last_received_occupancy_grid_msgs_.info.width] = true;
 		}
+		result.push_back(best_pose);
 	}
+	
+	return result;
 }
 
 bool ViewConeGenerator::canConnect(const geometry_msgs::Point& w1, const geometry_msgs::Point& w2, int occupancy_threshold)
