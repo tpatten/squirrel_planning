@@ -4,6 +4,9 @@
 #include "squirrel_planning_execution/ContingentStrategicClassifyPDDLGenerator.h"
 #include "squirrel_planning_execution/ContingentTacticalClassifyPDDLGenerator.h"
 #include "squirrel_planning_execution/ContingentTidyPDDLGenerator.h"
+#include <squirrel_planning_execution/ViewConeGenerator.h>
+#include <rosplan_planning_system/PlanningEnvironment.h>
+#include <rosplan_planning_system/PDDLProblemGenerator.h>
 #include <map>
 
 /* The implementation of RPSquirrelRecursion.h */
@@ -26,6 +29,10 @@ namespace KCL_rosplan {
 		classify_object_waypoint_client = nh.serviceClient<squirrel_waypoint_msgs::ExamineWaypoint>(classifyTopic);
 		
 		pddl_generation_service = nh.advertiseService("/kcl_rosplan/generate_planning_problem", &KCL_rosplan::RPSquirrelRecursion::generatePDDLProblemFile, this);
+		
+		std::string occupancyTopic("/squirrel_nav/occupancy_map");
+		nh.param("occupancy_topic", occupancyTopic, occupancyTopic);
+		view_cone_generator = new ViewConeGenerator(nh, occupancyTopic);
 		
 		geometry_msgs::PoseStamped pose;
 		pose.header.frame_id = "map";
@@ -75,7 +82,11 @@ namespace KCL_rosplan {
 		commandLine << "/kcl_rosplan/planning_commands:=/kcl_rosplan" << nspace.str() << "/planning_commands ";
 		commandLine << "/kcl_rosplan/planning_server:=/kcl_rosplan" << nspace.str() << "/planning_server ";
 		commandLine << "/kcl_rosplan/planning_server_params:=/kcl_rosplan" << nspace.str() << "/planning_server_params ";
-		system(commandLine.str().c_str());
+		int return_value = system(commandLine.str().c_str());
+		
+		std_msgs::Int8 return_value_int8;
+		return_value_int8.data = return_value;
+		ROS_INFO("KCL: (RPSquirrelRecursion) planner returned with value: %d", return_value_int8.data);
 
 		// Problem Construction and planning		
 		ROS_INFO("KCL: (RPSquirrelRecursion) process the action: %s", msg->name.c_str());
@@ -86,9 +97,21 @@ namespace KCL_rosplan {
 		commandPub << "/kcl_rosplan" << nspace.str() << "/planning_server_params";
 		ros::ServiceClient planningClient = nh.serviceClient<rosplan_dispatch_msgs::PlanningService>(commandPub.str());
 		
-		domain_name = "classify_domain.pddl";
-		problem_name = "classify_problem.pddl";
-		path = "";
+		if(msg->name == "classify_object" ||
+		   msg->name == "examine_area" ||
+		   msg->name == "tidy_area") {
+			std::stringstream ss;
+			ss << msg->name << "_domain.pddl";
+			domain_name = ss.str();
+			ss.str(std::string());
+			ss << msg->name << "_problem.pddl";
+			problem_name = ss.str();
+			path = "";
+		} else if (msg->name == "explore_area") {
+			domain_name = "domain_explore.pddl";
+			problem_name = "???.pddl";
+			path = "";
+		}
 
 		rosplan_dispatch_msgs::PlanningService psrv;
 		psrv.request.domain_path = domain_name;
@@ -115,11 +138,109 @@ namespace KCL_rosplan {
 	bool RPSquirrelRecursion::generatePDDLProblemFile(rosplan_knowledge_msgs::GenerateProblemService::Request &req, rosplan_knowledge_msgs::GenerateProblemService::Response &res)
 	{
 		ROS_INFO("RPSquirrelRecursion::generatePDDLProblemFile %s, with last msg: %s.", req.problem_path.c_str(), last_received_msg.back().name.c_str());
+		
+		ROS_INFO("KCL: (RPSquirrelRecursion) Started: %s", last_received_msg.back().name.c_str());
+		
+		if (last_received_msg.back().name == "explore_area") {
+			
+			std::vector<geometry_msgs::Pose> view_poses = view_cone_generator->createViewCones(10, 5, 30.0f, 2.0f, 100);
+			
+			// Add these poses to the knowledge base.
+			rosplan_knowledge_msgs::KnowledgeUpdateService add_waypoints_service;
+			add_waypoints_service.request.update_type = rosplan_knowledge_msgs::KnowledgeUpdateService::Request::ADD_KNOWLEDGE;
+			
+			unsigned int waypoint_number = 0;
+			std::stringstream ss;
+			for (std::vector<geometry_msgs::Pose>::const_iterator ci = view_poses.begin(); ci != view_poses.end(); ++ci) {
+				
+				ss.str(std::string());
+				ss << "explore_wp" << waypoint_number;
+				rosplan_knowledge_msgs::KnowledgeItem waypoint_knowledge;
+				waypoint_knowledge.knowledge_type = rosplan_knowledge_msgs::KnowledgeItem::INSTANCE;
+				waypoint_knowledge.instance_type = "waypoint";
+				waypoint_knowledge.instance_name = ss.str();
+				add_waypoints_service.request.knowledge = waypoint_knowledge;
+				if (!update_knowledge_client.call(add_waypoints_service)) {
+					ROS_ERROR("KCL: (RPSquirrelRecursion) Could not add an explore wayoint to the knowledge base.");
+					exit(-1);
+				}
+				++waypoint_number;
+			}
+			
+			std_msgs::Int8 nr_waypoint_number_int8;
+			nr_waypoint_number_int8.data = waypoint_number;
+			ROS_INFO("KCL: (RPSquirrelRecursion) Added %d waypoints to the knowledge base.", nr_waypoint_number_int8.data);
+			
+			// Next we need to call the default planner generator.
+			ss.str(std::string());
+			ss << path << "/" << domain_name << ".pddl";
+			
+			PlanningEnvironment planning_environment;
+			planning_environment.parseDomain(ss.str());
+			planning_environment.update(*node_handle);
+			PDDLProblemGenerator pddl_problem_generator;
+			
+			ss.str(std::string());
+			ss << path << "/" << problem_name << ".pddl";
+			std::string test = ss.str();
+			
+			pddl_problem_generator.generatePDDLProblemFile(planning_environment, test);
+		} else if (last_received_msg.back().name == "examine_area") {
+			
+			// Fetch all the objects.
+			rosplan_knowledge_msgs::GetAttributeService get_attribute;
+			get_attribute.request.predicate_name = "object_at";
+			if (!get_attribute_client.call(get_attribute)) {
+				ROS_ERROR("KCL: (RPSquirrelRoadmap) Failed to recieve the attributes of the predicate 'object_at'");
+				return false;
+			}
+			
+			std::map<std::string, std::string> object_to_location_mappings;
+			for (std::vector<rosplan_knowledge_msgs::KnowledgeItem>::const_iterator ci = get_attribute.response.attributes.begin(); ci != get_attribute.response.attributes.end(); ++ci) {
+				const rosplan_knowledge_msgs::KnowledgeItem& knowledge_item = *ci;
+				std::string object_predicate;
+				std::string location_predicate;
+				for (std::vector<diagnostic_msgs::KeyValue>::const_iterator ci = knowledge_item.values.begin(); ci != knowledge_item.values.end(); ++ci) {
+					const diagnostic_msgs::KeyValue& key_value = *ci;
+					if ("o" == key_value.key) {
+						object_predicate = key_value.value;
+					}
+					
+					if ("wp" == key_value.key) {
+						location_predicate = key_value.value;
+					}
+				}
+				
+				object_to_location_mappings[object_predicate] = location_predicate;
+			}
+			std_msgs::Int8 nr_objects;
+			nr_objects.data = object_to_location_mappings.size();
+			ROS_INFO("KCL: (RPSquirrelRecursion) Found %d objects to eximine.", nr_objects.data);
+			
+			std::string robot_location;
+			for (std::vector<diagnostic_msgs::KeyValue>::const_iterator ci = get_attribute.response.attributes[0].values.begin(); ci != get_attribute.response.attributes[0].values.end(); ++ci) {
+				const diagnostic_msgs::KeyValue& knowledge_item = *ci;
+				
+				ROS_INFO("KCL: (RPSquirrelRecursion) Process robot_at attribute: %s %s", knowledge_item.key.c_str(), knowledge_item.value.c_str());
+				
+				if ("wp" == knowledge_item.key) {
+					robot_location = knowledge_item.value;
+				}
+			}
+			
+			if ("" == robot_location) {
+				ROS_ERROR("KCL: (RPSquirrelRoadmap) Failed to recieve the location of Kenny");
+				return false;
+			}
+			
+			ROS_INFO("KCL: (RPSquirrelRecursion) Kenny is at waypoint: %s", robot_location.c_str());
+			
+			ContingentStrategicClassifyPDDLGenerator::createPDDL(path, domain_name, problem_name, robot_location, object_to_location_mappings, 3);
+			
 		// Create the classify_object contingent domain and problem files.
-		if (last_received_msg.back().name == "classify_object") {
+		} else if (last_received_msg.back().name == "classify_object") {
 		
 			// Find the object that needs to be classified.
-			ROS_INFO("KCL: (RPSquirrelRecursion) Started: %s", last_received_msg.back().name.c_str());
 			std::string object_name;
 			
 			for (std::vector<diagnostic_msgs::KeyValue>::const_iterator ci = last_received_msg.back().parameters.begin(); ci != last_received_msg.back().parameters.end(); ++ci) {
@@ -180,8 +301,7 @@ namespace KCL_rosplan {
 
 			// request classification waypoints for object
 			geometry_msgs::PoseStamped &objPose = *results[0];
-
-			// TODO Change to actual service type.
+			
 			squirrel_waypoint_msgs::ExamineWaypoint getTaskPose;
 			getTaskPose.request.object_pose.header = objPose.header;
 			getTaskPose.request.object_pose.pose = objPose.pose;
@@ -240,7 +360,6 @@ namespace KCL_rosplan {
 			
 			ROS_INFO("KCL: (RPSquirrelRecursion) Kenny is at waypoint: %s", robot_location.c_str());
 			
-			// TODO Change it to the strategic contingency plan generator.
 			ContingentTacticalClassifyPDDLGenerator::createPDDL(path, domain_name, problem_name, robot_location, observation_location_predicates, object_name, object_location);
 		} else if (last_received_msg.back().name == "tidy_area") {
 			// Get all the objects in the knowledge base that are in this area. 

@@ -63,6 +63,7 @@
 	</node>
 
 	<node name="squirrel_interface_recursion" pkg="squirrel_planning_execution" type="rpsquirrelRecursion" respawn="false" output="screen">
+	    <param name="occupancy_topic" value="/squirrel_nav/occupancy_map" />
 	</node>
 
 </launch>

@@ -31,6 +31,8 @@
  */
 namespace KCL_rosplan {
 
+	class ViewConeGenerator;
+	
 	class RPSquirrelRecursion
 	{
 
@@ -56,6 +58,9 @@ namespace KCL_rosplan {
 		std::string domain_name;
 		std::string problem_name;
 		std::string path;
+		
+		// View point generator.
+		ViewConeGenerator* view_cone_generator;
 
 	public:
 
