@@ -12,7 +12,7 @@ namespace KCL_rosplan {
 ViewConeGenerator::ViewConeGenerator(ros::NodeHandle& node_handle, const std::string& topic_name)
 	: has_received_occupancy_grid_(false)
 {
-	navigation_grid_sub_ = node_handle.subscribe("/map", 1, &ViewConeGenerator::storeNavigationGrid, this);
+	navigation_grid_sub_ = node_handle.subscribe(topic_name, 1, &ViewConeGenerator::storeNavigationGrid, this);
 	srand(time(NULL));
 }
 
@@ -22,14 +22,14 @@ void ViewConeGenerator::storeNavigationGrid(const nav_msgs::OccupancyGrid::Const
 	has_received_occupancy_grid_ = true;
 }
 
-std::vector<geometry_msgs::Pose> ViewConeGenerator::createViewCones(unsigned int max_view_cones, int occupancy_threshold, float fov, float view_distance, unsigned int sample_size)
+void ViewConeGenerator::createViewCones(std::vector<geometry_msgs::Pose>& poses, unsigned int max_view_cones, int occupancy_threshold, float fov, float view_distance, unsigned int sample_size, float safe_distance)
 {
-	std::vector<geometry_msgs::Pose> result;
 	if (!has_received_occupancy_grid_) {
 		ROS_WARN("(ViewConeGenerator) The occupancy grid was not published yet, no poses returned.");
-		return result;
+		return;
 	}
 	
+	ROS_INFO("(ViewConeGenerator) View code generation started.");
 	// Initialise the processed cells list.
 	std::vector<bool> processed_cells(last_received_occupancy_grid_msgs_.info.width * last_received_occupancy_grid_msgs_.info.height, false);
 	for (int y = 0; y < last_received_occupancy_grid_msgs_.info.width; ++y) {
@@ -42,8 +42,10 @@ std::vector<geometry_msgs::Pose> ViewConeGenerator::createViewCones(unsigned int
 		}
 	}
 	
+	ROS_INFO("(ViewConeGenerator) Initialised the processed cells.");
+	
 	for (unsigned int i = 0; i < max_view_cones; ++i) {
-		
+		ROS_INFO("(ViewConeGenerator) Process view cone: %d.", i);
 		// First we generate a bunch of random view cones and rate them.
 		geometry_msgs::Pose best_pose;
 		std::vector<occupancy_grid_utils::Cell> best_visible_cells;
@@ -52,14 +54,24 @@ std::vector<geometry_msgs::Pose> ViewConeGenerator::createViewCones(unsigned int
 			int grid_y = ((float)rand() / (float)RAND_MAX) * last_received_occupancy_grid_msgs_.info.width;
 			
 			occupancy_grid_utils::Cell c(grid_x, grid_y);
+			
 			geometry_msgs::Point p = occupancy_grid_utils::cellCenter(last_received_occupancy_grid_msgs_.info, c);
-			float yaw = ((float)rand() / (float)RAND_MAX) * 360.0f;
+			
+			// Check if this cell point is not too close to any obstacles.
+			if (isBlocked(p, safe_distance)) {
+				continue;
+			}
+			
+			float yaw = ((float)rand() / (float)RAND_MAX) * 2 * M_PI;
+			
+			//ROS_INFO("(ViewConeGenerator) Sample cone: (%d, %d) %f.", grid_x, grid_y, yaw);
+			//ROS_INFO("(ViewConeGenerator) Sample cone: (%f, %f) %f.", p.x, p.y, yaw);
 			
 			geometry_msgs::Pose pose;
 			pose.position = p;
 			
 			tf::Quaternion q;
-			q.setEuler(0, 0, yaw);
+			q.setEulerZYX(yaw, 0, 0);
 
 			pose.orientation.x = q.getX();
 			pose.orientation.y = q.getY();
@@ -70,24 +82,37 @@ std::vector<geometry_msgs::Pose> ViewConeGenerator::createViewCones(unsigned int
 			tf::Vector3 view_point(p.x, p.y, p.z);
 			
 			tf::Vector3 v0(view_distance, 0.0f, 0.0f);
-			v0.rotate(tf::Vector3(0.0f, 0.0f, 1.0f), yaw);
+			v0 = v0.rotate(tf::Vector3(0.0f, 0.0f, 1.0f), yaw);
+			
+			//ROS_INFO("(ViewConeGenerator) Viewing direction: (%f, %f, %f).", v0.x(), v0.y(), v0.z());
+			
 			tf::Vector3 v0_normalised = v0.normalized();
 			
+			//ROS_INFO("(ViewConeGenerator) Viewing direction (normalised): (%f, %f, %f).", v0_normalised.x(), v0_normalised.y(), v0_normalised.z());
+			
 			tf::Vector3 v1 = v0;
-			v1.rotate(tf::Vector3(0.0f, 0.0f, 1.0f), fov / 2.0f);
-			v1.normalize();
+			v1 = v1.rotate(tf::Vector3(0.0f, 0.0f, 1.0f), fov / 2.0f);
+			v1 = v1.normalize();
+			
+			//ROS_INFO("(ViewConeGenerator) V1 (normalised): (%f, %f, %f).", v1.x(), v1.y(), v1.z());
 			
 			float length = v0.length() / v0_normalised.dot(v1);
 			v1 *= length;
 			v1 += view_point;
 			
+			//ROS_INFO("(ViewConeGenerator) V1 (actual): (%f, %f, %f); length = %f.", v1.x(), v1.y(), v1.z(), length);
+			
 			tf::Vector3 v2 = v0;
-			v2.rotate(tf::Vector3(0.0f, 0.0f, 1.0f), -fov / 2.0f);
-			v2.normalize();
+			v2 = v2.rotate(tf::Vector3(0.0f, 0.0f, 1.0f), -fov / 2.0f);
+			v2 = v2.normalize();
+			//ROS_INFO("(ViewConeGenerator) V2 (normalised): (%f, %f, %f).", v2.x(), v2.y(), v2.z());
 			
 			length = v0.length() / v0_normalised.dot(v2);
 			v2 *= length;
 			v2 += view_point;
+			//ROS_INFO("(ViewConeGenerator) V2 (actual): (%f, %f, %f); length = %f.", v2.x(), v2.y(), v2.z(), length);
+			
+			//ROS_INFO("(ViewConeGenerator) Triangle: (%f, %f, %f), (%f, %f, %f), (%f, %f, %f).", p.x, p.y, p.z, v1.x(), v1.y(), v1.z(), v2.x(), v2.y(), v2.z());
 			
 			// The triangle now is view_point, v1, v2, we use a flood algorithm to determine which cells
 			// are inside the viewing cone.
@@ -108,15 +133,32 @@ std::vector<geometry_msgs::Pose> ViewConeGenerator::createViewCones(unsigned int
 				tf::Vector3 cell_point(cell_centre_point.x, cell_centre_point.y, cell_centre_point.z);
 				
 				tf::Vector3 cross_v1 = (cell_point - v1).cross(v2 - v1);
-				tf::Vector3 cross_v2 = (cell_point - v2).cross(v2 - view_point);
+				tf::Vector3 cross_v2 = (cell_point - v2).cross(view_point - v2);
+				tf::Vector3 cross_v3 = (cell_point - view_point).cross(v1 - view_point);
 				
 				// If both cross produces have the same sign we are good.
-				if (cross_v1.z() * cross_v2.z() < 0 && cell.x != c.x && cell.y != c.y) {
+				bool is_in_triangle = false;
+				if ((cross_v1.z() > 0 && cross_v2.z() > 0 && cross_v3.z() > 0) ||
+				    (cross_v1.z() < 0 && cross_v2.z() < 0 && cross_v3.z() < 0) ||
+				    (cell.x == c.x && cell.y == c.y)) {
+					is_in_triangle = true;
+				}
+				
+				if (!is_in_triangle) {
 					continue;
 				}
 				
 				// Make sure this cell was not already added.
-				if (std::find(complete_list.begin(), complete_list.end(), cell) != complete_list.end()) {
+				bool has_been_processed = false;
+				for (std::vector<occupancy_grid_utils::Cell>::const_iterator ci = complete_list.begin(); ci != complete_list.end(); ++ci) {
+					const occupancy_grid_utils::Cell& completed_cell = *ci;
+					if (completed_cell.x == cell.x && completed_cell.y == cell.y) {
+						has_been_processed = true;
+						break;
+					}
+				}
+				
+				if (has_been_processed) {
 					continue;
 				}
 				
@@ -124,30 +166,20 @@ std::vector<geometry_msgs::Pose> ViewConeGenerator::createViewCones(unsigned int
 				
 				// Add its children to the list.
 				occupancy_grid_utils::Cell new_cell;
-				if (cell.x > 0) {
-					new_cell = cell;
-					new_cell.x -= 1;
-					open_list.push_back(new_cell);
-				}
-				
-				if (cell.x + 1 < last_received_occupancy_grid_msgs_.info.width) {
-					new_cell = cell;
-					new_cell.x += 1;
-					open_list.push_back(new_cell);
-				}
-				
-				if (cell.y > 0) {
-					new_cell = cell;
-					new_cell.y -= 1;
-					open_list.push_back(new_cell);
-				}
-				
-				if (cell.y + 1 < last_received_occupancy_grid_msgs_.info.height) {
-					new_cell = cell;
-					new_cell.y += 1;
-					open_list.push_back(new_cell);
+				for (int x = cell.x - 1; x < cell.x + 2; ++x) {
+					for (int y = cell.y - 1; y < cell.y + 2; ++y) {
+						if (x > -1 && x + 1 < last_received_occupancy_grid_msgs_.info.width &&
+						    y > -1 && y + 1 < last_received_occupancy_grid_msgs_.info.height)
+						{
+							new_cell.x = x;
+							new_cell.y = y;
+							open_list.push_back(new_cell);
+						}
+					}
 				}
 			}
+			
+			//ROS_INFO("(ViewConeGenerator) Finished flood algorithm, %d cells in view.", complete_list.size());
 			
 			// Next we determine which of these cell points are visible from 'view_point'.
 			std::vector<occupancy_grid_utils::Cell> visible_cells;
@@ -166,11 +198,22 @@ std::vector<geometry_msgs::Pose> ViewConeGenerator::createViewCones(unsigned int
 				}
 			}
 			
+			//ROS_INFO("(ViewConeGenerator) Finished checking visibility, %d cells actually visible.", visible_cells.size());
+			
 			// Check if this is the best view cone thus far.
 			if (visible_cells.size() > best_visible_cells.size()) {
 				best_pose = pose;
 				best_visible_cells = visible_cells;
+				
+				tf::Quaternion q(best_pose.orientation.x, best_pose.orientation.y, best_pose.orientation.z, best_pose.orientation.w);
+				float best_yaw = tf::getYaw(q);
+				
+				ROS_INFO("(ViewConeGenerator) Best new pose(%f, %f, %f), yaw=%f (actual=%f) with %d cells.", best_pose.position.x, best_pose.position.y, best_pose.position.z, best_yaw, yaw, visible_cells.size());
 			}
+		}
+		
+		if (best_visible_cells.empty()) {
+			continue;
 		}
 		
 		// Update the state of which cells have been observed.
@@ -178,10 +221,17 @@ std::vector<geometry_msgs::Pose> ViewConeGenerator::createViewCones(unsigned int
 			const occupancy_grid_utils::Cell& cell = *ci;
 			processed_cells[cell.x + cell.y * last_received_occupancy_grid_msgs_.info.width] = true;
 		}
-		result.push_back(best_pose);
+		
+		tf::Quaternion q(best_pose.orientation.x, best_pose.orientation.y, best_pose.orientation.z, best_pose.orientation.w);
+		float yaw = tf::getYaw(q);
+		
+		ROS_INFO("(ViewConeGenerator) Add the pose(%f, %f, %f), yaw=%f with %d cells to the return list.", best_pose.position.x, best_pose.position.y, best_pose.position.z, yaw, best_visible_cells.size());
+		poses.push_back(best_pose);
 	}
 	
-	return result;
+	for (std::vector<geometry_msgs::Pose>::const_iterator ci = poses.begin(); ci != poses.end(); ++ci) {
+		ROS_INFO("(ViewConeGenerator) Found the pose(%f, %f, %f).", (*ci).position.x, (*ci).position.y, (*ci).position.z);
+	}
 }
 
 bool ViewConeGenerator::canConnect(const geometry_msgs::Point& w1, const geometry_msgs::Point& w2, int occupancy_threshold)
@@ -204,19 +254,25 @@ bool ViewConeGenerator::canConnect(const geometry_msgs::Point& w1, const geometr
 
 bool ViewConeGenerator::isBlocked(const geometry_msgs::Point& point, float min_distance) const
 {
-	for (float x = point.x - (min_distance + last_received_occupancy_grid_msgs_.info.resolution); x < point.x + min_distance + last_received_occupancy_grid_msgs_.info.resolution; x += last_received_occupancy_grid_msgs_.info.resolution)
+	for (float x = -min_distance - last_received_occupancy_grid_msgs_.info.resolution; x < min_distance + last_received_occupancy_grid_msgs_.info.resolution; x += last_received_occupancy_grid_msgs_.info.resolution)
 	{
-		for (float y = point.y - (min_distance + last_received_occupancy_grid_msgs_.info.resolution); y < point.y + min_distance + last_received_occupancy_grid_msgs_.info.resolution; y += last_received_occupancy_grid_msgs_.info.resolution)
+		for (float y = -min_distance - last_received_occupancy_grid_msgs_.info.resolution; y < min_distance + last_received_occupancy_grid_msgs_.info.resolution; y += last_received_occupancy_grid_msgs_.info.resolution)
 		{
 			if (sqrt(x * x + y * y) > min_distance)
 			{
 				continue;
 			}
+			
 			geometry_msgs::Point p;
-			p.x = x;
-			p.y = y;
+			p.x = x + point.x;
+			p.y = y + point.y;
 			
 			occupancy_grid_utils::Cell cell = occupancy_grid_utils::pointCell(last_received_occupancy_grid_msgs_.info, p);
+			
+			if (cell.x < 0 || cell.y < 0 || cell.x >= last_received_occupancy_grid_msgs_.info.width || cell.y >= last_received_occupancy_grid_msgs_.info.height) {
+				continue;
+			}
+			
 			if (last_received_occupancy_grid_msgs_.data[cell.x + cell.y * last_received_occupancy_grid_msgs_.info.width] > 0)
 			{
 				return true;
