@@ -110,45 +110,45 @@ namespace KCL_rosplan {
 			path = "";
 		}
 
-			rosplan_dispatch_msgs::PlanGoal psrv;
-			psrv.domain_path = domain_name;
-			psrv.problem_path = problem_name;
-			psrv.data_path = path;
-			psrv.planner_command = "ff -o DOMAIN -p PROBLEM";
+		rosplan_dispatch_msgs::PlanGoal psrv;
+		psrv.domain_path = domain_name;
+		psrv.problem_path = problem_name;
+		psrv.data_path = path;
+		psrv.planner_command = "ff -o DOMAIN -p PROBLEM";
 
-			// send goal
-			plan_action_client.sendGoal(psrv);
+		// send goal
+		plan_action_client.sendGoal(psrv);
 
-			// publish feedback (enabled)
+		// publish feedback (enabled)
+		rosplan_dispatch_msgs::ActionFeedback fb;
+		fb.action_id = msg->action_id;
+		fb.status = "action enabled";
+		action_feedback_pub.publish(fb);
+
+		// wait for action to finish
+		ros::Rate loop_rate(1);
+		while (ros::ok() && plan_action_client.getState()==actionlib::SimpleClientGoalState::ACTIVE) {
+			ros::spinOnce();
+			loop_rate.sleep();
+		}
+
+		actionlib::SimpleClientGoalState state = plan_action_client.getState();
+		ROS_INFO("KCL: (RPSquirrelRecursion) action finished: %s, %s", msg->name.c_str(), state.toString().c_str());
+
+		if(state == actionlib::SimpleClientGoalState::SUCCEEDED) {
+			// publish feedback (achieved)
 			rosplan_dispatch_msgs::ActionFeedback fb;
 			fb.action_id = msg->action_id;
-			fb.status = "action enabled";
+			fb.status = "action achieved";
 			action_feedback_pub.publish(fb);
-
-			// wait for action to finish
-			ros::Rate loop_rate(1);
-			while (ros::ok() && plan_action_client.getState()==actionlib::SimpleClientGoalState::ACTIVE) {
-				ros::spinOnce();
-				loop_rate.sleep();
-			}
-
-			actionlib::SimpleClientGoalState state = plan_action_client.getState();
-			ROS_INFO("KCL: (RPSquirrelRecursion) action finished: %s, %s", msg->name.c_str(), state.toString().c_str());
-
-			if(state == actionlib::SimpleClientGoalState::SUCCEEDED) {
-				// publish feedback (achieved)
-				rosplan_dispatch_msgs::ActionFeedback fb;
-				fb.action_id = msg->action_id;
-				fb.status = "action achieved";
-				action_feedback_pub.publish(fb);
-			} else {
-				// publish feedback (failed)
-				rosplan_dispatch_msgs::ActionFeedback fb;
-				fb.action_id = msg->action_id;
-				fb.status = "action failed";
-				action_feedback_pub.publish(fb);
-			}
+		} else {
+			// publish feedback (failed)
+			rosplan_dispatch_msgs::ActionFeedback fb;
+			fb.action_id = msg->action_id;
+			fb.status = "action failed";
+			action_feedback_pub.publish(fb);
 		}
+
 		last_received_msg.pop_back();
 	}
 	
