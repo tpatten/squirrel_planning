@@ -82,3 +82,9 @@ target_link_libraries(rpsquirrelRecursion ${catkin_LIBRARIES})
 ##########
 # please do not use add_rosttest_gtest (seems to be interfering with qtcreator and cmake)
 # see test documentation: http://wiki.ros.org/gtest
+
+add_executable(occupancy_grid_publisher src/view_cone_test_suite/OccupancyGridPublisher.cpp)
+target_link_libraries(occupancy_grid_publisher ${catkin_LIBRARIES})
+
+add_executable(view_cone_test src/view_cone_test_suite/ViewConeCaller.cpp src/ViewConeGenerator.cpp)
+target_link_libraries(view_cone_test ${catkin_LIBRARIES})

@@ -161,7 +161,8 @@ namespace KCL_rosplan {
 		
 		if (last_received_msg.back().name == "explore_area") {
 			
-			std::vector<geometry_msgs::Pose> view_poses = view_cone_generator->createViewCones(10, 5, 30.0f, 2.0f, 100);
+			std::vector<geometry_msgs::Pose> view_poses;
+			view_cone_generator->createViewCones(view_poses, 10, 5, 30.0f, 2.0f, 100, 0.5f);
 			
 			// Add these poses to the knowledge base.
 			rosplan_knowledge_msgs::KnowledgeUpdateService add_waypoints_service;
