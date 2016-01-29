@@ -77,6 +77,7 @@ namespace KCL_rosplan {
 		commandLine << "/kcl_rosplan/planning_server:=/kcl_rosplan/" << nspace.str() << "/planning_server ";
 		commandLine << "/kcl_rosplan/planning_server_params:=/kcl_rosplan/" << nspace.str() << "/planning_server_params ";
 		commandLine << "/kcl_rosplan/start_planning:=/kcl_rosplan/" << nspace.str() << "/start_planning ";
+		commandLine << "&";
 		int return_value = system(commandLine.str().c_str());
 		
 		std_msgs::Int8 return_value_int8;
@@ -89,7 +90,7 @@ namespace KCL_rosplan {
 		// create action client
 		ros::NodeHandle nh;
 		std::stringstream commandPub;
-		commandPub << "/kcl_rosplan" << nspace.str() << "/start_planning";
+		commandPub << "/kcl_rosplan/" << nspace.str() << "/start_planning";
 		actionlib::SimpleActionClient<rosplan_dispatch_msgs::PlanAction> plan_action_client(commandPub.str(), true);
 		ROS_INFO("KCL: (RPSquirrelRecursion) Waiting for action server to start.");
 		plan_action_client.waitForServer();
@@ -127,7 +128,7 @@ namespace KCL_rosplan {
 
 		// wait for action to finish
 		ros::Rate loop_rate(1);
-		while (ros::ok() && plan_action_client.getState()==actionlib::SimpleClientGoalState::ACTIVE) {
+		while (ros::ok() && (plan_action_client.getState()==actionlib::SimpleClientGoalState::ACTIVE || plan_action_client.getState()==actionlib::SimpleClientGoalState::PENDING)) {
 			ros::spinOnce();
 			loop_rate.sleep();
 		}
