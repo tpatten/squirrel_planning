@@ -82,7 +82,6 @@ namespace KCL_rosplan {
 		
 		std_msgs::Int8 return_value_int8;
 		return_value_int8.data = return_value;
-		ROS_INFO("KCL: (RPSquirrelRecursion) planner returned with value: %d", return_value_int8.data);
 
 		// Problem Construction and planning		
 		ROS_INFO("KCL: (RPSquirrelRecursion) process the action: %s", msg->name.c_str());
@@ -116,6 +115,7 @@ namespace KCL_rosplan {
 		psrv.problem_path = problem_name;
 		psrv.data_path = path;
 		psrv.planner_command = "ff -o DOMAIN -p PROBLEM";
+		psrv.start_action_id = last_received_msg.size() * 1000;
 
 		// send goal
 		plan_action_client.sendGoal(psrv);
