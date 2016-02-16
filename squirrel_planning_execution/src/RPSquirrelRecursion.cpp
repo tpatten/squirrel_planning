@@ -5,14 +5,15 @@
 #include "squirrel_planning_execution/ContingentTacticalClassifyPDDLGenerator.h"
 #include "squirrel_planning_execution/ContingentTidyPDDLGenerator.h"
 #include <squirrel_planning_execution/ViewConeGenerator.h>
-#include <rosplan_planning_system/PlanningEnvironment.h>
-#include <rosplan_planning_system/PDDLProblemGenerator.h>
 #include <map>
 
 /* The implementation of RPSquirrelRecursion.h */
 namespace KCL_rosplan {
 
+	/*-------------*/
 	/* constructor */
+	/*-------------*/
+
 	RPSquirrelRecursion::RPSquirrelRecursion(ros::NodeHandle &nh) : node_handle(&nh), message_store(nh) {
 		
 		// knowledge interface
@@ -50,13 +51,11 @@ namespace KCL_rosplan {
 		// { "_id" : ObjectId("56a64f691d41c83466e349f1"), "header" : { "stamp" : { "secs" : 0, "nsecs" : 0 }, "frame_id" : "map", "seq" : 0 }, "pose" : { "position" : { "y" : 2, "x" : 1, "z" : 0 }, "orientation" : { "y" : 0, "x" : 0, "z" : 0, "w" : 1 } }, "_meta" : { "stored_type" : "geometry_msgs/PoseStamped", "inserted_by" : "/squirrel_interface_recursion", "stored_class" : "geometry_msgs.msg._PoseStamped.PoseStamped", "name" : "teddybeer", "inserted_at" : ISODate("2016-01-25T16:38:01.392Z") } }
 	}
 
-	/* action dispatch callback */
-	void RPSquirrelRecursion::dispatchCallback(const rosplan_dispatch_msgs::ActionDispatch::ConstPtr& msg) {
+	/*---------------------------*/
+	/* strategic action callback */
+	/*---------------------------*/
 
-		bool actionAchieved = false;
-		last_received_msg.push_back(*msg);
-		
-		ROS_INFO("KCL: (RPSquirrelRecursion) action recieved %s", msg->name.c_str());
+	void RPSquirrelRecursion::dispatchCallback(const rosplan_dispatch_msgs::ActionDispatch::ConstPtr& msg) {
 
 		// ignore actions
 		if(0!=msg->name.compare("classify_object")
@@ -64,6 +63,11 @@ namespace KCL_rosplan {
 				&& 0!=msg->name.compare("explore_area")
 				&& 0!=msg->name.compare("tidy_area"))
 			return;
+
+		bool actionAchieved = false;
+		last_received_msg.push_back(*msg);
+		
+		ROS_INFO("KCL: (RPSquirrelRecursion) action recieved %s", msg->name.c_str());
 		
 		// create new planning system
 		std::stringstream nspace;
@@ -153,12 +157,54 @@ namespace KCL_rosplan {
 		last_received_msg.pop_back();
 	}
 	
-	/* Callback function that gets called by ROSPlan, we construct a domain and problem file */
+	/*--------------------*/
+	/* problem generation */
+	/*--------------------*/
+
+	/**
+	 * Service callback. Recieves service message and farms to sub-methods.
+	 */
 	bool RPSquirrelRecursion::generatePDDLProblemFile(rosplan_knowledge_msgs::GenerateProblemService::Request &req, rosplan_knowledge_msgs::GenerateProblemService::Response &res)
 	{
-		ROS_INFO("RPSquirrelRecursion::generatePDDLProblemFile %s, with last msg: %s.", req.problem_path.c_str(), last_received_msg.back().name.c_str());
-		
-		ROS_INFO("KCL: (RPSquirrelRecursion) Started: %s", last_received_msg.back().name.c_str());
+
+		if(req.contingent && last_received_msg.size() > 0) {
+			// generate contingent problem
+			ROS_INFO("KCL: (RPSquirrelRecursion) %s, with: %s.", last_received_msg.back().name.c_str(), req.problem_path.c_str());
+			generateContingentProblem(req,res);
+		} else if(req.contingent) {
+			// no strategic action dispatched, fail generating contingent problem
+			ROS_INFO("KCL: (RPSquirrelRecursion) %s, with no last msg! Cancelling.", req.problem_path.c_str());
+			return false;
+		} else {
+			// generate non-contingent problem
+			ROS_INFO("KCL: (RPSquirrelRecursion) %s", req.problem_path.c_str());
+			generateRegularProblem(req,res);
+		}
+	}
+
+
+	/**
+	 * Generate a regular (non-contingent) problem
+	 */
+	bool RPSquirrelRecursion::generateRegularProblem(rosplan_knowledge_msgs::GenerateProblemService::Request &req, rosplan_knowledge_msgs::GenerateProblemService::Response &res) {
+
+			(*node_handle).param("/domain_path", domain_name, std::string("common/domain.pddl"));
+
+			// create a planning environment to store data			
+			PlanningEnvironment planning_environment;
+			planning_environment.parseDomain(domain_name);
+			planning_environment.update(*node_handle);
+
+			// default problem generator
+			PDDLProblemGenerator pddl_problem_generator;
+			pddl_problem_generator.generatePDDLProblemFile(planning_environment, req.problem_path);
+	}
+
+
+	/**
+	 * Generate a contingent problem
+	 */
+	bool RPSquirrelRecursion::generateContingentProblem(rosplan_knowledge_msgs::GenerateProblemService::Request &req, rosplan_knowledge_msgs::GenerateProblemService::Response &res) {
 		
 		if (last_received_msg.back().name == "explore_area") {
 			
@@ -202,9 +248,11 @@ namespace KCL_rosplan {
 			
 			ss.str(std::string());
 			ss << path << "/" << problem_name << ".pddl";
+
 			std::string test = ss.str();
 			
 			pddl_problem_generator.generatePDDLProblemFile(planning_environment, test);
+
 		} else if (last_received_msg.back().name == "examine_area") {
 			
 			// Fetch all the objects.

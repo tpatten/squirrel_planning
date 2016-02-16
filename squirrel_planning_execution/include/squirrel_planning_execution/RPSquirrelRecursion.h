@@ -20,6 +20,9 @@
 #include "rosplan_knowledge_msgs/GenerateProblemService.h"
 #include "rosplan_dispatch_msgs/PlanningService.h"
 
+#include "rosplan_planning_system/PlanningEnvironment.h"
+#include "rosplan_planning_system/PDDLProblemGenerator.h"
+
 #include "squirrel_waypoint_msgs/ExamineWaypoint.h"
 
 #ifndef KCL_recursion
@@ -43,6 +46,9 @@ namespace KCL_rosplan {
 		mongodb_store::MessageStoreProxy message_store;
 		ros::Publisher action_feedback_pub;
 		
+		/* PDDL problem generation */
+		
+
 		/* knowledge service clients */
 		ros::ServiceClient update_knowledge_client;
 		ros::ServiceClient get_instance_client;
@@ -51,7 +57,7 @@ namespace KCL_rosplan {
 		// waypoint request services
 		ros::ServiceClient classify_object_waypoint_client;
 		
-		// call back function for the planning system that generates the PDDL domain and problem files.
+		// server that generates the PDDL domain and problem files.
 		ros::ServiceServer pddl_generation_service;
 		
 		// Cache the last message sent.
@@ -75,6 +81,8 @@ namespace KCL_rosplan {
 		
 		/* callback function from the ROSPlan planning system to generate the PDDL problem file (and domain in our case) */
 		bool generatePDDLProblemFile(rosplan_knowledge_msgs::GenerateProblemService::Request &req, rosplan_knowledge_msgs::GenerateProblemService::Response &res);
+		bool generateContingentProblem(rosplan_knowledge_msgs::GenerateProblemService::Request &req, rosplan_knowledge_msgs::GenerateProblemService::Response &res);
+		bool generateRegularProblem(rosplan_knowledge_msgs::GenerateProblemService::Request &req, rosplan_knowledge_msgs::GenerateProblemService::Response &res);
 	};
 }
 #endif
