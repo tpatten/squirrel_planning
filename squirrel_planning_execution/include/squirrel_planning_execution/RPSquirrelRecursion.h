@@ -64,12 +64,29 @@ namespace KCL_rosplan {
 		std::vector<rosplan_dispatch_msgs::ActionDispatch> last_received_msg;
 		
 		// The file names and the path for the domain and problem files.
-		std::string domain_name;
-		std::string problem_name;
-		std::string path;
+		//std::string domain_name;
+		//std::string problem_name;
+		//std::string path;
 		
 		// View point generator.
 		ViewConeGenerator* view_cone_generator;
+		
+		// Generate the initial state for the highest level of abstraction.
+		void generateInitialState();
+		
+		/**
+		 * Create a PDDL domainfile that is needed to execute @ref{action_name}.
+		 * @param action_name The name of the PDDL action that has been dispatched.
+		 * @return True if the domain was successfully created, false otherwise.
+		 */
+		bool createDomain(const std::string& action_name);
+		
+		/**
+		 * In the case that we are running a simulation we setup the knowledge base.
+		 */
+		void setupSimulation();
+		
+		bool initial_problem_generated;
 
 	public:
 

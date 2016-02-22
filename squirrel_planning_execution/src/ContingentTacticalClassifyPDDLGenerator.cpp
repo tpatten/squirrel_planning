@@ -1025,6 +1025,8 @@ void ContingentTacticalClassifyPDDLGenerator::createPDDL(const std::string& path
 				const Location* location = *ci;
 				classifiable_from.clear();
 				classifiable_from[object] = location;
+				
+				std::cout << object->name_ << " is visable from " << location->name_ << std::endl;
 			
 				ss.str(std::string());
 				ss << "s" << state_id;

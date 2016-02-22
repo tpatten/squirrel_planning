@@ -1150,6 +1150,9 @@ void ContingentStrategicClassifyPDDLGenerator::generateDomainFile(const std::str
 
 void ContingentStrategicClassifyPDDLGenerator::createPDDL(const std::string& path, const std::string& domain_file, const std::string& problem_file, const std::string& robot_location_predicate, const std::map<std::string, std::string>& object_location_predicates, unsigned int max_classification_attemps)
 {
+	
+	std::cout << "ContingentStrategicClassifyPDDLGenerator::createPDDL PATH=" << path << "; DOMAIN_FILE=" << domain_file << "; PROBLEM_FILE=" << problem_file << std::endl;
+	
 	std::vector<Location*> locations;
 	std::vector<Object*> objects;
 	std::map<std::string, Object*> predicate_to_object_mapping;
@@ -1160,7 +1163,7 @@ void ContingentStrategicClassifyPDDLGenerator::createPDDL(const std::string& pat
 		const std::string& object_predicate = (*ci).first;
 		const std::string& location_predicate = (*ci).second;
 		
-		Location* object_location = new Location(location_predicate, false);
+		Location* object_location = new Location(location_predicate, true);
 		Object* object = new Object(object_predicate, *object_location);
 		
 		locations.push_back(object_location);
