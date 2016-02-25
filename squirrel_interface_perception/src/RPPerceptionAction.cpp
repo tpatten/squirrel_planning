@@ -151,9 +151,11 @@ namespace KCL_rosplan {
 			if('y' == i) {
 				geometry_msgs::PoseStamped &pose = *results[0];
 				squirrel_planning_knowledge_msgs::AddObjectService aos;
-				aos.request.id = "simulated_object";
-				aos.request.category = "ghost";
-				aos.request.pose = pose;
+				aos.request.object.id = "simulated_object";
+				aos.request.object.category = "ghost";
+				aos.request.object.pose = pose.pose;
+                                aos.request.object.bounding_cylinder.diameter = 0.1;
+                                aos.request.object.bounding_cylinder.height = 0.1;
 				if(add_object_client.call(aos))
 					ROS_INFO("KCL: (PerceptionAction) added object");
 				else

@@ -30,25 +30,19 @@ namespace KCL_rosplan {
 	bool RPObjectPerception::addObjects(
 		squirrel_planning_knowledge_msgs::AddObjectService::Request &req,
 		squirrel_planning_knowledge_msgs::AddObjectService::Response &res) {
-		
-		ROS_INFO("KCL: (RPObjectPerception::addObjects) %s", req.id.c_str());
+
+		ROS_INFO("KCL: (RPObjectPerception::addObjects) %s", req.object.id.c_str());
 		
 		// store object in mongodb
-		std::string id = message_store.insertNamed(req.id, req.cloud);
-		mongo_id_mapping.insert(std::make_pair(req.id, id));
-		std_msgs::String ros_string_category;
-		ros_string_category.data = req.category;
-		id = message_store.insertNamed(req.id, ros_string_category);
-		mongo_id_mapping.insert(std::make_pair(req.id, id));
-		id = message_store.insertNamed(req.id, req.pose);
-		mongo_id_mapping.insert(std::make_pair(req.id, id));
+		std::string mongo_id = message_store.insertNamed(req.object.id, req.object);
+		mongo_id_mapping.insert(std::make_pair(req.object.id, mongo_id));
 		
 		// Add INSTANCE object
 		rosplan_knowledge_msgs::KnowledgeUpdateService obSrv;
 		obSrv.request.update_type = rosplan_knowledge_msgs::KnowledgeUpdateService::Request::ADD_KNOWLEDGE;
 		obSrv.request.knowledge.knowledge_type = rosplan_knowledge_msgs::KnowledgeItem::INSTANCE;
 		obSrv.request.knowledge.instance_type = "object";
-		obSrv.request.knowledge.instance_name = req.id;
+		obSrv.request.knowledge.instance_name = req.object.id;
 		if (!update_knowledge_client.call(obSrv)) {
 			ROS_ERROR("KCL: (ObjectPerception) error adding knowledge");
 			res.result = squirrel_planning_knowledge_msgs::AddObjectService::Response::FAILURE;
@@ -58,9 +52,10 @@ namespace KCL_rosplan {
 		// create new waypoint
 		rosplan_knowledge_msgs::AddWaypoint addWPSrv;
 		std::stringstream ss;
-		ss << "wp_" << req.id;
+		ss << "wp_" << req.object.id;
 		addWPSrv.request.id = ss.str();
-		addWPSrv.request.waypoint = req.pose;
+		addWPSrv.request.waypoint.header = req.object.header;
+                addWPSrv.request.waypoint.pose = req.object.pose;
 
 		addWPSrv.request.waypoint.pose.position.z = 0;
 
@@ -84,7 +79,7 @@ namespace KCL_rosplan {
 		atObjectSrv.request.knowledge.attribute_name = "object_at";
 		diagnostic_msgs::KeyValue oPair;
 		oPair.key = "o";
-		oPair.value = req.id;
+		oPair.value = req.object.id;
 		atObjectSrv.request.knowledge.values.push_back(oPair);
 		oPair.key = "wp";
 		oPair.value = ss.str();
@@ -101,7 +96,7 @@ namespace KCL_rosplan {
 		tidyLocationUnknownSrv.request.knowledge.knowledge_type = rosplan_knowledge_msgs::KnowledgeItem::FACT;
 		tidyLocationUnknownSrv.request.knowledge.attribute_name = "tidy_location_unknown";
 		oPair.key = "o";
-		oPair.value = req.id;
+		oPair.value = req.object.id;
 		tidyLocationUnknownSrv.request.knowledge.values.push_back(oPair);
 		if (!update_knowledge_client.call(tidyLocationUnknownSrv)) {
 			ROS_ERROR("KCL: (ObjectPerception) error adding tidy_location_unknown predicate");
@@ -115,14 +110,14 @@ namespace KCL_rosplan {
 		toSrv.request.knowledge.knowledge_type = rosplan_knowledge_msgs::KnowledgeItem::FACT;
 		toSrv.request.knowledge.attribute_name = "tidy";
 		oPair.key = "o";
-		oPair.value = req.id;
+		oPair.value = req.object.id;
 		toSrv.request.knowledge.values.push_back(oPair);
 		if (!update_knowledge_client.call(toSrv)) {
 			ROS_ERROR("KCL: (ObjectPerception) error adding tidy goal");
 			res.result = squirrel_planning_knowledge_msgs::AddObjectService::Response::FAILURE;
 			return false;
 		}
-		
+
 		res.result = squirrel_planning_knowledge_msgs::AddObjectService::Response::SUCCESS;
 		return true;
 	}
@@ -159,21 +154,21 @@ namespace KCL_rosplan {
 	bool RPObjectPerception::updateObjects(
 		squirrel_planning_knowledge_msgs::UpdateObjectService::Request &req,
 		squirrel_planning_knowledge_msgs::UpdateObjectService::Response &res) {
-		
+#if 0
 		// Update all data associated with the given id -- the types might be swapped, but this should only affect performance.
 		std::pair<std::multimap<std::string, std::string>::iterator, std::multimap<std::string, std::string>::iterator> mm_ci;
-		mm_ci = mongo_id_mapping.equal_range(req.id);
+		mm_ci = mongo_id_mapping.equal_range(req.object.id);
 		
-		// We expect exactly three instances in the DB, anything else indicates a failure.
+		// We expect exactly one instance in the DB, anything else indicates a failure.
 		int found_instances = std::distance(mm_ci.first, mm_ci.second);
-		if (found_instances != 3) {
-			ROS_ERROR("KCL: (ObjectPerception) error updating, we expected mongodb to contain 3 instances for id %s, instead we found %d.", req.id.c_str(), found_instances);
+		if (found_instances != 1) {
+			ROS_ERROR("KCL: (ObjectPerception) error updating, we expected mongodb to contain 1 instance for id %s, instead we found %d.", req.id.c_str(), found_instances);
 			res.result = squirrel_planning_knowledge_msgs::UpdateObjectService::Response::FAILURE;
 			return false;
 		}
 		
 		std::multimap<std::string, std::string>::const_iterator update_ci = mm_ci.first;
-		message_store.updateNamed((*update_ci).second, req.cloud); ++update_ci;
+		message_store.updateNamed((*update_ci).second, req.object); ++update_ci;
 
 		std_msgs::String ros_string_category;
 		ros_string_category.data = req.category;
@@ -184,7 +179,7 @@ namespace KCL_rosplan {
 		std::stringstream ss;
 		ss << req.id << "_wp";
 		message_store.updateNamed(ss.str(), req.pose);
-
+#endif
 		// TODO ensure that updating waypoint position is OK
 		res.result = squirrel_planning_knowledge_msgs::UpdateObjectService::Response::SUCCESS;
 		return true;
