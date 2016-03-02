@@ -31,7 +31,7 @@ script:
   - cd $CATKIN_WS
   - git clone git@github.com:squirrel-project/squirrel_common.git ~/catkin_ws/src/squirrel_common
   - git clone git@github.com:clearpathrobotics/occupancy_grid_utils.git ~/catkin_ws/src/occupancy_grid_utils
-  - git clone git@github.com:kcl-planning/ROSPlan.git ~/catkin_ws/src/ROSPlan
+  - git clone -b squirrel git@github.com:kcl-planning/ROSPlan.git ~/catkin_ws/src/ROSPlan
   - catkin init
   - rosdep install --from-paths src/ -i -y --rosdistro $CI_ROS_DISTRO
   # Enable install space
