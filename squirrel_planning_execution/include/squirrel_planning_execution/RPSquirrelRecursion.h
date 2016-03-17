@@ -18,6 +18,7 @@
 #include "rosplan_knowledge_msgs/GetInstanceService.h"
 #include "rosplan_knowledge_msgs/GetAttributeService.h"
 #include "rosplan_knowledge_msgs/GenerateProblemService.h"
+#include "rosplan_knowledge_msgs/KnowledgeQueryService.h"
 #include "rosplan_dispatch_msgs/PlanningService.h"
 
 #include "rosplan_planning_system/PlanningEnvironment.h"
@@ -53,6 +54,7 @@ namespace KCL_rosplan {
 		ros::ServiceClient update_knowledge_client;
 		ros::ServiceClient get_instance_client;
 		ros::ServiceClient get_attribute_client;
+		ros::ServiceClient query_knowledge_client;
 		
 		// waypoint request services
 		ros::ServiceClient classify_object_waypoint_client;

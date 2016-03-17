@@ -59,8 +59,12 @@ set(rpsquirrelRecursion_SOURCES
   src/ContingentTacticalClassifyPDDLGenerator.cpp
   src/ContingentStrategicClassifyPDDLGenerator.cpp
   src/ContingentTidyPDDLGenerator.cpp
+  src/ClassicalTidyPDDLGenerator.cpp
   src/pddl_actions/PlannerInstance.cpp
   src/pddl_actions/GotoPDDLAction.cpp
+  src/pddl_actions/PickupPDDLAction.cpp
+  src/pddl_actions/PutObjectInBoxPDDLAction.cpp
+  src/pddl_actions/TidyObjectPDDLAction.cpp
   src/pddl_actions/ClearObjectPDDLAction.cpp
   src/pddl_actions/ExploreWaypointPDDLAction.cpp
   src/pddl_actions/ClassifyObjectPDDLAction.cpp
