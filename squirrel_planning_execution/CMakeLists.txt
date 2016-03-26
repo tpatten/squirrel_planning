@@ -68,6 +68,7 @@ set(rpsquirrelRecursion_SOURCES
   src/pddl_actions/ClearObjectPDDLAction.cpp
   src/pddl_actions/ExploreWaypointPDDLAction.cpp
   src/pddl_actions/ClassifyObjectPDDLAction.cpp
+  src/pddl_actions/ShedKnowledgePDDLAction.cpp
   src/ViewConeGenerator.cpp)
 
 ## planning simulation

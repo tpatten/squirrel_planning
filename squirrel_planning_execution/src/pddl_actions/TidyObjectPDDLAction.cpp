@@ -43,15 +43,6 @@ void TidyObjectPDDLAction::dispatchCallback(const rosplan_dispatch_msgs::ActionD
 	}
 	
 	ROS_INFO("KCL (TidyObjectPDDLAction) Process the action: %s", normalised_action_name.c_str());
-	/*
-	for (std::vector<diagnostic_msgs::KeyValue>::const_iterator ci = msg->parameters.begin(); ci != msg->parameters.end(); ++ci)
-	{
-		const std::string& key = (*ci).key;
-		const std::string& value = (*ci).value;
-		
-		ROS_INFO("KCL (TidyObjectPDDLAction) %s -> %s", key.c_str(), value.c_str());
-	}
-	*/
 	
 	// Report this action is enabled and completed successfully.
 	rosplan_dispatch_msgs::ActionFeedback fb;

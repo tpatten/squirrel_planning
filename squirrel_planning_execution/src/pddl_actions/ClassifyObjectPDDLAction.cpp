@@ -55,17 +55,6 @@ void ClassifyObjectPDDLAction::dispatchCallback(const rosplan_dispatch_msgs::Act
 		return;
 	}
 	
-	ROS_INFO("KCL (ClassifyObjectPDDLAction) Process the action: %s", normalised_action_name.c_str());
-	/*
-	for (std::vector<diagnostic_msgs::KeyValue>::const_iterator ci = msg->parameters.begin(); ci != msg->parameters.end(); ++ci)
-	{
-		const std::string& key = (*ci).key;
-		const std::string& value = (*ci).value;
-		
-		ROS_INFO("KCL (ClassifyObjectPDDLAction) %s -> %s", key.c_str(), value.c_str());
-	}
-	*/
-	
 	// Report this action is enabled and completed successfully.
 	rosplan_dispatch_msgs::ActionFeedback fb;
 	fb.action_id = msg->action_id;
@@ -79,6 +68,8 @@ void ClassifyObjectPDDLAction::dispatchCallback(const rosplan_dispatch_msgs::Act
 		const std::string& from = msg->parameters[0].value;
 		const std::string& view = msg->parameters[1].value;
 		const std::string& object = msg->parameters[2].value;
+		
+		ROS_INFO("KCL (ClassifyObjectPDDLAction) Process the action: (%s %s %s %s)", normalised_action_name.c_str(), from.c_str(), view.c_str(), object.c_str());
 		
 		// Add the new knowledge.
 		rosplan_knowledge_msgs::KnowledgeUpdateService knowledge_update_service;
@@ -107,7 +98,7 @@ void ClassifyObjectPDDLAction::dispatchCallback(const rosplan_dispatch_msgs::Act
 			ROS_ERROR("KCL: (ClassifyObjectPDDLAction) Could not add the classifiable_from predicate to the knowledge base.");
 			exit(-1);
 		}
-		ROS_INFO("KCL: (ClassifyObjectPDDLAction) Added %s classifiable_from predicate to the knowledge base.", knowledge_item.is_negative ? "NOT" : "");
+		ROS_ERROR("KCL: (ClassifyObjectPDDLAction) Added %s (classifiable_from %s %s %s) to the knowledge base.", knowledge_item.is_negative ? "NOT" : "", from.c_str(), view.c_str(), object.c_str());
 		knowledge_item.values.clear();
 		
 		// If the fact is not negative, we need to decide upon the type of this object.
@@ -149,6 +140,10 @@ void ClassifyObjectPDDLAction::dispatchCallback(const rosplan_dispatch_msgs::Act
 			}
 			ROS_ERROR("KCL: (ClassifyObjectPDDLAction) Added the (is_of_type %s %s) predicate to the knowledge base.", object.c_str(), type.c_str());
 		}
+	}
+	else
+	{
+		ROS_INFO("KCL (ClassifyObjectPDDLAction) Ignore action: (%s)", normalised_action_name.c_str());
 	}
 	
 	fb.action_id = msg->action_id;

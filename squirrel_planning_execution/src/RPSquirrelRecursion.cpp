@@ -19,6 +19,7 @@
 #include "pddl_actions/PutObjectInBoxPDDLAction.h"
 #include "pddl_actions/TidyObjectPDDLAction.h"
 #include "pddl_actions/PickupPDDLAction.h"
+#include "pddl_actions/ShedKnowledgePDDLAction.h"
 
 #define SQUIRREL_SIMULATION
 
@@ -683,9 +684,7 @@ namespace KCL_rosplan {
 		std::string problem_path = ss.str();
 		ss.str(std::string());
 		
- 		std::cout << "DO ITTTT!  Path: " << data_path << "; domain name: " << domain_name << "; Domain path: " << domain_path << "; Problem name: " << problem_name << "; Problem path: " << problem_path << std::endl;
-		
-		if (action_name == "explore_area") {
+ 		if (action_name == "explore_area") {
 			
 			std::vector<geometry_msgs::Pose> view_poses;
 #ifndef SQUIRREL_SIMULATION
@@ -1169,6 +1168,7 @@ namespace KCL_rosplan {
 		KCL_rosplan::PutObjectInBoxPDDLAction pub_object_in_box_action(nh);
 		KCL_rosplan::TidyObjectPDDLAction tidy_object_action(nh);
 		KCL_rosplan::PickupPDDLAction pickup_action(nh);
+		KCL_rosplan::ShedKnowledgePDDLAction shed_knowledge_action(nh);
 		
 		// listen for action dispatch
 		ros::Subscriber ds = nh.subscribe("/kcl_rosplan/action_dispatch", 1000, &KCL_rosplan::RPSquirrelRecursion::dispatchCallback, &rpsr);
