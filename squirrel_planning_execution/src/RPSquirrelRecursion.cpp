@@ -86,6 +86,7 @@ namespace KCL_rosplan {
 		std::vector<std::string> toy_types;
 		toy_types.push_back("horse");
 		toy_types.push_back("car");
+		toy_types.push_back("unknown");
 		
 		for (std::vector<std::string>::const_iterator ci = toy_types.begin(); ci != toy_types.end(); ++ci)
 		{
@@ -194,7 +195,7 @@ namespace KCL_rosplan {
 			ROS_INFO("KCL: (RPSquirrelRecursion) Added the fact (can_pickup %s %s) to the knowledge base.", "kenny", type_predicate.c_str());
 			knowledge_item.values.clear();
 		}
-		
+		/*
 		for (unsigned int i = 0; i < 2; ++i)
 		{
 			std::stringstream ss;
@@ -247,62 +248,6 @@ namespace KCL_rosplan {
 			}
 			ROS_INFO("KCL: (RPSquirrelRecursion) Added the new object_at predicate to the knowledge base.");
 		}
-		/*
-		// (is_of_type ?o - object ?t -type ?s - state)
-		
-			get_attribute.request.predicate_name = "is_of_type";
-			if (!get_attribute_client.call(get_attribute)) {
-				ROS_ERROR("KCL: (RPSquirrelRoadmap) Failed to recieve the attributes of the predicate 'is_of_type'");
-				return false;
-			}
-			
-			std::map<std::string, std::string> object_to_type_mapping;
-			for (std::vector<rosplan_knowledge_msgs::KnowledgeItem>::const_iterator ci = get_attribute.response.attributes.begin(); ci != get_attribute.response.attributes.end(); ++ci) {
-				const rosplan_knowledge_msgs::KnowledgeItem& knowledge_item = *ci;
-				std::string type_predicate;
-				std::string object_predicate;
-				for (std::vector<diagnostic_msgs::KeyValue>::const_iterator ci = knowledge_item.values.begin(); ci != knowledge_item.values.end(); ++ci) {
-					const diagnostic_msgs::KeyValue& key_value = *ci;
-					if ("o" == key_value.key && object_to_location_mapping.count(key_value.value) == 1) {
-						object_predicate = key_value.value;
-					} else if ("t" == key_value.key) {
-						type_predicate = key_value.value;
-					}
-				}
-				
-				if ("" != object_predicate) {
-					object_to_type_mapping[object_predicate] = type_predicate;
-				}
-			}
-			
-			// Get the location of the boxes.
-			// (box_at ?b - box ?wp - waypoint)
-			get_attribute.request.predicate_name = "box_at";
-			if (!get_attribute_client.call(get_attribute)) {
-				ROS_ERROR("KCL: (RPSquirrelRoadmap) Failed to recieve the attributes of the predicate 'box_at'");
-				return false;
-			}
-			
-			std::map<std::string, std::string> box_to_location_mapping;
-			for (std::vector<rosplan_knowledge_msgs::KnowledgeItem>::const_iterator ci = get_attribute.response.attributes.begin(); ci != get_attribute.response.attributes.end(); ++ci) {
-				const rosplan_knowledge_msgs::KnowledgeItem& knowledge_item = *ci;
-				std::string box_predicate;
-				std::string box_location_predicate;
-				for (std::vector<diagnostic_msgs::KeyValue>::const_iterator ci = knowledge_item.values.begin(); ci != knowledge_item.values.end(); ++ci) {
-					const diagnostic_msgs::KeyValue& key_value = *ci;
-					if ("b" == key_value.key) {
-						box_predicate = key_value.value;
-					} else if ("wp" == key_value.key) {
-						box_location_predicate = key_value.value;
-					}
-				}
-				
-				box_to_location_mapping[box_predicate] = box_location_predicate;
-			}
-			
-			// Figure out which types of objects fit in each box.
-			// (can_fit_inside ?t - type ?b - box)
-			get_attribute.request.predicate_name = "can_fit_inside";
 		*/
 	}
 
@@ -351,7 +296,7 @@ namespace KCL_rosplan {
 		std::string problem_name = ss.str();
 		
 		ss.str(std::string());
-		ss << "timeout 10 " << planner_path << "ff -o DOMAIN -f PROBLEM";
+		ss << "timeout 60 " << planner_path << "ff -o DOMAIN -f PROBLEM";
 		std::string planner_command = ss.str();
 		
 		// Before calling the planner we create the domain so it can be parsed.
@@ -1058,6 +1003,16 @@ namespace KCL_rosplan {
 				
 				if ("" != object_predicate) {
 					object_to_type_mapping[object_predicate] = type_predicate;
+				}
+			}
+			
+			// For all object that do not have a type (i.e. were not classified) we add the 'unknown' type.
+			for (std::map<std::string, std::string>::const_iterator ci = object_to_location_mapping.begin(); ci != object_to_location_mapping.end(); ++ci)
+			{
+				const std::string& object_name = (*ci).first;
+				if (object_to_type_mapping.find(object_name) == object_to_location_mapping.end())
+				{
+					object_to_type_mapping[object_name] = "unknown";
 				}
 			}
 			

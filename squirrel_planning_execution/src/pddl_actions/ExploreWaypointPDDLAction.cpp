@@ -73,6 +73,77 @@ void ExploreWaypointPDDLAction::dispatchCallback(const rosplan_dispatch_msgs::Ac
 	}
 	ROS_INFO("KCL: (ExploreWaypointPDDLAction) Added the explored predicate to the knowledge base.");
 	
+	// Get all the objects from the knowledge base, so we can give our objects a unique name.
+	// Check if this object has been classified or not.
+	rosplan_knowledge_msgs::GetInstanceService get_instance;
+	get_instance.request.type_name = "object";
+	
+	if (!get_instance_client_.call(get_instance))
+	{
+		ROS_ERROR("KCL: (ExploreWaypointPDDLAction) Could not get the instances of type 'object'.");
+		exit(1);
+	}
+	
+	unsigned int object_nr = get_instance.response.instances.size();
+	
+	// Simulate that we found some (or none!) objects at this waypoint.
+	unsigned int new_objects =  rand() % 3;
+	for (unsigned int i = 0; i < new_objects; ++i)
+	{
+		std::stringstream ss;
+		ss << "object" << object_nr;
+		std::string object_name = ss.str();
+		
+		ss.str(std::string());
+		ss << "waypoint_object" << object_nr;
+		std::string waypoint_name = ss.str();
+		
+		rosplan_knowledge_msgs::KnowledgeItem knowledge_item;
+		knowledge_item.knowledge_type = rosplan_knowledge_msgs::KnowledgeItem::INSTANCE;
+		knowledge_item.instance_type = "object";
+		knowledge_item.instance_name = object_name;
+		
+		knowledge_update_service.request.knowledge = knowledge_item;
+		if (!update_knowledge_client_.call(knowledge_update_service)) {
+			ROS_ERROR("KCL: (ExploreWaypointPDDLAction) Could not add the object %s to the knowledge base.", object_name.c_str());
+			exit(-1);
+		}
+		ROS_INFO("KCL: (ExploreWaypointPDDLAction) Added %s to the knowledge base.", object_name.c_str());
+		
+		knowledge_item.instance_type = "waypoint";
+		knowledge_item.instance_name = waypoint_name;
+		
+		knowledge_update_service.request.knowledge = knowledge_item;
+		if (!update_knowledge_client_.call(knowledge_update_service)) {
+			ROS_ERROR("KCL: (ExploreWaypointPDDLAction) Could not add the waypoint %s to the knowledge base.", waypoint_name.c_str());
+			exit(-1);
+		}
+		ROS_INFO("KCL: (ExploreWaypointPDDLAction) Added %s to the knowledge base.", waypoint_name.c_str());
+		
+		knowledge_item.knowledge_type = rosplan_knowledge_msgs::KnowledgeItem::FACT;
+		knowledge_item.attribute_name = "object_at";
+		knowledge_item.is_negative = false;
+		
+		diagnostic_msgs::KeyValue kv;
+		kv.key = "o";
+		kv.value = object_name;
+		knowledge_item.values.push_back(kv);
+		
+		kv.key = "wp";
+		kv.value = waypoint_name;
+		knowledge_item.values.push_back(kv);
+		
+		knowledge_update_service.request.knowledge = knowledge_item;
+		if (!update_knowledge_client_.call(knowledge_update_service)) {
+			ROS_ERROR("KCL: (ExploreWaypointPDDLAction) Could not add the new object_at predicate to the knowledge base.");
+			exit(-1);
+		}
+		ROS_INFO("KCL: (ExploreWaypointPDDLAction) Added the new object_at predicate to the knowledge base.");
+		++object_nr;
+	}
+	
+	ROS_INFO("KCL: (ExploreWaypointPDDLAction) Added %d new objects!", new_objects);
+	
 	fb.action_id = msg->action_id;
 	fb.status = "action achieved";
 	action_feedback_pub_.publish(fb);
