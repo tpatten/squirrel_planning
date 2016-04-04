@@ -152,6 +152,12 @@ namespace KCL_rosplan {
 				message_store.deleteID(db_name_map[wpName]);
 				message_store.deleteID(db_name_map[so.id]);
 			}
+
+			// report this action is achieved
+			rosplan_dispatch_msgs::ActionFeedback fb;
+			fb.action_id = msg->action_id;
+			fb.status = "action achieved";
+			action_feedback_pub.publish(fb);
 		}
 /*
 		// ignore non-perception actions
