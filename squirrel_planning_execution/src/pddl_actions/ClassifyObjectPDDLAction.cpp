@@ -32,7 +32,8 @@ ClassifyObjectPDDLAction::ClassifyObjectPDDLAction(ros::NodeHandle& node_handle,
 	dispatch_sub_ = node_handle.subscribe("/kcl_rosplan/action_dispatch", 1000, &KCL_rosplan::ClassifyObjectPDDLAction::dispatchCallback, this);
 	
 	// Initialise the random number generator with a fixed number so we can reproduce the same results.
-	srand (1234);
+	//srand (1234);
+	srand(time(NULL));
 }
 
 ClassifyObjectPDDLAction::~ClassifyObjectPDDLAction()
@@ -77,7 +78,28 @@ void ClassifyObjectPDDLAction::dispatchCallback(const rosplan_dispatch_msgs::Act
 		rosplan_knowledge_msgs::KnowledgeItem knowledge_item;
 		knowledge_item.knowledge_type = rosplan_knowledge_msgs::KnowledgeItem::FACT;
 		knowledge_item.attribute_name = "classifiable_from";
-		
+		/*
+		bool received_user_input = false;
+		while (ros::ok() && !received_user_input)
+		{
+			char response;
+			std::cout << "Should this sensing action succeed? (y/n)" << std::endl;
+			std::cin >> response;
+			received_user_input = true;
+			if (response == 'n')
+			{
+				knowledge_item.is_negative = true;
+			}
+			else if (response == 'y')
+			{
+				knowledge_item.is_negative = false;
+			}
+			else
+			{
+				received_user_input = false;
+			}
+		}
+		*/
 		knowledge_item.is_negative = (float)rand() / (float)RAND_MAX >= classification_probability_;
 		
 		diagnostic_msgs::KeyValue kv;
