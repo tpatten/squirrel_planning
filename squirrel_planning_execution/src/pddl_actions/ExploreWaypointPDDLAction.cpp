@@ -87,7 +87,7 @@ void ExploreWaypointPDDLAction::dispatchCallback(const rosplan_dispatch_msgs::Ac
 	unsigned int object_nr = get_instance.response.instances.size();
 	
 	// Simulate that we found some (or none!) objects at this waypoint.
-	unsigned int new_objects =  rand() % 3;
+	unsigned int new_objects =  rand() % 2;
 	for (unsigned int i = 0; i < new_objects; ++i)
 	{
 		std::stringstream ss;

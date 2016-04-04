@@ -306,6 +306,8 @@ namespace KCL_rosplan {
 			return;
 		}
 		
+		ROS_INFO("KCL: (RPSquirrelRecursion) Start planner: %s %s.", domain_name.c_str(), problem_name.c_str());
+		
 		planner_instance.startPlanner(domain_name, problem_name, data_path, planner_command);
 		
 		// publish feedback (enabled)
@@ -538,6 +540,11 @@ namespace KCL_rosplan {
 			ROS_INFO("KCL: (RPSquirrelRecursion) No messages received...");
 			return false;
 		}
+		else
+		{
+			// Generate the PDDL problem file here.
+			
+		}
 		
 		// All domains / problem files should all ready been generated.
 		return true;
@@ -554,20 +561,20 @@ namespace KCL_rosplan {
 		knowledge_item.instance_name = "kenny";
 		knowledge_update_service.request.knowledge = knowledge_item;
 		if (!update_knowledge_client.call(knowledge_update_service)) {
-			ROS_ERROR("KCL: (TidyRooms) Could not add kenny to the knowledge base.");
+			ROS_ERROR("KCL: (RPSquirrelRecursion) Could not add kenny to the knowledge base.");
 			exit(-1);
 		}
-		ROS_INFO("KCL: (TidyRooms) Added kenny to the knowledge base.");
+		ROS_INFO("KCL: (RPSquirrelRecursion) Added kenny to the knowledge base.");
 		
 		// Add the single room.
 		knowledge_item.instance_type = "area";
 		knowledge_item.instance_name = "room";
 		knowledge_update_service.request.knowledge = knowledge_item;
 		if (!update_knowledge_client.call(knowledge_update_service)) {
-			ROS_ERROR("KCL: (TidyRooms) Could not add area to the knowledge base.");
+			ROS_ERROR("KCL: (RPSquirrelRecursion) Could not add area to the knowledge base.");
 			exit(-1);
 		}
-		ROS_INFO("KCL: (TidyRooms) Added area to the knowledge base.");
+		ROS_INFO("KCL: (RPSquirrelRecursion) Added area to the knowledge base.");
 		
 		// Set the location of the robot.
 		knowledge_item.knowledge_type = rosplan_knowledge_msgs::KnowledgeItem::FACT;
@@ -582,10 +589,10 @@ namespace KCL_rosplan {
 		knowledge_item.values.push_back(kv);
 		knowledge_update_service.request.knowledge = knowledge_item;
 		if (!update_knowledge_client.call(knowledge_update_service)) {
-			ROS_ERROR("KCL: (TidyRooms) Could not add the fact (robot_in kenny room) to the knowledge base.");
+			ROS_ERROR("KCL: (RPSquirrelRecursion) Could not add the fact (robot_in kenny room) to the knowledge base.");
 			exit(-1);
 		}
-		ROS_INFO("KCL: (TidyRooms) Added (robot_in kenny room) to the knowledge base.");
+		ROS_INFO("KCL: (RPSquirrelRecursion) Added (robot_in kenny room) to the knowledge base.");
 		knowledge_item.values.clear();
 		
 		// Setup the goal.
@@ -602,10 +609,10 @@ namespace KCL_rosplan {
 		knowledge_update_service.request.update_type = rosplan_knowledge_msgs::KnowledgeUpdateService::Request::ADD_GOAL;
 		knowledge_update_service.request.knowledge = knowledge_item;
 		if (!update_knowledge_client.call(knowledge_update_service)) {
-			ROS_ERROR("KCL: (TidyRooms) Could not add the goal (tidy room) to the knowledge base.");
+			ROS_ERROR("KCL: (RPSquirrelRecursion) Could not add the goal (tidy room) to the knowledge base.");
 			exit(-1);
 		}
-		ROS_INFO("KCL: (TidyRooms) Added the goal (tidy room) to the knowledge base.");
+		ROS_INFO("KCL: (RPSquirrelRecursion) Added the goal (tidy room) to the knowledge base.");
 	}
 	
 	bool RPSquirrelRecursion::createDomain(const std::string& action_name)
@@ -618,13 +625,14 @@ namespace KCL_rosplan {
 		//ss << data_path << last_received_msg.back().name << "_domain-nt.pddl";
 		ss << last_received_msg.back().name << "_domain-nt.pddl";
 		std::string domain_name = ss.str();
+		ss.str(std::string());
 		ss << data_path << domain_name;
 		std::string domain_path = ss.str();
 		
 		ss.str(std::string());
-		//ss << data_path << last_received_msg.back().name << "_problem.pddl";
 		ss << last_received_msg.back().name << "_problem.pddl";
 		std::string problem_name = ss.str();
+		ss.str(std::string());
 		ss << data_path << problem_name;
 		std::string problem_path = ss.str();
 		ss.str(std::string());
@@ -675,10 +683,10 @@ namespace KCL_rosplan {
 				add_waypoints_service.request.update_type = rosplan_knowledge_msgs::KnowledgeUpdateService::Request::ADD_GOAL;
 				add_waypoints_service.request.knowledge = waypoint_knowledge;
 				if (!update_knowledge_client.call(add_waypoints_service)) {
-					ROS_ERROR("KCL: (TidyRooms) Could not add the goal (tidy room) to the knowledge base.");
+					ROS_ERROR("KCL: (RPSquirrelRecursion) Could not add the goal (explored %s) to the knowledge base.", ss.str().c_str());
 					exit(-1);
 				}
-				ROS_INFO("KCL: (TidyRooms) Added the goal (tidy room) to the knowledge base.");
+				ROS_INFO("KCL: (RPSquirrelRecursion) Added the goal (explored %s) to the knowledge base.", ss.str().c_str());
 				++waypoint_number;
 			}
 			
@@ -718,8 +726,9 @@ namespace KCL_rosplan {
 			ROS_INFO("KCL: (RPSquirrelRecursion) Added %d waypoints to the knowledge base.", nr_waypoint_number_int8.data);
 			
 			PlanningEnvironment planning_environment;
-			planning_environment.parseDomain(domain_name);
+			planning_environment.parseDomain(domain_path);
 			planning_environment.update(*node_handle);
+			ROS_INFO("KCL: (RPSquirrelRecursion) Found %d waypoints.", planning_environment.type_object_map["waypoint"].size());
 			PDDLProblemGenerator pddl_problem_generator;
 			
 			pddl_problem_generator.generatePDDLProblemFile(planning_environment, problem_path);
@@ -1137,11 +1146,11 @@ namespace KCL_rosplan {
 		nh.getParam("/planner_path", planner_path);
 		
 		std::stringstream ss;
-		ss << data_path << "domain_tidy_room-nt.pddl";
+		ss << data_path << "tidy_room_domain-nt.pddl";
 		std::string domain_path = ss.str();
 		
 		ss.str(std::string());
-		ss << data_path << "problem_tidy_room.pddl";
+		ss << data_path << "tidy_room_problem.pddl";
 		std::string problem_path = ss.str();
 		
 		ss.str(std::string());

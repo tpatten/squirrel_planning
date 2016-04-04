@@ -34,6 +34,29 @@ ClassifyObjectPDDLAction::ClassifyObjectPDDLAction(ros::NodeHandle& node_handle,
 	// Initialise the random number generator with a fixed number so we can reproduce the same results.
 	//srand (1234);
 	srand(time(NULL));
+	
+	bool received_user_input = false;
+	while (ros::ok() && !received_user_input)
+	{
+		char response;
+		std::cout << "Hello dear User, would you like to be asked whether a classification action succeeds? (y/n)" << std::endl;
+		std::cin >> response;
+		received_user_input = true;
+		if (response == 'n')
+		{
+			ask_user_input_ = false;
+		}
+		else if (response == 'y')
+		{
+			ask_user_input_ = true;
+		}
+		else
+		{
+			received_user_input = false;
+		}
+	}
+	
+	
 }
 
 ClassifyObjectPDDLAction::~ClassifyObjectPDDLAction()
@@ -78,29 +101,34 @@ void ClassifyObjectPDDLAction::dispatchCallback(const rosplan_dispatch_msgs::Act
 		rosplan_knowledge_msgs::KnowledgeItem knowledge_item;
 		knowledge_item.knowledge_type = rosplan_knowledge_msgs::KnowledgeItem::FACT;
 		knowledge_item.attribute_name = "classifiable_from";
-		/*
-		bool received_user_input = false;
-		while (ros::ok() && !received_user_input)
+		
+		if (ask_user_input_)
 		{
-			char response;
-			std::cout << "Should this sensing action succeed? (y/n)" << std::endl;
-			std::cin >> response;
-			received_user_input = true;
-			if (response == 'n')
+			bool received_user_input = false;
+			while (ros::ok() && !received_user_input)
 			{
-				knowledge_item.is_negative = true;
-			}
-			else if (response == 'y')
-			{
-				knowledge_item.is_negative = false;
-			}
-			else
-			{
-				received_user_input = false;
+				char response;
+				std::cout << "Should this sensing action succeed? (y/n)" << std::endl;
+				std::cin >> response;
+				received_user_input = true;
+				if (response == 'n')
+				{
+					knowledge_item.is_negative = true;
+				}
+				else if (response == 'y')
+				{
+					knowledge_item.is_negative = false;
+				}
+				else
+				{
+					received_user_input = false;
+				}
 			}
 		}
-		*/
-		knowledge_item.is_negative = (float)rand() / (float)RAND_MAX >= classification_probability_;
+		else 
+		{
+			knowledge_item.is_negative = (float)rand() / (float)RAND_MAX >= classification_probability_;
+		}
 		
 		diagnostic_msgs::KeyValue kv;
 		kv.key = "from";
@@ -120,7 +148,7 @@ void ClassifyObjectPDDLAction::dispatchCallback(const rosplan_dispatch_msgs::Act
 			ROS_ERROR("KCL: (ClassifyObjectPDDLAction) Could not add the classifiable_from predicate to the knowledge base.");
 			exit(-1);
 		}
-		ROS_ERROR("KCL: (ClassifyObjectPDDLAction) Added %s (classifiable_from %s %s %s) to the knowledge base.", knowledge_item.is_negative ? "NOT" : "", from.c_str(), view.c_str(), object.c_str());
+		ROS_INFO("KCL: (ClassifyObjectPDDLAction) Added %s (classifiable_from %s %s %s) to the knowledge base.", knowledge_item.is_negative ? "NOT" : "", from.c_str(), view.c_str(), object.c_str());
 		knowledge_item.values.clear();
 		
 		// If the fact is not negative, we need to decide upon the type of this object.
@@ -160,7 +188,7 @@ void ClassifyObjectPDDLAction::dispatchCallback(const rosplan_dispatch_msgs::Act
 				ROS_ERROR("KCL: (ClassifyObjectPDDLAction) Could not add the (is_of_type %s %s) predicate to the knowledge base.", object.c_str(), type.c_str());
 				exit(1);
 			}
-			ROS_ERROR("KCL: (ClassifyObjectPDDLAction) Added the (is_of_type %s %s) predicate to the knowledge base.", object.c_str(), type.c_str());
+			ROS_INFO("KCL: (ClassifyObjectPDDLAction) Added the (is_of_type %s %s) predicate to the knowledge base.", object.c_str(), type.c_str());
 		}
 	}
 	else
