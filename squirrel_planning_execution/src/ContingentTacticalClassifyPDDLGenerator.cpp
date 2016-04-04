@@ -278,9 +278,9 @@ void ContingentTacticalClassifyPDDLGenerator::generateDomainFile(const std::stri
 	 * Classify sension action.
 	 */
 	myfile << ";; Attempt to classify the object." << std::endl;
-	myfile << "(:action classify_object" << std::endl;
+	myfile << "(:action observe-classifiable_from" << std::endl;
 	
-	myfile << "\t:parameters (?o - object ?r - robot ?from ?view - waypoint ?l ?l2 - level ?kb - knowledgebase)" << std::endl;
+	myfile << "\t:parameters (?from ?view - waypoint ?o - object ?r - robot  ?l ?l2 - level ?kb - knowledgebase)" << std::endl;
 	myfile << "\t:precondition (and" << std::endl;
 	myfile << "\t\t(not (resolve-axioms))" << std::endl;
 	myfile << "\t\t(next ?l ?l2)" << std::endl;
@@ -979,7 +979,10 @@ void ContingentTacticalClassifyPDDLGenerator::createPDDL(const std::string& path
 			Location* other_location = *ci;
 			location->connected_locations_.push_back(other_location);
 			other_location->connected_locations_.push_back(location);
+			
+			std::cout << location->name_ << " is connected to " << other_location->name_ << std::endl;
 		}
+		std::cout << "Processed: " << location->name_ << std::endl;
 	}
 	
 	std::cout << "Creating all possible states..." << std::endl;

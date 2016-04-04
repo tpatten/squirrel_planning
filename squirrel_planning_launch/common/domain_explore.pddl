@@ -9,7 +9,7 @@
 
 (:predicates
 	(explored ?wp - waypoint)
-	(robot_at ?v - robot ?wp - waypoint)
+	(robot_at ?r - robot ?wp - waypoint)
 )
 
 (:functions

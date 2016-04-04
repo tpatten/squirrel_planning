@@ -448,9 +448,9 @@ void ContingentStrategicClassifyPDDLGenerator::generateDomainFile(const std::str
 	 * Abstract classify action.
 	 */
 	myfile << ";; Attempt to classify the object." << std::endl;
-	myfile << "(:action abstract_classify_object" << std::endl;
+	myfile << "(:action observe-classifiable_on_attempt" << std::endl;
 
-	myfile << "\t:parameters (?o - object ?r - robot ?from - waypoint ?c ?c2 - counter ?l ?l2 - level ?kb - knowledgebase)" << std::endl;
+	myfile << "\t:parameters (?o - object ?c - counter ?r - robot ?from - waypoint ?c2 - counter ?l ?l2 - level ?kb - knowledgebase)" << std::endl;
 	myfile << "\t:precondition (and" << std::endl;
 	myfile << "\t\t(not (resolve-axioms))" << std::endl;
 	myfile << "\t\t(next ?l ?l2)" << std::endl;
