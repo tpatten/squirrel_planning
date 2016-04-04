@@ -106,10 +106,8 @@ namespace KCL_rosplan {
 				}
 
 				//data
-				message_store.insertNamed(wpName, ci->pose);
-				message_store.insertNamed(so.id, ci->pose);
-				message_store.insertNamed(so.id, ci->cloud);
-				message_store.insertNamed(so.id, ci->bounding_cylinder);
+				db_name_map[wpName] = message_store.insertNamed(wpName, ci->pose);
+				db_name_map[so.id] = message_store.insertNamed(so.id, so);
 			}
 
 			// update all new objects
@@ -123,9 +121,7 @@ namespace KCL_rosplan {
 
 				//data
 				db_name_map[wpName] = message_store.updateNamed(wpName, ci->pose);
-				db_name_map[so.id] = message_store.updateNamed(so.id, ci->pose);
-				message_store.updateNamed(so.id, ci->cloud);
-				message_store.updateNamed(so.id, ci->bounding_cylinder);
+				db_name_map[so.id] = message_store.updateNamed(so.id, so);
 			}
 
 			// remove ghost objects
@@ -154,7 +150,6 @@ namespace KCL_rosplan {
 			}
 
 			// report this action is achieved
-			rosplan_dispatch_msgs::ActionFeedback fb;
 			fb.action_id = msg->action_id;
 			fb.status = "action achieved";
 			action_feedback_pub.publish(fb);
