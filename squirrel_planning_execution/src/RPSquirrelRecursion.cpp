@@ -613,18 +613,21 @@ namespace KCL_rosplan {
 		// Lets start the planning process.
 		std::string data_path;
 		node_handle->getParam("/data_path", data_path);
-		
+
 		std::stringstream ss;
-		//ss << data_path << last_received_msg.back().name << "_domain-nt.pddl";
+
 		ss << last_received_msg.back().name << "_domain-nt.pddl";
-		std::string domain_name = ss.str();
-		ss << data_path << domain_name;
-		std::string domain_path = ss.str();
-		
+		std::string domain_name = ss.str();		
 		ss.str(std::string());
-		//ss << data_path << last_received_msg.back().name << "_problem.pddl";
+
+		ss << data_path << domain_name;
+		std::string domain_path = ss.str();		
+		ss.str(std::string());
+
 		ss << last_received_msg.back().name << "_problem.pddl";
 		std::string problem_name = ss.str();
+		ss.str(std::string());
+
 		ss << data_path << problem_name;
 		std::string problem_path = ss.str();
 		ss.str(std::string());
@@ -718,7 +721,7 @@ namespace KCL_rosplan {
 			ROS_INFO("KCL: (RPSquirrelRecursion) Added %d waypoints to the knowledge base.", nr_waypoint_number_int8.data);
 			
 			PlanningEnvironment planning_environment;
-			planning_environment.parseDomain(domain_name);
+			planning_environment.parseDomain(domain_path);
 			planning_environment.update(*node_handle);
 			PDDLProblemGenerator pddl_problem_generator;
 			
@@ -1137,7 +1140,7 @@ namespace KCL_rosplan {
 		nh.getParam("/planner_path", planner_path);
 		
 		std::stringstream ss;
-		ss << data_path << "domain_tidy_room-nt.pddl";
+		ss << data_path << "tidy_room_domain-nt.pddl";
 		std::string domain_path = ss.str();
 		
 		ss.str(std::string());
