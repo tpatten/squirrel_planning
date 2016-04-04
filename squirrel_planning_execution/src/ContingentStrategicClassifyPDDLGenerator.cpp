@@ -7,6 +7,7 @@
 #include <map>
 #include <set>
 #include <string>
+#include <ros/ros.h>
 
 #include "squirrel_planning_execution/ContingentStrategicClassifyPDDLGenerator.h"
 
@@ -1150,9 +1151,6 @@ void ContingentStrategicClassifyPDDLGenerator::generateDomainFile(const std::str
 
 void ContingentStrategicClassifyPDDLGenerator::createPDDL(const std::string& path, const std::string& domain_file, const std::string& problem_file, const std::string& robot_location_predicate, const std::map<std::string, std::string>& object_location_predicates, unsigned int max_classification_attemps)
 {
-	
-	std::cout << "ContingentStrategicClassifyPDDLGenerator::createPDDL PATH=" << path << "; DOMAIN_FILE=" << domain_file << "; PROBLEM_FILE=" << problem_file << std::endl;
-	
 	std::vector<Location*> locations;
 	std::vector<Object*> objects;
 	std::map<std::string, Object*> predicate_to_object_mapping;
@@ -1187,7 +1185,6 @@ void ContingentStrategicClassifyPDDLGenerator::createPDDL(const std::string& pat
 		}
 	}
 	std::stringstream ss;
-	std::cout << "Creating all possible states..." << std::endl;
 
 	std::vector<const KnowledgeBase*> knowledge_bases;
 	std::map<const Object*, unsigned int> empty_classifiable_when;
@@ -1226,11 +1223,11 @@ void ContingentStrategicClassifyPDDLGenerator::createPDDL(const std::string& pat
 	
 	ss.str(std::string());
 	ss << path << domain_file;
-	std::cout << "Generate domain... " << ss.str() << std::endl;
+	ROS_INFO("KCL: (ContingentStrategicClassifyPDDLGenerator) Generate domain... %s", ss.str().c_str());
 	generateDomainFile(ss.str(), basis_kb, knowledge_bases, *robot_location, locations, objects, max_classification_attemps);
 	ss.str(std::string());
 	ss << path  << problem_file;
-	std::cout << "Generate problem... " << ss.str() << std::endl;
+	ROS_INFO("KCL: (ContingentStrategicClassifyPDDLGenerator) Generate problem... %s", ss.str().c_str());
 	generateProblemFile(ss.str(), basis_kb, knowledge_bases, *robot_location, locations, objects, max_classification_attemps);
 }
 

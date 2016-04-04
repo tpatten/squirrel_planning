@@ -19,7 +19,7 @@ namespace KCL_rosplan
 {
 
 ClassifyObjectPDDLAction::ClassifyObjectPDDLAction(ros::NodeHandle& node_handle, float classification_probability)
-	: classification_probability_(classification_probability)
+	: classification_probability_(classification_probability), ask_user_input_(false)
 {
 	// knowledge interface
 	update_knowledge_client_ = node_handle.serviceClient<rosplan_knowledge_msgs::KnowledgeUpdateService>("/kcl_rosplan/update_knowledge_base");
@@ -35,28 +35,7 @@ ClassifyObjectPDDLAction::ClassifyObjectPDDLAction(ros::NodeHandle& node_handle,
 	//srand (1234);
 	srand(time(NULL));
 	
-	bool received_user_input = false;
-	while (ros::ok() && !received_user_input)
-	{
-		char response;
-		std::cout << "Hello dear User, would you like to be asked whether a classification action succeeds? (y/n)" << std::endl;
-		std::cin >> response;
-		received_user_input = true;
-		if (response == 'n')
-		{
-			ask_user_input_ = false;
-		}
-		else if (response == 'y')
-		{
-			ask_user_input_ = true;
-		}
-		else
-		{
-			received_user_input = false;
-		}
-	}
-	
-	
+	node_handle.getParam("/simulated_actions/query_user", ask_user_input_);
 }
 
 ClassifyObjectPDDLAction::~ClassifyObjectPDDLAction()
@@ -93,7 +72,7 @@ void ClassifyObjectPDDLAction::dispatchCallback(const rosplan_dispatch_msgs::Act
 		const std::string& view = msg->parameters[1].value;
 		const std::string& object = msg->parameters[2].value;
 		
-		ROS_INFO("KCL (ClassifyObjectPDDLAction) Process the action: (%s %s %s %s)", normalised_action_name.c_str(), from.c_str(), view.c_str(), object.c_str());
+		ROS_INFO("KCL: (ClassifyObjectPDDLAction) Process the action: (%s %s %s %s)", normalised_action_name.c_str(), from.c_str(), view.c_str(), object.c_str());
 		
 		// Add the new knowledge.
 		rosplan_knowledge_msgs::KnowledgeUpdateService knowledge_update_service;
@@ -193,7 +172,7 @@ void ClassifyObjectPDDLAction::dispatchCallback(const rosplan_dispatch_msgs::Act
 	}
 	else
 	{
-		ROS_INFO("KCL (ClassifyObjectPDDLAction) Ignore action: (%s)", normalised_action_name.c_str());
+		ROS_INFO("KCL: (ClassifyObjectPDDLAction) Ignore action: (%s)", normalised_action_name.c_str());
 	}
 	
 	fb.action_id = msg->action_id;

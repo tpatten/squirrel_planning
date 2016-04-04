@@ -65,11 +65,6 @@ namespace KCL_rosplan {
 		// Cache the last message sent.
 		std::vector<rosplan_dispatch_msgs::ActionDispatch> last_received_msg;
 		
-		// The file names and the path for the domain and problem files.
-		//std::string domain_name;
-		//std::string problem_name;
-		//std::string path;
-		
 		// View point generator.
 		ViewConeGenerator* view_cone_generator;
 		
@@ -89,6 +84,9 @@ namespace KCL_rosplan {
 		void setupSimulation();
 		
 		bool initial_problem_generated;
+		
+		// Determine whether this is a simulation or not.
+		bool simulated;
 
 	public:
 

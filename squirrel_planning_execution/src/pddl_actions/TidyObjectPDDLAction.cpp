@@ -42,7 +42,7 @@ void TidyObjectPDDLAction::dispatchCallback(const rosplan_dispatch_msgs::ActionD
 		return;
 	}
 	
-	ROS_INFO("KCL (TidyObjectPDDLAction) Process the action: %s", normalised_action_name.c_str());
+	ROS_INFO("KCL: (TidyObjectPDDLAction) Process the action: %s", normalised_action_name.c_str());
 	
 	// Report this action is enabled and completed successfully.
 	rosplan_dispatch_msgs::ActionFeedback fb;
@@ -53,7 +53,7 @@ void TidyObjectPDDLAction::dispatchCallback(const rosplan_dispatch_msgs::ActionD
 	// Update the domain.
 	const std::string& object = msg->parameters[0].value;
 	
-	ROS_INFO("KCL (TidyObjectPDDLAction) Process the action: %s, Tidy %s", normalised_action_name.c_str(), object.c_str());
+	ROS_INFO("KCL: (TidyObjectPDDLAction) Process the action: %s, Tidy %s", normalised_action_name.c_str(), object.c_str());
 	
 	// Remove the old knowledge.
 	rosplan_knowledge_msgs::KnowledgeUpdateService knowledge_update_service;

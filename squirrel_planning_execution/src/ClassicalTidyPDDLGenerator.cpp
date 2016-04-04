@@ -7,6 +7,7 @@
 #include <map>
 #include <set>
 #include <string>
+#include <ros/ros.h>
 
 #include "squirrel_planning_execution/ClassicalTidyPDDLGenerator.h"
 
@@ -304,11 +305,11 @@ void ClassicalTidyPDDLGenerator::createPDDL(const std::string& path, const std::
 {
 	std::stringstream ss;
 	ss << path << domain_file;
-	std::cout << "(ContingentTidyPDDLGenerator) Generate domain... " << ss.str() << std::endl;
+	ROS_INFO("KCL: (ContingentTidyPDDLGenerator) Generate domain... %s", ss.str().c_str());
 	generateDomainFile(ss.str(), robot_location_predicate, object_to_location_mapping, object_to_type_mapping, box_to_location_mapping, box_to_type_mapping);
 	ss.str(std::string());
 	ss << path  << problem_file;
-	std::cout << "(ContingentTidyPDDLGenerator) Generate problem... " << ss.str() << std::endl;
+	ROS_INFO("KCL: (ContingentTidyPDDLGenerator) Generate problem... %s", ss.str().c_str());
 	generateProblemFile(ss.str(), robot_location_predicate, object_to_location_mapping, object_to_type_mapping, box_to_location_mapping, box_to_type_mapping);
 }
 

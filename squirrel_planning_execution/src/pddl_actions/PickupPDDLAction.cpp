@@ -41,14 +41,14 @@ void PickupPDDLAction::dispatchCallback(const rosplan_dispatch_msgs::ActionDispa
 		return;
 	}
 	
-	ROS_INFO("KCL (PickupPDDLAction) Process the action: %s", normalised_action_name.c_str());
+	ROS_INFO("KCL: (PickupPDDLAction) Process the action: %s", normalised_action_name.c_str());
 	/*
 	for (std::vector<diagnostic_msgs::KeyValue>::const_iterator ci = msg->parameters.begin(); ci != msg->parameters.end(); ++ci)
 	{
 		const std::string& key = (*ci).key;
 		const std::string& value = (*ci).value;
 		
-		ROS_INFO("KCL (PickupPDDLAction) %s -> %s", key.c_str(), value.c_str());
+		ROS_INFO("KCL: (PickupPDDLAction) %s -> %s", key.c_str(), value.c_str());
 	}
 	*/
 	
@@ -64,7 +64,7 @@ void PickupPDDLAction::dispatchCallback(const rosplan_dispatch_msgs::ActionDispa
 	const std::string& object = msg->parameters[2].value;
 	const std::string& type = msg->parameters[3].value;
 	
-	ROS_INFO("KCL (PickupPDDLAction) Process the action: %s, Pickup %s(%s) by %s", normalised_action_name.c_str(), object.c_str(), type.c_str(), robot.c_str());
+	ROS_INFO("KCL: (PickupPDDLAction) Process the action: %s, Pickup %s(%s) by %s", normalised_action_name.c_str(), object.c_str(), type.c_str(), robot.c_str());
 	
 	// Remove the old knowledge.
 	rosplan_knowledge_msgs::KnowledgeUpdateService knowledge_update_service;

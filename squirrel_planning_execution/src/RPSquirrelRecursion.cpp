@@ -10,18 +10,9 @@
 #include "squirrel_planning_execution/ContingentTacticalClassifyPDDLGenerator.h"
 #include "squirrel_planning_execution/ContingentTidyPDDLGenerator.h"
 #include "squirrel_planning_execution/ViewConeGenerator.h"
-#include <squirrel_planning_execution/ClassicalTidyPDDLGenerator.h>
-#include "pddl_actions/PlannerInstance.h"
-#include "pddl_actions/GotoPDDLAction.h"
-#include "pddl_actions/ExploreWaypointPDDLAction.h"
-#include "pddl_actions/ClearObjectPDDLAction.h"
-#include "pddl_actions/ClassifyObjectPDDLAction.h"
-#include "pddl_actions/PutObjectInBoxPDDLAction.h"
-#include "pddl_actions/TidyObjectPDDLAction.h"
-#include "pddl_actions/PickupPDDLAction.h"
+#include "squirrel_planning_execution/ClassicalTidyPDDLGenerator.h"
 #include "pddl_actions/ShedKnowledgePDDLAction.h"
-
-#define SQUIRREL_SIMULATION
+#include "pddl_actions/PlannerInstance.h"
 
 
 /* The implementation of RPSquirrelRecursion.h */
@@ -32,7 +23,7 @@ namespace KCL_rosplan {
 	/*-------------*/
 
 	RPSquirrelRecursion::RPSquirrelRecursion(ros::NodeHandle &nh)
-		: node_handle(&nh), message_store(nh), initial_problem_generated(false)
+		: node_handle(&nh), message_store(nh), initial_problem_generated(false), simulated(false)
 	{
 		// knowledge interface
 		update_knowledge_client = nh.serviceClient<rosplan_knowledge_msgs::KnowledgeUpdateService>("/kcl_rosplan/update_knowledge_base");
@@ -50,13 +41,19 @@ namespace KCL_rosplan {
 		
 		pddl_generation_service = nh.advertiseService("/kcl_rosplan/generate_planning_problem", &KCL_rosplan::RPSquirrelRecursion::generatePDDLProblemFile, this);
 
-#ifndef SQUIRREL_SIMULATION
-		std::string occupancyTopic("/squirrel_nav/occupancy_map");
-		nh.param("occupancy_topic", occupancyTopic, occupancyTopic);
-		view_cone_generator = new ViewConeGenerator(nh, occupancyTopic);
-#else
-		setupSimulation();
-#endif
+		nh.getParam("/squirrel_planning_execution/simulated", simulated);
+		
+		
+		if (!simulated)
+		{
+			std::string occupancyTopic("/squirrel_nav/occupancy_map");
+			nh.param("occupancy_topic", occupancyTopic, occupancyTopic);
+			view_cone_generator = new ViewConeGenerator(nh, occupancyTopic);
+		}
+		else
+		{
+			setupSimulation();
+		}
 		/*
 		geometry_msgs::PoseStamped pose;
 		pose.header.frame_id = "map";
@@ -335,7 +332,7 @@ namespace KCL_rosplan {
 				const std::string& robot = msg->parameters[0].value;
 				const std::string& area = msg->parameters[1].value;
 				
-				ROS_INFO("KCL (RPSquirrelRecursion) Process the action: %s, Explore %s by %s", action_name.c_str(), area.c_str(), robot.c_str());
+				ROS_INFO("KCL: (RPSquirrelRecursion) Process the action: %s, Explore %s by %s", action_name.c_str(), area.c_str(), robot.c_str());
 				
 				// Remove the old knowledge.
 				rosplan_knowledge_msgs::KnowledgeUpdateService knowledge_update_service;
@@ -362,7 +359,7 @@ namespace KCL_rosplan {
 				const std::string& robot = msg->parameters[0].value;
 				const std::string& area = msg->parameters[1].value;
 				
-				ROS_INFO("KCL (RPSquirrelRecursion) Process the action: %s, Examine %s by %s", action_name.c_str(), area.c_str(), robot.c_str());
+				ROS_INFO("KCL: (RPSquirrelRecursion) Process the action: %s, Examine %s by %s", action_name.c_str(), area.c_str(), robot.c_str());
 				
 				// Remove the old knowledge.
 				rosplan_knowledge_msgs::KnowledgeUpdateService knowledge_update_service;
@@ -640,14 +637,17 @@ namespace KCL_rosplan {
  		if (action_name == "explore_area") {
 			
 			std::vector<geometry_msgs::Pose> view_poses;
-#ifndef SQUIRREL_SIMULATION
-			view_cone_generator->createViewCones(view_poses, 10, 5, 30.0f, 2.0f, 100, 0.5f);
-#else
-			view_poses.push_back(geometry_msgs::Pose());
-			view_poses.push_back(geometry_msgs::Pose());
-			view_poses.push_back(geometry_msgs::Pose());
-			view_poses.push_back(geometry_msgs::Pose());
-#endif 
+			if (!simulated)
+			{
+				view_cone_generator->createViewCones(view_poses, 10, 5, 30.0f, 2.0f, 100, 0.5f);
+			}
+			else
+			{
+				view_poses.push_back(geometry_msgs::Pose());
+				view_poses.push_back(geometry_msgs::Pose());
+				view_poses.push_back(geometry_msgs::Pose());
+				view_poses.push_back(geometry_msgs::Pose());
+			}
 			
 			// Add these poses to the knowledge base.
 			rosplan_knowledge_msgs::KnowledgeUpdateService add_waypoints_service;
@@ -728,7 +728,6 @@ namespace KCL_rosplan {
 			PlanningEnvironment planning_environment;
 			planning_environment.parseDomain(domain_path);
 			planning_environment.update(*node_handle);
-			ROS_INFO("KCL: (RPSquirrelRecursion) Found %d waypoints.", planning_environment.type_object_map["waypoint"].size());
 			PDDLProblemGenerator pddl_problem_generator;
 			
 			pddl_problem_generator.generatePDDLProblemFile(planning_environment, problem_path);
@@ -837,42 +836,43 @@ namespace KCL_rosplan {
 			
 			ROS_INFO("KCL: (RPSquirrelRecursion) Object location is: %s", object_location.c_str());
 			
-#ifndef SQUIRREL_SIMULATION
-			// fetch position of object from message store
-			std::vector< boost::shared_ptr<geometry_msgs::PoseStamped> > results;
-			if(message_store.queryNamed<geometry_msgs::PoseStamped>(object_name, results)) {
-				if(results.size()<1) {
-					ROS_ERROR("KCL: (RPSquirrelRoadmap) aborting waypoint request; no matching obID %s", object_name.c_str());
+			squirrel_waypoint_msgs::ExamineWaypoint getTaskPose;
+			if (!simulated)
+			{
+				// fetch position of object from message store
+				std::vector< boost::shared_ptr<geometry_msgs::PoseStamped> > results;
+				if(message_store.queryNamed<geometry_msgs::PoseStamped>(object_name, results)) {
+					if(results.size()<1) {
+						ROS_ERROR("KCL: (RPSquirrelRoadmap) aborting waypoint request; no matching obID %s", object_name.c_str());
+						return false;
+					}
+				} else {
+					ROS_ERROR("KCL: (RPSquirrelRoadmap) could not query message store to fetch object pose");
 					return false;
 				}
-			} else {
-				ROS_ERROR("KCL: (RPSquirrelRoadmap) could not query message store to fetch object pose");
-				return false;
-			}
 
-			// request classification waypoints for object
-			geometry_msgs::PoseStamped &objPose = *results[0];
-			
-			squirrel_waypoint_msgs::ExamineWaypoint getTaskPose;
-			getTaskPose.request.object_pose.header = objPose.header;
-			getTaskPose.request.object_pose.pose = objPose.pose;
-			if (!classify_object_waypoint_client.call(getTaskPose)) {
-				ROS_ERROR("KCL: (RPSquirrelRoadmap) Failed to recieve classification waypoints for %s.", object_name.c_str());
-				return false;
-			}
+				// request classification waypoints for object
+				geometry_msgs::PoseStamped &objPose = *results[0];
+				
+				getTaskPose.request.object_pose.header = objPose.header;
+				getTaskPose.request.object_pose.pose = objPose.pose;
+				if (!classify_object_waypoint_client.call(getTaskPose)) {
+					ROS_ERROR("KCL: (RPSquirrelRoadmap) Failed to recieve classification waypoints for %s.", object_name.c_str());
+					return false;
+				}
 
-			std_msgs::Int8 debug_pose_number;
-			debug_pose_number.data = getTaskPose.response.poses.size();
-			ROS_INFO("KCL: (RPSquirrelRecursion) Found %d observation poses", debug_pose_number.data);
-#else
-			squirrel_waypoint_msgs::ExamineWaypoint getTaskPose;
-			
-			for (unsigned int i = 0; i < 4; ++i)
+				std_msgs::Int8 debug_pose_number;
+				debug_pose_number.data = getTaskPose.response.poses.size();
+				ROS_INFO("KCL: (RPSquirrelRecursion) Found %d observation poses", debug_pose_number.data);
+			}
+			else
 			{
-				geometry_msgs::PoseWithCovarianceStamped pwcs;
-				getTaskPose.response.poses.push_back(pwcs);
+				for (unsigned int i = 0; i < 4; ++i)
+				{
+					geometry_msgs::PoseWithCovarianceStamped pwcs;
+					getTaskPose.response.poses.push_back(pwcs);
+				}
 			}
-#endif
 
 			// Add all the waypoints to the knowledge base.
 			std::stringstream ss;
@@ -902,15 +902,6 @@ namespace KCL_rosplan {
 			if (!get_attribute_client.call(get_attribute)) {// || get_attribute.response.attributes.size() != 3) {
 				ROS_ERROR("KCL: (RPSquirrelRoadmap) Failed to recieve the attributes of the predicate 'robot_at'");
 				return false;
-			}
-			
-			for (unsigned int i = 0; i < get_attribute.response.attributes.size(); ++i)
-			{
-				ROS_INFO("robot_at attributes: %s", get_attribute.response.attributes[i].attribute_name.c_str());
-				for (unsigned int j = 0; j < get_attribute.response.attributes[i].values.size(); ++j)
-				{
-					ROS_INFO("\t %s -> %s", get_attribute.response.attributes[i].values[j].key.c_str(), get_attribute.response.attributes[i].values[j].value.c_str());
-				}
 			}
 			
 			std::string robot_location;
@@ -1125,13 +1116,6 @@ namespace KCL_rosplan {
 		KCL_rosplan::RPSquirrelRecursion rpsr(nh);
 		
 		// Setup all the simulated actions.
-		KCL_rosplan::GotoPDDLAction goto_action(nh);
-		KCL_rosplan::ExploreWaypointPDDLAction explore_waypoint_action(nh);
-		KCL_rosplan::ClearObjectPDDLAction clear_object_action(nh);
-		KCL_rosplan::ClassifyObjectPDDLAction classify_object_action(nh, 0.5f);
-		KCL_rosplan::PutObjectInBoxPDDLAction pub_object_in_box_action(nh);
-		KCL_rosplan::TidyObjectPDDLAction tidy_object_action(nh);
-		KCL_rosplan::PickupPDDLAction pickup_action(nh);
 		KCL_rosplan::ShedKnowledgePDDLAction shed_knowledge_action(nh);
 		
 		// listen for action dispatch
@@ -1190,3 +1174,4 @@ namespace KCL_rosplan {
 		ros::spin();
 		return 0;
 	}
+	
