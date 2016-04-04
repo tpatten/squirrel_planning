@@ -42,6 +42,8 @@ private:
 	//ros::ServiceClient query_knowledge_client_;  // Service client to query the knowledge base.
 	ros::Publisher action_feedback_pub_;         // Publisher that communicates feedback to ROSPlan.
 	ros::Subscriber dispatch_sub_;               // Subscriber to the dispatch topic of ROSPlan.
+	
+	bool ask_user_input_;                        // If true the user is queried whether a classification action fails or succeeds.
 };
 
 };
