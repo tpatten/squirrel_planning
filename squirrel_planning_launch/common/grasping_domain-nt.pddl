@@ -14,7 +14,7 @@
 )
 
 (:action pickup_object
-	:parameters (?r - robot ?wp - waypoint ?o - object)
+	:parameters (?r - robot ?wp - waypoint ?ob - object)
 	:precondition (and
 		(robot_at ?r ?wp)
 	)
