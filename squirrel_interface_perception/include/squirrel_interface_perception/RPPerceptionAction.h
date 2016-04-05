@@ -36,6 +36,10 @@ namespace KCL_rosplan {
 
 		void publishFeedback(int action_id, std::string feedback);
 
+		/* actions */
+		void exploreAction(const rosplan_dispatch_msgs::ActionDispatch::ConstPtr& msg);
+		void examineAction(const rosplan_dispatch_msgs::ActionDispatch::ConstPtr& msg);
+
 	public:
 
 		/* constructor */
