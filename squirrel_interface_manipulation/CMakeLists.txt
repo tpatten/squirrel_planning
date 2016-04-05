@@ -49,10 +49,13 @@ set(SIM_SOURCES
 
 ## Declare cpp executables
 add_executable(rppushServer ${SIM_SOURCES})
+add_executable(rpgraspServer src/RPGraspAction.cpp)
 add_dependencies(rppushServer ${catkin_EXPORTED_TARGETS})
+add_dependencies(rpgraspServer ${catkin_EXPORTED_TARGETS})
 
 ## Specify libraries against which to link a library or executable target
 target_link_libraries(rppushServer ${catkin_LIBRARIES})
+target_link_libraries(rpgraspServer ${catkin_LIBRARIES})
 
 ##########
 ## Test ##
