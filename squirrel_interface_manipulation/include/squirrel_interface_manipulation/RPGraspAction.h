@@ -5,6 +5,8 @@
 #include <boost/foreach.hpp>
 #include <tf/LinearMath/Vector3.h>
 #include <tf/LinearMath/Quaternion.h>
+#include <tf/transform_listener.h>
+#include <tf/tf.h>
 #include <actionlib/client/simple_action_client.h>
 #include "rosplan_dispatch_msgs/ActionDispatch.h"
 #include "rosplan_dispatch_msgs/ActionFeedback.h"

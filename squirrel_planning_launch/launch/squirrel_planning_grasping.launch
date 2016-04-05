@@ -5,7 +5,7 @@
 	<param name="planner_path" value="$(find rosplan_planning_system)/common/bin/" />
 
 	<!-- domain file -->
-	<param name="domain_path" value="$(find squirrel_planning_launch)/common/tidy_room_domain-nt.pddl" />
+	<param name="domain_path" value="$(find squirrel_planning_launch)/common/grasping_domain-nt.pddl" />
 
 	<!-- knowledge base -->
 	<node name="rosplan_knowledge_base" pkg="rosplan_knowledge_base" type="knowledgeBase" respawn="false" output="screen">
@@ -26,9 +26,15 @@
 		<param name="strl_file_path" value="$(find squirrel_planning_launch)/common/plan.strl" />
 
 		<!-- to run the planner -->
-		<param name="planner_command" value="cat $(find rosplan_planning_system)/common/test_grasp_plan.pddl" />
-		<param name="generate_default_problem" value="false" />
+		<param name="planner_command" value="cat $(find squirrel_planning_launch)/common/test_grasp_plan.pddl" />
+		<param name="generate_default_problem" value="true" />
 	</node>
+
+	<node name="squirrel_interface_manipulation" pkg="squirrel_interface_manipulation" type="rpgraspServer" respawn="false" output="screen">
+		<param name="blind_grasp_action_server" value="/push" />
+	</node>
+
+	<node name="squirrel_grasping_node" pkg="squirrel_grasping" type="squirrel_grasping_node.py" output="screen"/>
 
 </launch>
 

@@ -51,10 +51,23 @@ namespace KCL_rosplan {
 			if(results.size()>1)
 				ROS_INFO("KCL: (GraspAction) multiple objects share the same objectID");
 
+			// get pose in odom frame
+			geometry_msgs::PoseStamped poseMap, pose;
+			poseMap.header = results[0]->header;
+			poseMap.pose = results[0]->pose;
+			tf::TransformListener tfl;
+			try {
+				tfl.waitForTransform("/odom", "/map", ros::Time::now(), ros::Duration(1.0));
+				tfl.transformPose("/odom", poseMap, pose);
+			} catch ( tf::TransformException& ex ) {
+				ROS_ERROR("%s: error while transforming point", ros::this_node::getName().c_str(), ex.what());
+				return;
+			}
+
 			// dispatch Grasp action
 			squirrel_manipulation_msgs::BlindGraspGoal goal;
-			goal.heap_center_pose = results[0]->pose;
-//			goal.heap_bounding_cylinder = results[0].bounding_cylinder;
+			goal.heap_center_pose = pose;
+			goal.heap_bounding_cylinder = results[0]->bounding_cylinder;
 			goal.heap_point_cloud = results[0]->cloud;
 			blind_grasp_action_client.sendGoal(goal);
 
@@ -65,8 +78,8 @@ namespace KCL_rosplan {
 			action_feedback_pub.publish(fb);
 
 			
-			bool finished_before_timeout = false;
-			finished_before_timeout = blind_grasp_action_client.waitForResult(ros::Duration(msg->duration));
+			// bool finished_before_timeout = false;
+			blind_grasp_action_client.waitForResult();
 
 			actionlib::SimpleClientGoalState state = blind_grasp_action_client.getState();
 			ROS_INFO("KCL: (GraspAction) action finished: %s", state.toString().c_str());
