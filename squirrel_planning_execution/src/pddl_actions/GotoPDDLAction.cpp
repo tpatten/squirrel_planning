@@ -41,14 +41,14 @@ void GotoPDDLAction::dispatchCallback(const rosplan_dispatch_msgs::ActionDispatc
 		return;
 	}
 	
-	ROS_INFO("KCL (GotoPDDLAction) Process the action: %s", normalised_action_name.c_str());
+	ROS_INFO("KCL: (GotoPDDLAction) Process the action: %s", normalised_action_name.c_str());
 	/*
 	for (std::vector<diagnostic_msgs::KeyValue>::const_iterator ci = msg->parameters.begin(); ci != msg->parameters.end(); ++ci)
 	{
 		const std::string& key = (*ci).key;
 		const std::string& value = (*ci).value;
 		
-		ROS_INFO("KCL (GotoPDDLAction) %s -> %s", key.c_str(), value.c_str());
+		ROS_INFO("KCL: (GotoPDDLAction) %s -> %s", key.c_str(), value.c_str());
 	}
 	*/
 	
@@ -63,7 +63,7 @@ void GotoPDDLAction::dispatchCallback(const rosplan_dispatch_msgs::ActionDispatc
 	const std::string& previous_waypoint = msg->parameters[1].value;
 	const std::string& new_waypoint = msg->parameters[2].value;
 	
-	ROS_INFO("KCL (GotoPDDLAction) Process the action: %s, Move %s from %s to %s", normalised_action_name.c_str(), robot.c_str(), previous_waypoint.c_str(), new_waypoint.c_str());
+	ROS_INFO("KCL: (GotoPDDLAction) Process the action: %s, Move %s from %s to %s", normalised_action_name.c_str(), robot.c_str(), previous_waypoint.c_str(), new_waypoint.c_str());
 	
 	// Remove the old knowledge.
 	rosplan_knowledge_msgs::KnowledgeUpdateService knowledge_update_service;

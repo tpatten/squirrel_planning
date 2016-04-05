@@ -39,7 +39,7 @@ void ExploreWaypointPDDLAction::dispatchCallback(const rosplan_dispatch_msgs::Ac
 		return;
 	}
 	
-	ROS_INFO("KCL (ExploreWaypointPDDLAction) Process the action: %s", normalised_action_name.c_str());
+	ROS_INFO("KCL: (ExploreWaypointPDDLAction) Process the action: %s", normalised_action_name.c_str());
 	
 	// Report this action is enabled and completed successfully.
 	rosplan_dispatch_msgs::ActionFeedback fb;
@@ -51,7 +51,7 @@ void ExploreWaypointPDDLAction::dispatchCallback(const rosplan_dispatch_msgs::Ac
 	const std::string& robot = msg->parameters[0].value;
 	const std::string& explored_waypoint = msg->parameters[1].value;
 	
-	ROS_INFO("KCL (ExploreWaypointPDDLAction) Process the action: %s, %s explored %s", normalised_action_name.c_str(), robot.c_str(), explored_waypoint.c_str());
+	ROS_INFO("KCL: (ExploreWaypointPDDLAction) Process the action: %s, %s explored %s", normalised_action_name.c_str(), robot.c_str(), explored_waypoint.c_str());
 	
 	// Add the new knowledge.
 	rosplan_knowledge_msgs::KnowledgeUpdateService knowledge_update_service;

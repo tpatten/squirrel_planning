@@ -7,6 +7,7 @@
 #include <map>
 #include <set>
 #include <string>
+#include <ros/ros.h>
 
 #include "squirrel_planning_execution/ContingentTidyPDDLGenerator.h"
 
@@ -113,7 +114,7 @@ void ContingentTidyPDDLGenerator::generateProblemFile(const std::string& file_na
 			}
 		}
 	}
-	
+	/*
 	// Location constants.
 	for (std::vector<const Location*>::const_iterator ci = locations.begin(); ci != locations.end(); ++ci)
 	{
@@ -126,11 +127,11 @@ void ContingentTidyPDDLGenerator::generateProblemFile(const std::string& file_na
 			//if (location == location2) continue;
 			myfile << "\t(connected " << location->name_ << " " << location2->name_ << ")" << std::endl;
 			
-			std::cout << "\t is connected to " << location2->name_ << std::endl;
+			//std::cout << "\t is connected to " << location2->name_ << std::endl;
 			//myfile << "\t(connected " << location2->name_ << " " << location->name_ << ")" << std::endl;
 		}
 	}
-	
+	*/
 	// Locations of the objects.
 	for (std::vector<const KnowledgeBase*>::const_iterator ci = knowledge_base.begin(); ci != knowledge_base.end(); ++ci)
 	{
@@ -1757,7 +1758,7 @@ void ContingentTidyPDDLGenerator::createPDDL(const std::string& path, const std:
 	Location* robot_location = new Location(robot_location_predicate, false);
 	locations.push_back(robot_location);
 
-	std::cout << "(ContingentTidyPDDLGenerator) Creating all possible states..." << std::endl;
+	//std::cout << "(ContingentTidyPDDLGenerator) Creating all possible states..." << std::endl;
 
 	std::vector<const KnowledgeBase*> knowledge_bases;
 	//std::map<const Object*, const Location*> empty_object_location_mapping;
@@ -1823,11 +1824,11 @@ void ContingentTidyPDDLGenerator::createPDDL(const std::string& path, const std:
 	
 	ss.str(std::string());
 	ss << path << domain_file;
-	std::cout << "(ContingentTidyPDDLGenerator) Generate domain... " << ss.str() << std::endl;
+	ROS_INFO("KCL: (ContingentTidyPDDLGenerator) Generate domain... %s", ss.str().c_str());
 	generateDomainFile(ss.str(), basis_kb, knowledge_bases, *robot_location, locations, objects, boxes, types);
 	ss.str(std::string());
 	ss << path  << problem_file;
-	std::cout << "(ContingentTidyPDDLGenerator) Generate problem... " << ss.str() << std::endl;
+	ROS_INFO("KCL: (ContingentTidyPDDLGenerator) Generate problem... %s", ss.str().c_str());
 	generateProblemFile(ss.str(), basis_kb, knowledge_bases, *robot_location, locations, objects, boxes, types);
 }
 

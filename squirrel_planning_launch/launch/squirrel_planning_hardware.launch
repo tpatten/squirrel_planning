@@ -30,14 +30,9 @@
             <param name="generate_default_problem" value="false" />
 	</node>
 
-	<!-- simulation acitons -->
-	<node name="simulated_actions" pkg="squirrel_planning_execution" type="simulatedPDDLActionsNode" output="screen">
-		<param name="query_user" value="false" />
-	</node>
-
 	<!-- RPSquirrelRecursion actions -->
 	<node name="squirrel_planning_execution" pkg="squirrel_planning_execution" type="rpsquirrelRecursion" output="screen">
-		<param name="simulated" value="true" />
+		<param name="simulated" value="false" />
 	</node>
 
 </launch>
