@@ -100,10 +100,15 @@ function tryDraw() {
 
 			// Render the graph into svg g
 			d3.select("svg g").call(render, g);
-			d3.selectAll("svg")
-				.attr("height", document.body.offsetHeight - 20)
-				.attr("transform", "translate(10, 10)");
-			svg.call(zoom);
+
+			// Center the graph
+			var initialScale = 2.75;
+			zoom
+//			  .translate([(svg.attr("width") - g.graph().width * initialScale) / 2, 20])
+			  .translate([(document.body.offsetWidth - g.graph().width * initialScale) / 2, document.body.offsetHeight / 20])
+			  .scale(initialScale)
+			  .event(svg);
+			svg.attr('height', g.graph().height * initialScale + 40);
 		}
 	});
 };
