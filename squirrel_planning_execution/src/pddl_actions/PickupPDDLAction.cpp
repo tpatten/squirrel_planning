@@ -58,6 +58,15 @@ void PickupPDDLAction::dispatchCallback(const rosplan_dispatch_msgs::ActionDispa
 	fb.status = "action enabled";
 	action_feedback_pub_.publish(fb);
 	
+	// Add a random chance that this action fails!
+	if (rand() % 5 == 0)
+	{
+		fb.action_id = msg->action_id;
+		fb.status = "action failed";
+		action_feedback_pub_.publish(fb);
+		return;
+	}
+	
 	// Update the domain.
 	const std::string& robot = msg->parameters[0].value;
 	const std::string& waypoint = msg->parameters[1].value;

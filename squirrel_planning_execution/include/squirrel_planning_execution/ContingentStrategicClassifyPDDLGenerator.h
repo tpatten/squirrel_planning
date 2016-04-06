@@ -34,6 +34,7 @@ namespace KCL_rosplan {
 			
 			std::string name_;
 			std::vector<const Location*> connected_locations_;
+			std::vector<const Location*> near_locations_;
 			bool is_clear_;
 		};
 
@@ -118,9 +119,10 @@ namespace KCL_rosplan {
 		 * @param problem_file The name of the PDDL file where the problem is stored.
 		 * @param robot_location_predicate The predicate name of the waypoint where the robot is.
 		 * @param object_location_predicates A mapping from the predicates of each object to the predicate of the waypoint where it is located.
+		 * @param near_waypoint_mapping Mapping of waypoints to waypoint that are near each other, allowing grasping, dropping, and pushing operations.
 		 * @param max_classification_attemps The maximum number of classification attemps we allow per object before giving up.
 		 */
-		static void createPDDL(const std::string& path, const std::string& domain_file, const std::string& problem_file, const std::string& robot_location_predicate, const std::map<std::string, std::string>& object_location_predicates, unsigned int max_classification_attemps);
+		static void createPDDL(const std::string& path, const std::string& domain_file, const std::string& problem_file, const std::string& robot_location_predicate, const std::map<std::string, std::string>& object_location_predicates, const std::map<std::string, std::vector<std::string> >& near_waypoint_mapping, unsigned int max_classification_attemps);
 	};
 }
 #endif

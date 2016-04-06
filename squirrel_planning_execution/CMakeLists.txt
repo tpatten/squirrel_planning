@@ -58,7 +58,6 @@ set(rpsquirrelRecursion_SOURCES
   src/RPSquirrelRecursion.cpp
   src/ContingentTacticalClassifyPDDLGenerator.cpp
   src/ContingentStrategicClassifyPDDLGenerator.cpp
-  src/ContingentTidyPDDLGenerator.cpp
   src/ClassicalTidyPDDLGenerator.cpp
   src/pddl_actions/PlannerInstance.cpp
   src/pddl_actions/GotoPDDLAction.cpp
@@ -69,12 +68,14 @@ set(rpsquirrelRecursion_SOURCES
   src/pddl_actions/ExploreWaypointPDDLAction.cpp
   src/pddl_actions/ClassifyObjectPDDLAction.cpp
   src/pddl_actions/ShedKnowledgePDDLAction.cpp
+  src/pddl_actions/FinaliseClassificationPDDLAction.cpp
   src/ViewConeGenerator.cpp)
   
 set(simulatedPDDLActionsNode_SOURCES
   src/SimulatedPDDLActionsNode.cpp
   src/pddl_actions/PlannerInstance.cpp
   src/pddl_actions/GotoPDDLAction.cpp
+  src/pddl_actions/PushObjectPDDLAction.cpp
   src/pddl_actions/PickupPDDLAction.cpp
   src/pddl_actions/PutObjectInBoxPDDLAction.cpp
   src/pddl_actions/TidyObjectPDDLAction.cpp

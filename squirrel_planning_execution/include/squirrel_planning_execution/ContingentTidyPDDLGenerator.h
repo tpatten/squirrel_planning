@@ -53,6 +53,7 @@ namespace KCL_rosplan {
 			std::string name_;
 			bool is_blocked_;
 			std::vector<const Location*> connected_locations_;
+			std::vector<const Location*> near_locations_;
 		};
 
 		/**
@@ -178,8 +179,9 @@ namespace KCL_rosplan {
 		 * @param object_to_type_mapping A mapping for each object predicate to the type predicate 
 		 * @param box_to_location_mapping A mapping for each box to its location predicate.
 		 * @param box_to_type_mapping A mapping for each box to the type predicate of each object type it can contain.
+		 * @param near_box_location_mapping A mapping from box location to location near it.
 		 */
-		static void createPDDL(const std::string& path, const std::string& domain_file, const std::string& problem_file, const std::string& robot_location_predicate, const std::map<std::string, std::string>& object_to_location_mapping, const std::map<std::string, std::string>& object_to_type_mapping, const std::map<std::string, std::string>& box_to_location_mapping, const std::map<std::string, std::string>& box_to_type_mapping);
+		static void createPDDL(const std::string& path, const std::string& domain_file, const std::string& problem_file, const std::string& robot_location_predicate, const std::map<std::string, std::string>& object_to_location_mapping, std::map<std::string, std::vector<std::string> >& near_waypoint_mappings, const std::map<std::string, std::string>& object_to_type_mapping, const std::map<std::string, std::string>& box_to_location_mapping, const std::map<std::string, std::string>& box_to_type_mapping, const std::map<std::string, std::vector<std::string> >& near_box_location_mapping);
 	};
 }
 #endif

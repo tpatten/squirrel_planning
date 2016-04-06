@@ -7,6 +7,7 @@
 #include "pddl_actions/PutObjectInBoxPDDLAction.h"
 #include "pddl_actions/TidyObjectPDDLAction.h"
 #include "pddl_actions/PickupPDDLAction.h"
+#include "pddl_actions/PushObjectPDDLAction.h"
 
 int main(int argc, char **argv) {
 
@@ -21,6 +22,7 @@ int main(int argc, char **argv) {
 	KCL_rosplan::PutObjectInBoxPDDLAction pub_object_in_box_action(nh);
 	KCL_rosplan::TidyObjectPDDLAction tidy_object_action(nh);
 	KCL_rosplan::PickupPDDLAction pickup_action(nh);
+	KCL_rosplan::PushObjectPDDLAction push_object_action(nh);
 
 	ROS_INFO("KCL: (SimulatedPDDLActionsNode) All simulated actions are ready to receive.");
 	

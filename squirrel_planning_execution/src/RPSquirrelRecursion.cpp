@@ -12,6 +12,7 @@
 #include "squirrel_planning_execution/ViewConeGenerator.h"
 #include "squirrel_planning_execution/ClassicalTidyPDDLGenerator.h"
 #include "pddl_actions/ShedKnowledgePDDLAction.h"
+#include "pddl_actions/FinaliseClassificationPDDLAction.h"
 #include "pddl_actions/PlannerInstance.h"
 
 
@@ -536,7 +537,6 @@ namespace KCL_rosplan {
 			return false;
 		}
 		
-		// All domains / problem files should all ready been generated.
 		return true;
 	}
 	
@@ -607,6 +607,7 @@ namespace KCL_rosplan {
 	
 	bool RPSquirrelRecursion::createDomain(const std::string& action_name)
 	{
+		ROS_INFO("KCL: (RPSquirrelRecursion) Create domain for action %s.", action_name.c_str());
 		// Lets start the planning process.
 		std::string data_path;
 		node_handle->getParam("/data_path", data_path);
@@ -738,6 +739,7 @@ namespace KCL_rosplan {
 			}
 			
 			std::map<std::string, std::string> object_to_location_mappings;
+			std::map<std::string, std::vector<std::string> > near_waypoint_mappings;
 			for (std::vector<rosplan_knowledge_msgs::KnowledgeItem>::const_iterator ci = get_attribute.response.attributes.begin(); ci != get_attribute.response.attributes.end(); ++ci) {
 				const rosplan_knowledge_msgs::KnowledgeItem& knowledge_item = *ci;
 				std::string object_predicate;
@@ -754,10 +756,62 @@ namespace KCL_rosplan {
 				}
 				
 				object_to_location_mappings[object_predicate] = location_predicate;
+				
+				// Find waypoints that are near this waypoint, these waypoints are used by the 
+				// robot to pickup or push this object.
+				rosplan_knowledge_msgs::KnowledgeUpdateService knowledge_update_service;
+				knowledge_update_service.request.update_type = rosplan_knowledge_msgs::KnowledgeUpdateService::Request::ADD_KNOWLEDGE;
+				
+				std::vector<std::string> near_waypoints;
+				for (unsigned int i = 0; i < 1; ++i)
+				{
+					rosplan_knowledge_msgs::KnowledgeItem kenny_knowledge;
+					kenny_knowledge.knowledge_type = rosplan_knowledge_msgs::KnowledgeItem::INSTANCE;
+					std::stringstream ss;
+					ss << "near_" << location_predicate << "_" << i;
+					
+					near_waypoints.push_back(ss.str());
+					
+					kenny_knowledge.instance_type = "waypoint";
+					kenny_knowledge.instance_name = ss.str();
+					
+					knowledge_update_service.request.knowledge = kenny_knowledge;
+					if (!update_knowledge_client.call(knowledge_update_service)) {
+						ROS_ERROR("KCL: (RPSquirrelRecursion) Could not add the waypoint %s to the knowledge base.", ss.str().c_str());
+						exit(-1);
+					}
+					ROS_INFO("KCL: (RPSquirrelRecursion) Added %s to the knowledge base.", ss.str().c_str());
+					
+					kenny_knowledge.knowledge_type = rosplan_knowledge_msgs::KnowledgeItem::FACT;
+					kenny_knowledge.attribute_name = "near";
+					kenny_knowledge.is_negative = false;
+					diagnostic_msgs::KeyValue kv;
+					kv.key = "wp1";
+					kv.value = ss.str();
+					kenny_knowledge.values.push_back(kv);
+					kv.key = "wp2";
+					kv.value = location_predicate;
+					kenny_knowledge.values.push_back(kv);
+					knowledge_update_service.request.knowledge = kenny_knowledge;
+					if (!update_knowledge_client.call(knowledge_update_service)) {
+						ROS_ERROR("KCL: (RPSquirrelRecursion) Could not add the fact (near %s %s) to the knowledge base.", ss.str().c_str(), location_predicate.c_str());
+						exit(-1);
+					}
+					ROS_INFO("KCL: (RPSquirrelRecursion) Added (near %s %s) to the knowledge base.", ss.str().c_str(), location_predicate.c_str());
+					kenny_knowledge.values.clear();
+				}
+				near_waypoint_mappings[location_predicate] = near_waypoints;
 			}
 			std_msgs::Int8 nr_objects;
 			nr_objects.data = object_to_location_mappings.size();
 			ROS_INFO("KCL: (RPSquirrelRecursion) Found %d objects to eximine.", nr_objects.data);
+			
+			// Get the location of kenny.
+			get_attribute.request.predicate_name = "robot_at";
+			if (!get_attribute_client.call(get_attribute)) {// || get_attribute.response.attributes.size() != 3) {
+				ROS_ERROR("KCL: (RPSquirrelRoadmap) Failed to recieve the attributes of the predicate 'robot_at'");
+				return false;
+			}
 			
 			std::string robot_location;
 			for (std::vector<diagnostic_msgs::KeyValue>::const_iterator ci = get_attribute.response.attributes[0].values.begin(); ci != get_attribute.response.attributes[0].values.end(); ++ci) {
@@ -777,7 +831,43 @@ namespace KCL_rosplan {
 			
 			ROS_INFO("KCL: (RPSquirrelRecursion) Kenny is at waypoint: %s", robot_location.c_str());
 			
-			ContingentStrategicClassifyPDDLGenerator::createPDDL(data_path, domain_name, problem_name, robot_location, object_to_location_mappings, 3);
+			// Check which objects have already been classified.
+			get_attribute.request.predicate_name = "is_of_type";
+			if (!get_attribute_client.call(get_attribute)) {
+				ROS_ERROR("KCL: (RPSquirrelRoadmap) Failed to recieve the attributes of the predicate 'is_of_type'");
+				return false;
+			}
+			
+			for (std::vector<rosplan_knowledge_msgs::KnowledgeItem>::const_iterator ci = get_attribute.response.attributes.begin(); ci != get_attribute.response.attributes.end(); ++ci) {
+				const rosplan_knowledge_msgs::KnowledgeItem& knowledge_item = *ci;
+				std::string object_predicate;
+				std::string type_predicate;
+				for (std::vector<diagnostic_msgs::KeyValue>::const_iterator ci = knowledge_item.values.begin(); ci != knowledge_item.values.end(); ++ci) {
+					const diagnostic_msgs::KeyValue& key_value = *ci;
+					if ("o" == key_value.key) {
+						object_predicate = key_value.value;
+					}
+					
+					if ("t" == key_value.key) {
+						type_predicate = key_value.value;
+					}
+				}
+				
+				if (type_predicate != "unknown")
+				{
+					object_to_location_mappings.erase(object_predicate);
+					ROS_INFO("KCL: (RPSquirrelRecursion) No need to classify %s it is of type %s", object_predicate.c_str(), type_predicate.c_str());
+				}
+			}
+			
+			if (object_to_location_mappings.empty())
+			{
+				ROS_INFO("KCL: (RPSquirrelRecursion) All objects are all ready classified (or we found none!)");
+			}
+			else
+			{
+				ContingentStrategicClassifyPDDLGenerator::createPDDL(data_path, domain_name, problem_name, robot_location, object_to_location_mappings, near_waypoint_mappings, 3);
+			}
 			
 		// Create the classify_object contingent domain and problem files.
 		} else if (action_name == "observe-classifiable_on_attempt") {
@@ -932,6 +1022,7 @@ namespace KCL_rosplan {
 			
 			// Create a mapping of each object to its location.
 			std::map<std::string, std::string> object_to_location_mapping;
+			std::map<std::string, std::vector<std::string> > near_waypoint_mappings;
 			for (std::vector<rosplan_knowledge_msgs::KnowledgeItem>::const_iterator ci = get_attribute.response.attributes.begin(); ci != get_attribute.response.attributes.end(); ++ci) {
 				const rosplan_knowledge_msgs::KnowledgeItem& knowledge_item = *ci;
 				std::string object_predicate;
@@ -949,6 +1040,51 @@ namespace KCL_rosplan {
 				{
 					object_to_location_mapping[object_predicate] = object_location_predicate;
 				}
+				
+				// Find waypoints that are near this waypoint, these waypoints are used by the 
+				// robot to pickup or push this object.
+				rosplan_knowledge_msgs::KnowledgeUpdateService knowledge_update_service;
+				knowledge_update_service.request.update_type = rosplan_knowledge_msgs::KnowledgeUpdateService::Request::ADD_KNOWLEDGE;
+				
+				std::vector<std::string> near_waypoints;
+				for (unsigned int i = 0; i < 1; ++i)
+				{
+					rosplan_knowledge_msgs::KnowledgeItem kenny_knowledge;
+					kenny_knowledge.knowledge_type = rosplan_knowledge_msgs::KnowledgeItem::INSTANCE;
+					std::stringstream ss;
+					ss << "near_" << object_location_predicate << "_" << i;
+					
+					near_waypoints.push_back(ss.str());
+					
+					kenny_knowledge.instance_type = "waypoint";
+					kenny_knowledge.instance_name = ss.str();
+					
+					knowledge_update_service.request.knowledge = kenny_knowledge;
+					if (!update_knowledge_client.call(knowledge_update_service)) {
+						ROS_ERROR("KCL: (RPSquirrelRecursion) Could not add the waypoint %s to the knowledge base.", ss.str().c_str());
+						exit(-1);
+					}
+					ROS_INFO("KCL: (RPSquirrelRecursion) Added %s to the knowledge base.", ss.str().c_str());
+					
+					kenny_knowledge.knowledge_type = rosplan_knowledge_msgs::KnowledgeItem::FACT;
+					kenny_knowledge.attribute_name = "near";
+					kenny_knowledge.is_negative = false;
+					diagnostic_msgs::KeyValue kv;
+					kv.key = "wp1";
+					kv.value = ss.str();
+					kenny_knowledge.values.push_back(kv);
+					kv.key = "wp2";
+					kv.value = object_location_predicate;
+					kenny_knowledge.values.push_back(kv);
+					knowledge_update_service.request.knowledge = kenny_knowledge;
+					if (!update_knowledge_client.call(knowledge_update_service)) {
+						ROS_ERROR("KCL: (RPSquirrelRecursion) Could not add the fact (near %s %s) to the knowledge base.", ss.str().c_str(), object_location_predicate.c_str());
+						exit(-1);
+					}
+					ROS_INFO("KCL: (RPSquirrelRecursion) Added (near %s %s) to the knowledge base.", ss.str().c_str(), object_location_predicate.c_str());
+					kenny_knowledge.values.clear();
+				}
+				near_waypoint_mappings[object_location_predicate] = near_waypoints;
 			}
 			
 			// Filter those objects that are already tidied.
@@ -1020,6 +1156,7 @@ namespace KCL_rosplan {
 			}
 			
 			std::map<std::string, std::string> box_to_location_mapping;
+			std::map<std::string, std::vector<std::string> > near_box_location_mapping;
 			for (std::vector<rosplan_knowledge_msgs::KnowledgeItem>::const_iterator ci = get_attribute.response.attributes.begin(); ci != get_attribute.response.attributes.end(); ++ci) {
 				const rosplan_knowledge_msgs::KnowledgeItem& knowledge_item = *ci;
 				std::string box_predicate;
@@ -1034,6 +1171,50 @@ namespace KCL_rosplan {
 				}
 				
 				box_to_location_mapping[box_predicate] = box_location_predicate;
+				
+				rosplan_knowledge_msgs::KnowledgeUpdateService knowledge_update_service;
+				knowledge_update_service.request.update_type = rosplan_knowledge_msgs::KnowledgeUpdateService::Request::ADD_KNOWLEDGE;
+				
+				// Create some waypoints near the boxes.
+				std::vector<std::string> near_waypoints;
+				for (unsigned int i = 0; i < 1; ++i)
+				{
+					rosplan_knowledge_msgs::KnowledgeItem kenny_knowledge;
+					kenny_knowledge.knowledge_type = rosplan_knowledge_msgs::KnowledgeItem::INSTANCE;
+					std::stringstream ss;
+					ss << "near_" << box_location_predicate << "_" << i;
+					
+					near_waypoints.push_back(ss.str());
+					
+					kenny_knowledge.instance_type = "waypoint";
+					kenny_knowledge.instance_name = ss.str();
+					
+					knowledge_update_service.request.knowledge = kenny_knowledge;
+					if (!update_knowledge_client.call(knowledge_update_service)) {
+						ROS_ERROR("KCL: (RPSquirrelRecursion) Could not add the waypoint %s to the knowledge base.", ss.str().c_str());
+						exit(-1);
+					}
+					ROS_INFO("KCL: (RPSquirrelRecursion) Added %s to the knowledge base.", ss.str().c_str());
+					
+					kenny_knowledge.knowledge_type = rosplan_knowledge_msgs::KnowledgeItem::FACT;
+					kenny_knowledge.attribute_name = "near";
+					kenny_knowledge.is_negative = false;
+					diagnostic_msgs::KeyValue kv;
+					kv.key = "wp1";
+					kv.value = ss.str();
+					kenny_knowledge.values.push_back(kv);
+					kv.key = "wp2";
+					kv.value = box_location_predicate;
+					kenny_knowledge.values.push_back(kv);
+					knowledge_update_service.request.knowledge = kenny_knowledge;
+					if (!update_knowledge_client.call(knowledge_update_service)) {
+						ROS_ERROR("KCL: (RPSquirrelRecursion) Could not add the fact (near %s %s) to the knowledge base.", ss.str().c_str(), box_location_predicate.c_str());
+						exit(-1);
+					}
+					ROS_INFO("KCL: (RPSquirrelRecursion) Added (near %s %s) to the knowledge base.", ss.str().c_str(), box_location_predicate.c_str());
+					kenny_knowledge.values.clear();
+				}
+				near_box_location_mapping[box_location_predicate] = near_waypoints;
 			}
 			
 			// Figure out which types of objects fit in each box.
@@ -1088,7 +1269,7 @@ namespace KCL_rosplan {
 			ROS_INFO("KCL: (RPSquirrelRecursion) Kenny is at waypoint: %s", robot_location.c_str());
 			
 			
-			ClassicalTidyPDDLGenerator::createPDDL(data_path, domain_name, problem_name, robot_location, object_to_location_mapping, object_to_type_mapping, box_to_location_mapping, box_to_type_mapping);
+			ClassicalTidyPDDLGenerator::createPDDL(data_path, domain_name, problem_name, robot_location, object_to_location_mapping, near_waypoint_mappings, object_to_type_mapping, box_to_location_mapping, box_to_type_mapping, near_box_location_mapping);
 		} else {
 			ROS_INFO("KCL: (RPSquirrelRecursion) Unable to create a domain for unknown action %s.", action_name.c_str());
 			return false;
@@ -1112,6 +1293,7 @@ namespace KCL_rosplan {
 		
 		// Setup all the simulated actions.
 		KCL_rosplan::ShedKnowledgePDDLAction shed_knowledge_action(nh);
+		KCL_rosplan::FinaliseClassificationPDDLAction finalise_classify_action(nh);
 		
 		// listen for action dispatch
 		ros::Subscriber ds = nh.subscribe("/kcl_rosplan/action_dispatch", 1000, &KCL_rosplan::RPSquirrelRecursion::dispatchCallback, &rpsr);
