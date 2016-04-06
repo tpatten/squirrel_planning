@@ -13,7 +13,6 @@
 #include <diagnostic_msgs/KeyValue.h>
 
 #include "ClassifyObjectPDDLAction.h"
-#include "squirrel_planning_execution/ViewConeGenerator.h"
 
 namespace KCL_rosplan
 {
@@ -49,11 +48,7 @@ void ClassifyObjectPDDLAction::dispatchCallback(const rosplan_dispatch_msgs::Act
 	std::transform(normalised_action_name.begin(), normalised_action_name.end(), normalised_action_name.begin(), tolower);
 	
 	// Check if this action is to be handled by this class.
-	if (normalised_action_name != "observe-classifiable_from" && 
-	    normalised_action_name != "finalise_classification" &&
-	    normalised_action_name != "finalise_classification_nowhere" &&
-	    normalised_action_name != "finalise_classification_success" &&
-	    normalised_action_name != "finalise_classification_fail")
+	if (normalised_action_name != "observe-classifiable_from")
 	{
 		return;
 	}
@@ -64,115 +59,107 @@ void ClassifyObjectPDDLAction::dispatchCallback(const rosplan_dispatch_msgs::Act
 	fb.status = "action enabled";
 	action_feedback_pub_.publish(fb);
 	
-	// We can ignore some set of actions as they only do bookkeeping for the planner.
-	if (normalised_action_name == "observe-classifiable_from")
+	// Update the domain.
+	const std::string& from = msg->parameters[0].value;
+	const std::string& view = msg->parameters[1].value;
+	const std::string& object = msg->parameters[2].value;
+	
+	ROS_INFO("KCL: (ClassifyObjectPDDLAction) Process the action: (%s %s %s %s)", normalised_action_name.c_str(), from.c_str(), view.c_str(), object.c_str());
+	
+	// Add the new knowledge.
+	rosplan_knowledge_msgs::KnowledgeUpdateService knowledge_update_service;
+	knowledge_update_service.request.update_type = rosplan_knowledge_msgs::KnowledgeUpdateService::Request::ADD_KNOWLEDGE;
+	rosplan_knowledge_msgs::KnowledgeItem knowledge_item;
+	knowledge_item.knowledge_type = rosplan_knowledge_msgs::KnowledgeItem::FACT;
+	knowledge_item.attribute_name = "classifiable_from";
+	
+	if (ask_user_input_)
 	{
-		// Update the domain.
-		const std::string& from = msg->parameters[0].value;
-		const std::string& view = msg->parameters[1].value;
-		const std::string& object = msg->parameters[2].value;
-		
-		ROS_INFO("KCL: (ClassifyObjectPDDLAction) Process the action: (%s %s %s %s)", normalised_action_name.c_str(), from.c_str(), view.c_str(), object.c_str());
-		
-		// Add the new knowledge.
-		rosplan_knowledge_msgs::KnowledgeUpdateService knowledge_update_service;
-		knowledge_update_service.request.update_type = rosplan_knowledge_msgs::KnowledgeUpdateService::Request::ADD_KNOWLEDGE;
-		rosplan_knowledge_msgs::KnowledgeItem knowledge_item;
-		knowledge_item.knowledge_type = rosplan_knowledge_msgs::KnowledgeItem::FACT;
-		knowledge_item.attribute_name = "classifiable_from";
-		
-		if (ask_user_input_)
+		bool received_user_input = false;
+		while (ros::ok() && !received_user_input)
 		{
-			bool received_user_input = false;
-			while (ros::ok() && !received_user_input)
+			char response;
+			std::cout << "Should this sensing action succeed? (y/n)" << std::endl;
+			std::cin >> response;
+			received_user_input = true;
+			if (response == 'n')
 			{
-				char response;
-				std::cout << "Should this sensing action succeed? (y/n)" << std::endl;
-				std::cin >> response;
-				received_user_input = true;
-				if (response == 'n')
-				{
-					knowledge_item.is_negative = true;
-				}
-				else if (response == 'y')
-				{
-					knowledge_item.is_negative = false;
-				}
-				else
-				{
-					received_user_input = false;
-				}
+				knowledge_item.is_negative = true;
+			}
+			else if (response == 'y')
+			{
+				knowledge_item.is_negative = false;
+			}
+			else
+			{
+				received_user_input = false;
 			}
 		}
-		else 
+	}
+	else 
+	{
+		knowledge_item.is_negative = (float)rand() / (float)RAND_MAX >= classification_probability_;
+	}
+	
+	diagnostic_msgs::KeyValue kv;
+	kv.key = "from";
+	kv.value = from;
+	knowledge_item.values.push_back(kv);
+	
+	kv.key = "view";
+	kv.value = view;
+	knowledge_item.values.push_back(kv);
+	
+	kv.key = "o";
+	kv.value = object;
+	knowledge_item.values.push_back(kv);
+	
+	knowledge_update_service.request.knowledge = knowledge_item;
+	if (!update_knowledge_client_.call(knowledge_update_service)) {
+		ROS_ERROR("KCL: (ClassifyObjectPDDLAction) Could not add the classifiable_from predicate to the knowledge base.");
+		exit(-1);
+	}
+	ROS_INFO("KCL: (ClassifyObjectPDDLAction) Added %s (classifiable_from %s %s %s) to the knowledge base.", knowledge_item.is_negative ? "NOT" : "", from.c_str(), view.c_str(), object.c_str());
+	knowledge_item.values.clear();
+	
+	// If the fact is not negative, we need to decide upon the type of this object.
+	if (!knowledge_item.is_negative)
+	{
+		// Check if this object has been classified or not.
+		rosplan_knowledge_msgs::GetInstanceService get_instance;
+		get_instance.request.type_name = "type";
+		
+		if (!get_instance_client_.call(get_instance) || get_instance.response.instances.empty())
 		{
-			knowledge_item.is_negative = (float)rand() / (float)RAND_MAX >= classification_probability_;
+			ROS_ERROR("KCL: (ClassifyObjectPDDLAction) Could not get the instances of type 'type'.");
+			exit(1);
 		}
 		
+		// Select one type at random.
+		const std::string type = get_instance.response.instances[rand() % get_instance.response.instances.size()];
+		
+		knowledge_item.knowledge_type = rosplan_knowledge_msgs::KnowledgeItem::FACT;
+		knowledge_item.attribute_name = "is_of_type";
+		
 		diagnostic_msgs::KeyValue kv;
-		kv.key = "from";
-		kv.value = from;
-		knowledge_item.values.push_back(kv);
-		
-		kv.key = "view";
-		kv.value = view;
-		knowledge_item.values.push_back(kv);
-		
 		kv.key = "o";
 		kv.value = object;
 		knowledge_item.values.push_back(kv);
 		
-		knowledge_update_service.request.knowledge = knowledge_item;
-		if (!update_knowledge_client_.call(knowledge_update_service)) {
-			ROS_ERROR("KCL: (ClassifyObjectPDDLAction) Could not add the classifiable_from predicate to the knowledge base.");
-			exit(-1);
-		}
-		ROS_INFO("KCL: (ClassifyObjectPDDLAction) Added %s (classifiable_from %s %s %s) to the knowledge base.", knowledge_item.is_negative ? "NOT" : "", from.c_str(), view.c_str(), object.c_str());
-		knowledge_item.values.clear();
+		kv.key = "t";
+		kv.value = type;
+		knowledge_item.values.push_back(kv);
 		
-		// If the fact is not negative, we need to decide upon the type of this object.
-		if (!knowledge_item.is_negative)
+		knowledge_item.is_negative = false;
+		knowledge_update_service.request.knowledge = knowledge_item;
+		
+		// Check if any of these facts are true.
+		if (!update_knowledge_client_.call(knowledge_update_service))
 		{
-			// Check if this object has been classified or not.
-			rosplan_knowledge_msgs::GetInstanceService get_instance;
-			get_instance.request.type_name = "type";
-			
-			if (!get_instance_client_.call(get_instance) || get_instance.response.instances.empty())
-			{
-				ROS_ERROR("KCL: (ClassifyObjectPDDLAction) Could not get the instances of type 'type'.");
-				exit(1);
-			}
-			
-			// Select one type at random.
-			const std::string type = get_instance.response.instances[rand() % get_instance.response.instances.size()];
-			
-			knowledge_item.knowledge_type = rosplan_knowledge_msgs::KnowledgeItem::FACT;
-			knowledge_item.attribute_name = "is_of_type";
-			
-			diagnostic_msgs::KeyValue kv;
-			kv.key = "o";
-			kv.value = object;
-			knowledge_item.values.push_back(kv);
-			
-			kv.key = "t";
-			kv.value = type;
-			knowledge_item.values.push_back(kv);
-			
-			knowledge_item.is_negative = false;
-			knowledge_update_service.request.knowledge = knowledge_item;
-			
-			// Check if any of these facts are true.
-			if (!update_knowledge_client_.call(knowledge_update_service))
-			{
-				ROS_ERROR("KCL: (ClassifyObjectPDDLAction) Could not add the (is_of_type %s %s) predicate to the knowledge base.", object.c_str(), type.c_str());
-				exit(1);
-			}
-			ROS_INFO("KCL: (ClassifyObjectPDDLAction) Added the (is_of_type %s %s) predicate to the knowledge base.", object.c_str(), type.c_str());
+			ROS_ERROR("KCL: (ClassifyObjectPDDLAction) Could not add the (is_of_type %s %s) predicate to the knowledge base.", object.c_str(), type.c_str());
+			exit(1);
 		}
-	}
-	else
-	{
-		ROS_INFO("KCL: (ClassifyObjectPDDLAction) Ignore action: (%s)", normalised_action_name.c_str());
+		ROS_INFO("KCL: (ClassifyObjectPDDLAction) Added the (is_of_type %s %s) predicate to the knowledge base.", object.c_str(), type.c_str());
 	}
 	
 	fb.action_id = msg->action_id;

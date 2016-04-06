@@ -1703,7 +1703,7 @@ void ContingentTidyPDDLGenerator::generateDomainFile(const std::string& file_nam
 	myfile.close();
 }
 
-void ContingentTidyPDDLGenerator::createPDDL(const std::string& path, const std::string& domain_file, const std::string& problem_file, const std::string& robot_location_predicate, const std::map<std::string, std::string>& object_to_location_mapping, const std::map<std::string, std::string>& object_to_type_mapping, const std::map<std::string, std::string>& box_to_location_mapping, const std::map<std::string, std::string>& box_to_type_mapping)
+void ContingentTidyPDDLGenerator::createPDDL(const std::string& path, const std::string& domain_file, const std::string& problem_file, const std::string& robot_location_predicate, const std::map<std::string, std::string>& object_to_location_mapping, std::map<std::string, std::vector<std::string> >& near_waypoint_mappings, const std::map<std::string, std::string>& object_to_type_mapping, const std::map<std::string, std::string>& box_to_location_mapping, const std::map<std::string, std::string>& box_to_type_mapping)
 {
 	// Now generate the waypoints / boxes / toys / etc.
 	std::vector<const Location*> locations;
@@ -1720,6 +1720,19 @@ void ContingentTidyPDDLGenerator::createPDDL(const std::string& path, const std:
 		Object* object = new Object(object_predicate, *location);
 		locations.push_back(location);
 		objects.push_back(object);
+		
+		std::map<std::string, std::vector<std::string> >::const_iterator mi = near_waypoint_mappings.find(location_predicate);
+		if (mi != near_waypoint_mappings.end())
+		{
+			const std::vector<std::string>& near_locations = (*mi).second;
+			for (std::vector<std::string>::const_iterator ci = near_locations.begin(); ci != near_locations.end(); ++ci)
+			{
+				const std::string& near_location_name = *ci;
+				Location* near_location = new Location(near_location_name, false);
+				locations.push_back(near_location);
+				location->near_locations_.push_back(near_location);
+			}
+		}
 	}
 	
 	// Create all the boxes.
