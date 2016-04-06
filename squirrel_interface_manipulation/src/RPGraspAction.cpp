@@ -8,6 +8,7 @@ namespace KCL_rosplan {
 	 : message_store(nh), blind_grasp_action_client(blindGraspActionServer, true) {
 
 		// create the action clients
+		drop_client = nh.serviceClient<kclhand_control::graspPreparation>("/hand_controller/openFinger");
 		ROS_INFO("KCL: (GraspAction) waiting for action server to start on %s", blindGraspActionServer.c_str());
 		blind_grasp_action_client.waitForServer();
 
@@ -18,12 +19,41 @@ namespace KCL_rosplan {
 	/* action dispatch callback */
 	void RPGraspAction::dispatchCallback(const rosplan_dispatch_msgs::ActionDispatch::ConstPtr& msg) {
 
+		rosplan_dispatch_msgs::ActionFeedback fb;
+
 		// ignore non-grasp actions
-		if(0==msg->name.compare("pickup_object")) dispatchBlindGraspAction(msg);
+		if(0==msg->name.compare("pickup_object")) {
+
+			publishFeedback(msg->action_id, "action enabled");
+			for(int i=0; i<5; i++) {
+				if(dispatchBlindGraspAction(msg)) {
+					publishFeedback(msg->action_id, "action achieved");
+					return;
+				}
+			}
+			publishFeedback(msg->action_id, "action failed");
+		}
+
+		// ignore non-drop objects
+		else if(0==msg->name.compare("drop_object")) {
+
+			publishFeedback(msg->action_id, "action enabled");
+			if(dispatchDropAction(msg)) {
+				publishFeedback(msg->action_id, "action achieved");
+				return;
+			}
+			publishFeedback(msg->action_id, "action failed");
+		}
 	}
 
 	/* blind grasp action dispatch */
-	void RPGraspAction::dispatchBlindGraspAction(const rosplan_dispatch_msgs::ActionDispatch::ConstPtr& msg) {
+	bool RPGraspAction::dispatchDropAction(const rosplan_dispatch_msgs::ActionDispatch::ConstPtr& msg) {
+		kclhand_control::graspPreparation srv;
+		return drop_client.call(srv);
+	}
+
+	/* blind grasp action dispatch */
+	bool RPGraspAction::dispatchBlindGraspAction(const rosplan_dispatch_msgs::ActionDispatch::ConstPtr& msg) {
 
 		ROS_INFO("KCL: (GraspAction) blind grasp action recieved");
 
@@ -38,7 +68,7 @@ namespace KCL_rosplan {
 		}
 		if(!foundObject) {
 			ROS_INFO("KCL: (GraspAction) aborting action dispatch; malformed parameters");
-			return;
+			return false;
 		}
 		
 		// get details from message store
@@ -46,7 +76,7 @@ namespace KCL_rosplan {
 		if(message_store.queryNamed<squirrel_object_perception_msgs::SceneObject>(objectID, results)) {
 			if(results.size()<1) {
 				ROS_INFO("KCL: (GraspAction) aborting action dispatch; no matching objectID %s", objectID.c_str());
-				return;
+				return false;
 			}
 			if(results.size()>1)
 				ROS_INFO("KCL: (GraspAction) multiple objects share the same objectID");
@@ -61,7 +91,7 @@ namespace KCL_rosplan {
 				tfl.transformPose("/odom", poseMap, pose);
 			} catch ( tf::TransformException& ex ) {
 				ROS_ERROR("%s: error while transforming point: %s", ros::this_node::getName().c_str(), ex.what());
-				return;
+				return false;
 			}
 
 			// dispatch Grasp action
@@ -70,26 +100,18 @@ namespace KCL_rosplan {
 			goal.heap_bounding_cylinder = results[0]->bounding_cylinder;
 			goal.heap_point_cloud = results[0]->cloud;
 			blind_grasp_action_client.sendGoal(goal);
-
-			// publish feedback (enabled)
-			rosplan_dispatch_msgs::ActionFeedback fb;
-			fb.action_id = msg->action_id;
-			fb.status = "action enabled";
-			action_feedback_pub.publish(fb);
-
 			
 			// bool finished_before_timeout = false;
 			blind_grasp_action_client.waitForResult();
-
 			actionlib::SimpleClientGoalState state = blind_grasp_action_client.getState();
 			ROS_INFO("KCL: (GraspAction) action finished: %s", state.toString().c_str());
-				
-			// publish feedback (achieved)
-			fb.action_id = msg->action_id;
-			fb.status = "action achieved";
-			action_feedback_pub.publish(fb);
+			
+			return (state == actionlib::SimpleClientGoalState::SUCCEEDED);	
 
-		} else ROS_INFO("KCL: (GraspAction) aborting action dispatch; query to sceneDB failed");
+		} else {
+			ROS_INFO("KCL: (GraspAction) aborting action dispatch; query to sceneDB failed");
+			return false;
+		}
 	}
 } // close namespace
 
