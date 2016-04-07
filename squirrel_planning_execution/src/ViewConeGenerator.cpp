@@ -22,7 +22,7 @@ void ViewConeGenerator::storeNavigationGrid(const nav_msgs::OccupancyGrid::Const
 	has_received_occupancy_grid_ = true;
 }
 
-void ViewConeGenerator::createViewCones(std::vector<geometry_msgs::Pose>& poses, unsigned int max_view_cones, int occupancy_threshold, float fov, float view_distance, unsigned int sample_size, float safe_distance)
+void ViewConeGenerator::createViewCones(std::vector<geometry_msgs::Pose>& poses, const std::vector<tf::Vector3>& bounding_box, unsigned int max_view_cones, int occupancy_threshold, float fov, float view_distance, unsigned int sample_size, float safe_distance)
 {
 	if (!has_received_occupancy_grid_) {
 		ROS_WARN("(ViewConeGenerator) The occupancy grid was not published yet, no poses returned.");
@@ -62,6 +62,35 @@ void ViewConeGenerator::createViewCones(std::vector<geometry_msgs::Pose>& poses,
 				continue;
 			}
 			
+			// Check if this point falls within the bounding box.
+			{
+				bool falls_within_bounded_box = true;
+				char sign = 0;
+				tf::Vector3 cell_point(p.x, p.y, p.z);
+				for (int i = 0; i < bounding_box.size(); ++i)
+				{
+					const tf::Vector3& v1 = bounding_box[i];
+					const tf::Vector3& v2 = bounding_box[i + 1];
+					
+					tf::Vector3 cross_product = (cell_point - v1).cross(v2 - v1);
+					
+					if (sign == 0)
+					{
+						sign = cross_product.z() > 0 ? 1 : -1;
+					}
+					else
+					{
+						if (sign == -1 && cross_product.z() > 0 ||
+							sign == 1 && cross_product.z() < 0)
+						{
+							falls_within_bounded_box = false;
+							break;
+						}
+					}
+				}
+				
+				if (!falls_within_bounded_box) continue;
+			}
 			float yaw = ((float)rand() / (float)RAND_MAX) * 2 * M_PI;
 			
 			//ROS_INFO("(ViewConeGenerator) Sample cone: (%d, %d) %f.", grid_x, grid_y, yaw);
@@ -71,7 +100,7 @@ void ViewConeGenerator::createViewCones(std::vector<geometry_msgs::Pose>& poses,
 			pose.position = p;
 			
 			tf::Quaternion q;
-			q.setEulerZYX(yaw, 0, 0);
+			q.setEulerZYX(yaw, 0.0f, 0.0f);
 
 			pose.orientation.x = q.getX();
 			pose.orientation.y = q.getY();

@@ -635,7 +635,8 @@ namespace KCL_rosplan {
 			std::vector<geometry_msgs::Pose> view_poses;
 			if (!simulated)
 			{
-				view_cone_generator->createViewCones(view_poses, 10, 5, 30.0f, 2.0f, 100, 0.5f);
+				std::vector<tf::Vector3> bounding_box;
+				view_cone_generator->createViewCones(view_poses, bounding_box, 10, 5, 30.0f, 2.0f, 100, 0.5f);
 			}
 			else
 			{
