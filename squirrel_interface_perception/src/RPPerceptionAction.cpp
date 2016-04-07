@@ -196,7 +196,7 @@ namespace KCL_rosplan {
 		std::string explored_waypoint;
 		bool foundWP = false;
 		for(size_t i=0; i<msg->parameters.size(); i++) {
-			if(0==msg->parameters[i].key.compare("view")) {
+			if(0==msg->parameters[i].key.compare("wp")) {
 				explored_waypoint = msg->parameters[i].value;
 				foundWP = true;
 			}
