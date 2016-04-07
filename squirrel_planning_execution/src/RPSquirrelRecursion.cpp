@@ -47,7 +47,7 @@ namespace KCL_rosplan {
 		
 		if (!simulated)
 		{
-			std::string occupancyTopic("/squirrel_nav/occupancy_map");
+			std::string occupancyTopic("/map");
 			nh.param("occupancy_topic", occupancyTopic, occupancyTopic);
 			view_cone_generator = new ViewConeGenerator(nh, occupancyTopic);
 		}
@@ -666,6 +666,12 @@ namespace KCL_rosplan {
 					ROS_ERROR("KCL: (RPSquirrelRecursion) Could not add an explore wayoint to the knowledge base.");
 					exit(-1);
 				}
+
+				// add waypoint to MongoDB
+				geometry_msgs::PoseStamped pose;
+				pose.header.frame_id = "/map";
+				pose.pose = *ci;
+				std::string id(message_store.insertNamed(ss.str(), pose));
 				
 				// Setup the goal.
 				waypoint_knowledge.knowledge_type = rosplan_knowledge_msgs::KnowledgeItem::FACT;
