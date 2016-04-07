@@ -15,6 +15,9 @@
 #include "pddl_actions/FinaliseClassificationPDDLAction.h"
 #include "pddl_actions/PlannerInstance.h"
 
+#include <visualization_msgs/MarkerArray.h>
+#include <visualization_msgs/Marker.h>
+
 
 /* The implementation of RPSquirrelRecursion.h */
 namespace KCL_rosplan {
@@ -632,6 +635,12 @@ namespace KCL_rosplan {
 		
  		if (action_name == "explore_area") {
 			
+			//rviz things
+			std::vector<geometry_msgs::Point> waypoints;
+			std::vector<std_msgs::ColorRGBA> waypoint_colours;
+			std::vector<geometry_msgs::Point> triangle_points;
+			std::vector<std_msgs::ColorRGBA> triangle_colours;
+
 			std::vector<geometry_msgs::Pose> view_poses;
 			if (!simulated)
 			{
@@ -695,8 +704,133 @@ namespace KCL_rosplan {
 				}
 				ROS_INFO("KCL: (RPSquirrelRecursion) Added the goal (explored %s) to the knowledge base.", ss.str().c_str());
 				++waypoint_number;
+
+				// publish to rviz
+				const geometry_msgs::Pose& pose_marker = *ci;
+
+				// Create a triangle out of this pose.
+				tf::Quaternion q(pose_marker.orientation.x, pose_marker.orientation.y, pose_marker.orientation.z, pose_marker.orientation.w);
+				float yaw = tf::getYaw(q);
+				// Calculate the triangle points encompasses the area that is viewed.
+				tf::Vector3 view_point(pose_marker.position.x, pose_marker.position.y, pose_marker.position.z);
+				tf::Vector3 v0(2.0f/*view_distance*/, 0.0f, 0.0f);
+				v0 = v0.rotate(tf::Vector3(0.0f, 0.0f, 1.0f), yaw);
+				tf::Vector3 v0_normalised = v0.normalized();
+				tf::Vector3 v1 = v0;
+				v1 = v1.rotate(tf::Vector3(0.0f, 0.0f, 1.0f), 2.0f/*fov*/ / 2.0f);
+				v1 = v1.normalize();
+				float length = v0.length() / v0_normalised.dot(v1);
+				v1 *= length;
+				v1 += view_point;
+				tf::Vector3 v2 = v0;
+				v2 = v2.rotate(tf::Vector3(0.0f, 0.0f, 1.0f), -2.0f/*-fov*/ / 2.0f);
+				v2 = v2.normalize();
+				length = v0.length() / v0_normalised.dot(v2);
+				v2 *= length;
+				v2 += view_point;
+		
+				geometry_msgs::Point pose_view_point;
+				pose_view_point.x = view_point.x();
+				pose_view_point.y = view_point.y();
+				pose_view_point.z = view_point.z();
+				triangle_points.push_back(pose_view_point);
+				waypoints.push_back(pose_view_point);
+		
+				geometry_msgs::Point pose_v1;
+				pose_v1.x = v1.x();
+				pose_v1.y = v1.y();
+				pose_v1.z = v1.z();
+				triangle_points.push_back(pose_v1);
+		
+				geometry_msgs::Point pose_v2;
+				pose_v2.x = v2.x();
+				pose_v2.y = v2.y();
+				pose_v2.z = v2.z();
+				triangle_points.push_back(pose_v2);
+		
+				std_msgs::ColorRGBA colour;
+				colour.r = (float)rand() / (float)RAND_MAX;
+				colour.b = (float)rand() / (float)RAND_MAX;
+				colour.g = (float)rand() / (float)RAND_MAX;
+				colour.a = 1.0f;
+				triangle_colours.push_back(colour);
+				triangle_colours.push_back(colour);
+				triangle_colours.push_back(colour);
+		
+				colour.r = 1;
+				colour.b = 1;
+				colour.g = 1;
+				colour.a = 1.0f;
+				waypoint_colours.push_back(colour);
 			}
+
+			ros::Publisher rivz_pub = node_handle->advertise<visualization_msgs::MarkerArray>("/vis/view_cones", 1000);
+
+			visualization_msgs::MarkerArray marker_array;
+
+			// Create a marker to be displayed.
+			visualization_msgs::Marker marker;
+	
+			marker.header.frame_id = "map";
+			marker.header.stamp = ros::Time::now();
+			marker.id = 0;
+			marker.ns = "Waypoints";
+			marker.type = visualization_msgs::Marker::SPHERE_LIST;
+			marker.action = visualization_msgs::Marker::ADD;
+			marker.points = waypoints;
+			marker.colors = waypoint_colours;
+			marker.pose.position.x = 0.0;
+			marker.pose.position.y = 0.0;
+			marker.pose.position.z = 0.0;
+			marker.pose.orientation.x = 0.0;
+			marker.pose.orientation.y = 0.0;
+			marker.pose.orientation.z = 0.0;
+			marker.pose.orientation.w = 1.0;
+
+			marker.scale.y = 1.0;
+			marker.scale.z = 1.0;
+			marker.color.g = 1.0;
+			marker.color.a = 1.0;
+
+			marker.scale.x = 0.1;
+			marker.scale.y = 0.1;
+			marker.scale.z = 0.1;
+			marker_array.markers.push_back(marker);
+
+			// Reuse the marker for the actual view cones.2
+			marker.header.frame_id = "map";
+			marker.header.stamp = ros::Time::now();
+			marker.id = 1;
+			marker.ns = "ViewCone";
+			marker.type = visualization_msgs::Marker::TRIANGLE_LIST;
+			marker.action = visualization_msgs::Marker::ADD;
+			marker.points = triangle_points;
+			marker.colors = triangle_colours;
+			marker.pose.position.x = 0.0;
+			marker.pose.position.y = 0.0;
+			marker.pose.position.z = 0.0;
+			marker.pose.orientation.x = 0.0;
+			marker.pose.orientation.y = 0.0;
+			marker.pose.orientation.z = 0.0;
+			marker.pose.orientation.w = 1.0;
+
+			marker.scale.y = 1.0;
+			marker.scale.z = 1.0;
+			marker.color.g = 1.0;
+			marker.color.a = 1.0;
+
+			marker.scale.x = 1.;
+			marker.scale.y = 1.;
+			marker.scale.z = 1.;
+			marker_array.markers.push_back(marker);
 			
+			ros::Rate loop_rate(100);
+			while (ros::ok()) {
+				rivz_pub.publish(marker_array);
+				loop_rate.sleep();
+			}
+
+			// add initial state (robot_at)
 			rosplan_knowledge_msgs::KnowledgeItem waypoint_knowledge;
 			add_waypoints_service.request.update_type = rosplan_knowledge_msgs::KnowledgeUpdateService::Request::ADD_KNOWLEDGE;
 			waypoint_knowledge.knowledge_type = rosplan_knowledge_msgs::KnowledgeItem::INSTANCE;
