@@ -649,6 +649,10 @@ namespace KCL_rosplan {
 				tf::Vector3 p2(-0.5, 4.07, 0.00);
 				tf::Vector3 p3(3.49, 0.01, 0.00);
 				tf::Vector3 p4(-0.35, -0.09, 0.00);
+				bounding_box.push_back(p1);
+				bounding_box.push_back(p3);
+				bounding_box.push_back(p4);
+				bounding_box.push_back(p2);
 				view_cone_generator->createViewCones(view_poses, bounding_box, 10, 80, 30.0f, 1.0f, 100, 0.5f);
 			}
 			else
