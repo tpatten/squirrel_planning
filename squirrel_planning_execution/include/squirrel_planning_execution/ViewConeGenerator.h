@@ -50,6 +50,14 @@ namespace KCL_rosplan {
 	private:
 		
 		/**
+		 * Publish the generated viewcones to RViz.
+		 * @param poses The found poses.
+		 * @param view_distance The maximum viewing distance (straight in front).
+		 * @param fov Field of view.
+		 */
+		void visualiseViewCones(const std::vector<geometry_msgs::Pose>& poses, float view_distance, float fov) const;
+		
+		/**
 		 * Check if two waypoints can be connected without colliding with any known scenery. The line is assumed
 		 * to have an effective width of 0.
 		 * @param w1 The first waypoint.
@@ -68,6 +76,7 @@ namespace KCL_rosplan {
 		*/
 		bool isBlocked(const geometry_msgs::Point& point, float min_distance) const;
 		
+		ros::Publisher rivz_pub_;
 		ros::Subscriber navigation_grid_sub_;
 		nav_msgs::OccupancyGrid last_received_occupancy_grid_msgs_;
 		bool has_received_occupancy_grid_;
