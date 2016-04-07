@@ -1,6 +1,7 @@
 #include <squirrel_planning_execution/ViewConeGenerator.h>
 #include <occupancy_grid_utils/ray_tracer.h>
 #include <occupancy_grid_utils/coordinate_conversions.h>
+#include <visualization_msgs/MarkerArray.h>
 //#include <tf/Quaternion.h>
 //#include <tf/Vector3.h>
 
@@ -13,6 +14,7 @@ ViewConeGenerator::ViewConeGenerator(ros::NodeHandle& node_handle, const std::st
 	: has_received_occupancy_grid_(false)
 {
 	navigation_grid_sub_ = node_handle.subscribe(topic_name, 1, &ViewConeGenerator::storeNavigationGrid, this);
+	rivz_pub_ = node_handle.advertise<visualization_msgs::MarkerArray>("/vis/view_cones", 1000);
 	srand(time(NULL));
 }
 
@@ -261,6 +263,158 @@ void ViewConeGenerator::createViewCones(std::vector<geometry_msgs::Pose>& poses,
 	for (std::vector<geometry_msgs::Pose>::const_iterator ci = poses.begin(); ci != poses.end(); ++ci) {
 		ROS_INFO("(ViewConeGenerator) Found the pose(%f, %f, %f).", (*ci).position.x, (*ci).position.y, (*ci).position.z);
 	}
+	
+	// Visualise the view cones.
+	visualiseViewCones(poses, view_distance, fov);
+}
+
+void ViewConeGenerator::visualiseViewCones(const std::vector<geometry_msgs::Pose>& poses, float view_distance, float fov) const
+{
+	ROS_INFO("Got the view cones, there are %d!", poses.size());
+
+	std::vector<geometry_msgs::Point> waypoints;
+	std::vector<std_msgs::ColorRGBA> waypoint_colours;
+	std::vector<geometry_msgs::Point> triangle_points;
+	std::vector<std_msgs::ColorRGBA> triangle_colours;
+	
+	for (std::vector<geometry_msgs::Pose>::const_iterator ci = poses.begin(); ci != poses.end(); ++ci) {
+		const geometry_msgs::Pose& pose = *ci;
+		
+		// Create a triangle out of this pose.
+		tf::Quaternion q(pose.orientation.x, pose.orientation.y, pose.orientation.z, pose.orientation.w);
+		float yaw = tf::getYaw(q);
+		
+		//ROS_INFO("(ViewConeGenerator) Yaw: %f.", yaw);
+		
+		// Calculate the triangle points encompasses the area that is viewed.
+		tf::Vector3 view_point(pose.position.x, pose.position.y, pose.position.z);
+		
+		tf::Vector3 v0(view_distance, 0.0f, 0.0f);
+		v0 = v0.rotate(tf::Vector3(0.0f, 0.0f, 1.0f), yaw);
+		
+		//ROS_INFO("(ViewConeGenerator) Viewing direction: (%f, %f, %f).", v0.x(), v0.y(), v0.z());
+		
+		tf::Vector3 v0_normalised = v0.normalized();
+		
+		//ROS_INFO("(ViewConeGenerator) Viewing direction (normalised): (%f, %f, %f).", v0_normalised.x(), v0_normalised.y(), v0_normalised.z());
+		
+		tf::Vector3 v1 = v0;
+		v1 = v1.rotate(tf::Vector3(0.0f, 0.0f, 1.0f), fov / 2.0f);
+		v1 = v1.normalize();
+		
+		//ROS_INFO("(ViewConeGenerator) V1 (normalised): (%f, %f, %f).", v1.x(), v1.y(), v1.z());
+		
+		float length = v0.length() / v0_normalised.dot(v1);
+		v1 *= length;
+		v1 += view_point;
+		
+		//ROS_INFO("(ViewConeGenerator) V1 (actual): (%f, %f, %f); length = %f.", v1.x(), v1.y(), v1.z(), length);
+		
+		tf::Vector3 v2 = v0;
+		v2 = v2.rotate(tf::Vector3(0.0f, 0.0f, 1.0f), -fov / 2.0f);
+		v2 = v2.normalize();
+		//ROS_INFO("(ViewConeGenerator) V2 (normalised): (%f, %f, %f).", v2.x(), v2.y(), v2.z());
+		
+		length = v0.length() / v0_normalised.dot(v2);
+		v2 *= length;
+		v2 += view_point;
+		//ROS_INFO("(ViewConeGenerator) V2 (actual): (%f, %f, %f); length = %f.", v2.x(), v2.y(), v2.z(), length);
+		
+		//ROS_INFO("(ViewConeGenerator) Triangle: (%f, %f, %f), (%f, %f, %f), (%f, %f, %f).", view_point.x(), view_point.y(), view_point.z(), v1.x(), v1.y(), v1.z(), v2.x(), v2.y(), v2.z());
+
+		geometry_msgs::Point pose_view_point;
+		pose_view_point.x = view_point.x();
+		pose_view_point.y = view_point.y();
+		pose_view_point.z = view_point.z();
+		triangle_points.push_back(pose_view_point);
+		waypoints.push_back(pose_view_point);
+		
+		geometry_msgs::Point pose_v1;
+		pose_v1.x = v1.x();
+		pose_v1.y = v1.y();
+		pose_v1.z = v1.z();
+		triangle_points.push_back(pose_v1);
+		
+		geometry_msgs::Point pose_v2;
+		pose_v2.x = v2.x();
+		pose_v2.y = v2.y();
+		pose_v2.z = v2.z();
+		triangle_points.push_back(pose_v2);
+		
+		std_msgs::ColorRGBA colour;
+		colour.r = (float)rand() / (float)RAND_MAX;
+		colour.b = (float)rand() / (float)RAND_MAX;
+		colour.g = (float)rand() / (float)RAND_MAX;
+		colour.a = 1.0f;
+		triangle_colours.push_back(colour);
+		triangle_colours.push_back(colour);
+		triangle_colours.push_back(colour);
+		
+		colour.r = 1;
+		colour.b = 1;
+		colour.g = 1;
+		colour.a = 1.0f;
+		waypoint_colours.push_back(colour);
+	}
+	
+	visualization_msgs::MarkerArray marker_array;
+	
+	// Create a marker to be displayed.
+	visualization_msgs::Marker marker;
+		
+	marker.header.frame_id = "map";
+	marker.header.stamp = ros::Time::now();
+	marker.id = 0;
+	marker.ns = "Waypoints";
+	marker.type = visualization_msgs::Marker::SPHERE_LIST;
+	marker.action = visualization_msgs::Marker::ADD;
+	marker.points = waypoints;
+	marker.colors = waypoint_colours;
+	marker.pose.position.x = 0.0;
+	marker.pose.position.y = 0.0;
+	marker.pose.position.z = 0.0;
+	marker.pose.orientation.x = 0.0;
+	marker.pose.orientation.y = 0.0;
+	marker.pose.orientation.z = 0.0;
+	marker.pose.orientation.w = 1.0;
+	
+	marker.scale.y = 1.0;
+	marker.scale.z = 1.0;
+	marker.color.g = 1.0;
+	marker.color.a = 1.0;
+
+	marker.scale.x = 0.1;
+	marker.scale.y = 0.1;
+	marker.scale.z = 0.1;
+	marker_array.markers.push_back(marker);
+	
+	// Reuse the marker for the actual view cones.2
+	marker.header.frame_id = "map";
+	marker.header.stamp = ros::Time::now();
+	marker.id = 1;
+	marker.ns = "ViewCone";
+	marker.type = visualization_msgs::Marker::TRIANGLE_LIST;
+	marker.action = visualization_msgs::Marker::ADD;
+	marker.points = triangle_points;
+	marker.colors = triangle_colours;
+	marker.pose.position.x = 0.0;
+	marker.pose.position.y = 0.0;
+	marker.pose.position.z = 0.0;
+	marker.pose.orientation.x = 0.0;
+	marker.pose.orientation.y = 0.0;
+	marker.pose.orientation.z = 0.0;
+	marker.pose.orientation.w = 1.0;
+	
+	marker.scale.y = 1.0;
+	marker.scale.z = 1.0;
+	marker.color.g = 1.0;
+	marker.color.a = 1.0;
+
+	marker.scale.x = 1.;
+	marker.scale.y = 1.;
+	marker.scale.z = 1.;
+	marker_array.markers.push_back(marker);
+	rivz_pub_.publish(marker_array);
 }
 
 bool ViewConeGenerator::canConnect(const geometry_msgs::Point& w1, const geometry_msgs::Point& w2, int occupancy_threshold)
