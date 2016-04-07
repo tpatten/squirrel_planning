@@ -47,7 +47,7 @@ namespace KCL_rosplan {
 		
 		if (!simulated)
 		{
-			std::string occupancyTopic("/squirrel_nav/occupancy_map");
+			std::string occupancyTopic("/map");
 			nh.param("occupancy_topic", occupancyTopic, occupancyTopic);
 			view_cone_generator = new ViewConeGenerator(nh, occupancyTopic);
 		}
