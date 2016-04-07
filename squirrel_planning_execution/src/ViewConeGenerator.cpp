@@ -36,7 +36,9 @@ void ViewConeGenerator::createViewCones(std::vector<geometry_msgs::Pose>& poses,
 	std::vector<bool> processed_cells(last_received_occupancy_grid_msgs_.info.width * last_received_occupancy_grid_msgs_.info.height, false);
 	for (int y = 0; y < last_received_occupancy_grid_msgs_.info.width; ++y) {
 		for (int x = 0; x < last_received_occupancy_grid_msgs_.info.height; ++x) {
-			if (last_received_occupancy_grid_msgs_.data[x + y * last_received_occupancy_grid_msgs_.info.width] > occupancy_threshold) {
+			if (last_received_occupancy_grid_msgs_.data[x + y * last_received_occupancy_grid_msgs_.info.width] > occupancy_threshold ||
+			    last_received_occupancy_grid_msgs_.data[x + y * last_received_occupancy_grid_msgs_.info.width == -1]
+			) {
 				processed_cells[x + y * last_received_occupancy_grid_msgs_.info.width] = true;
 			} else {
 				processed_cells[x + y * last_received_occupancy_grid_msgs_.info.width] = false;
@@ -83,7 +85,7 @@ void ViewConeGenerator::createViewCones(std::vector<geometry_msgs::Pose>& poses,
 					else
 					{
 						if (sign == -1 && cross_product.z() > 0 ||
-							sign == 1 && cross_product.z() < 0)
+							 sign == 1 && cross_product.z() < 0)
 						{
 							falls_within_bounded_box = false;
 							break;
