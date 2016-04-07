@@ -41,14 +41,16 @@ void ClearObjectPDDLAction::dispatchCallback(const rosplan_dispatch_msgs::Action
 		return;
 	}
 	
-	ROS_INFO("KCL (ClearObjectPDDLAction) Process the action: %s", normalised_action_name.c_str());
+	ROS_INFO("KCL: (ClearObjectPDDLAction) Process the action: %s", normalised_action_name.c_str());
+	/*
 	for (std::vector<diagnostic_msgs::KeyValue>::const_iterator ci = msg->parameters.begin(); ci != msg->parameters.end(); ++ci)
 	{
 		const std::string& key = (*ci).key;
 		const std::string& value = (*ci).value;
 		
-		ROS_INFO("KCL (ClearObjectPDDLAction) %s -> %s", key.c_str(), value.c_str());
+		ROS_INFO("KCL: (ClearObjectPDDLAction) %s -> %s", key.c_str(), value.c_str());
 	}
+	*/
 	
 	// Report this action is enabled and completed successfully.
 	rosplan_dispatch_msgs::ActionFeedback fb;
@@ -60,7 +62,7 @@ void ClearObjectPDDLAction::dispatchCallback(const rosplan_dispatch_msgs::Action
 	const std::string& object = msg->parameters[0].value;
 	const std::string& state = msg->parameters[1].value;
 	
-	ROS_INFO("KCL (ClearObjectPDDLAction) Process the action: %s, Clear the area around object %s in state %s", normalised_action_name.c_str(), object.c_str(), state.c_str());
+	ROS_INFO("KCL: (ClearObjectPDDLAction) Process the action: %s, Clear the area around object %s in state %s", normalised_action_name.c_str(), object.c_str(), state.c_str());
 	
 	// Remove the old knowledge.
 	rosplan_knowledge_msgs::KnowledgeUpdateService knowledge_update_service;
@@ -68,6 +70,7 @@ void ClearObjectPDDLAction::dispatchCallback(const rosplan_dispatch_msgs::Action
 	rosplan_knowledge_msgs::KnowledgeItem kenny_knowledge;
 	kenny_knowledge.knowledge_type = rosplan_knowledge_msgs::KnowledgeItem::FACT;
 	kenny_knowledge.attribute_name = "cleared";
+	kenny_knowledge.is_negative = false;
 	
 	diagnostic_msgs::KeyValue kv;
 	kv.key = "o";

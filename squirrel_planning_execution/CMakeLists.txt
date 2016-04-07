@@ -58,13 +58,30 @@ set(rpsquirrelRecursion_SOURCES
   src/RPSquirrelRecursion.cpp
   src/ContingentTacticalClassifyPDDLGenerator.cpp
   src/ContingentStrategicClassifyPDDLGenerator.cpp
-  src/ContingentTidyPDDLGenerator.cpp
+  src/ClassicalTidyPDDLGenerator.cpp
   src/pddl_actions/PlannerInstance.cpp
   src/pddl_actions/GotoPDDLAction.cpp
+  src/pddl_actions/PickupPDDLAction.cpp
+  src/pddl_actions/PutObjectInBoxPDDLAction.cpp
+  src/pddl_actions/TidyObjectPDDLAction.cpp
   src/pddl_actions/ClearObjectPDDLAction.cpp
   src/pddl_actions/ExploreWaypointPDDLAction.cpp
   src/pddl_actions/ClassifyObjectPDDLAction.cpp
+  src/pddl_actions/ShedKnowledgePDDLAction.cpp
+  src/pddl_actions/FinaliseClassificationPDDLAction.cpp
   src/ViewConeGenerator.cpp)
+  
+set(simulatedPDDLActionsNode_SOURCES
+  src/SimulatedPDDLActionsNode.cpp
+  src/pddl_actions/PlannerInstance.cpp
+  src/pddl_actions/GotoPDDLAction.cpp
+  src/pddl_actions/PushObjectPDDLAction.cpp
+  src/pddl_actions/PickupPDDLAction.cpp
+  src/pddl_actions/PutObjectInBoxPDDLAction.cpp
+  src/pddl_actions/TidyObjectPDDLAction.cpp
+  src/pddl_actions/ClearObjectPDDLAction.cpp
+  src/pddl_actions/ExploreWaypointPDDLAction.cpp
+  src/pddl_actions/ClassifyObjectPDDLAction.cpp)
 
 ## planning simulation
 #set(planSim_SOURCES
@@ -83,18 +100,21 @@ add_executable(tidyroom ${tidyroom_SOURCES})
 add_executable(simpledemo src/TidyRoomGrasping.cpp)
 add_executable(rpsquirrelRoadmap ${rpsquirrelroadmap_SOURCES})
 add_executable(rpsquirrelRecursion ${rpsquirrelRecursion_SOURCES})
+add_executable(simulatedPDDLActionsNode ${simulatedPDDLActionsNode_SOURCES})
 #add_executable(planSim ${planSim_SOURCES})
 
 add_dependencies(tidyroom ${catkin_EXPORTED_TARGETS})
 add_dependencies(simpledemo ${catkin_EXPORTED_TARGETS})
 add_dependencies(rpsquirrelRoadmap ${catkin_EXPORTED_TARGETS})
 add_dependencies(rpsquirrelRecursion ${catkin_EXPORTED_TARGETS})
+add_dependencies(simulatedPDDLActionsNode ${catkin_EXPORTED_TARGETS})
 #add_dependencies(planSim ${catkin_EXPORTED_TARGETS})
 
 target_link_libraries(tidyroom ${catkin_LIBRARIES})
 target_link_libraries(simpledemo ${catkin_LIBRARIES})
 target_link_libraries(rpsquirrelRoadmap ${catkin_LIBRARIES})
 target_link_libraries(rpsquirrelRecursion ${catkin_LIBRARIES})
+target_link_libraries(simulatedPDDLActionsNode ${catkin_LIBRARIES})
 #target_link_libraries(planSim ${catkin_LIBRARIES})
 
 ##########

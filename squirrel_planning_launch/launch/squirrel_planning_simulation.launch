@@ -5,7 +5,7 @@
 	<param name="planner_path" value="$(find rosplan_planning_system)/common/bin/" />
 
 	<!-- domain file -->
-	<param name="domain_path" value="$(find squirrel_planning_launch)/common/domain_tidy_room.pddl" />
+	<param name="domain_path" value="$(find squirrel_planning_launch)/common/tidy_room_domain-nt.pddl" />
 
 	<!-- knowledge base -->
 	<node name="rosplan_knowledge_base" pkg="rosplan_knowledge_base" type="knowledgeBase" respawn="false" output="screen">
@@ -26,19 +26,19 @@
             <param name="strl_file_path" value="$(find squirrel_planning_launch)/common/plan.strl" />
 
 		<!-- to run the planner -->
-	    <param name="planner_command" value="timeout 10 $(find rosplan_planning_system)/common/bin/popf -n" />
+	    <param name="planner_command" value="timeout 60 $(find rosplan_planning_system)/common/bin/popf -n" />
             <param name="generate_default_problem" value="false" />
 	</node>
 
-<!--
-	<node name="squirrel_interface_recursion" pkg="squirrel_planning_execution" type="rpsquirrelRecursion" respawn="false" output="screen">
-	    <param name="occupancy_topic" value="/squirrel_nav/occupancy_map" />
+	<!-- simulation acitons -->
+	<node name="simulated_actions" pkg="squirrel_planning_execution" type="simulatedPDDLActionsNode" output="screen">
+		<param name="query_user" value="false" />
 	</node>
 
-	<node name="squirrel_create_examine_waypoint" pkg="squirrel_perception_waypoint" type="squirrel_create_examine_waypoint" required="true">
-
+	<!-- RPSquirrelRecursion actions -->
+	<node name="squirrel_planning_execution" pkg="squirrel_planning_execution" type="rpsquirrelRecursion" output="screen">
+		<param name="simulated" value="true" />
 	</node>
--->
 
 </launch>
 

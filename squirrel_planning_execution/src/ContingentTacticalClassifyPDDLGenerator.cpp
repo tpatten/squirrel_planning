@@ -7,6 +7,7 @@
 #include <map>
 #include <set>
 #include <string>
+#include <ros/ros.h>
 
 #include "squirrel_planning_execution/ContingentTacticalClassifyPDDLGenerator.h"
 
@@ -145,8 +146,6 @@ void ContingentTacticalClassifyPDDLGenerator::generateDomainFile(const std::stri
 		}
 	}
 	
-	std::cout << "generateClassifyObjectTacticalDomain:: file name= " << file_name << std::endl;
-	
 	std::ofstream myfile;
 	myfile.open (file_name.c_str());
 	myfile << "(define (domain classify_objects)" << std::endl;
@@ -278,9 +277,9 @@ void ContingentTacticalClassifyPDDLGenerator::generateDomainFile(const std::stri
 	 * Classify sension action.
 	 */
 	myfile << ";; Attempt to classify the object." << std::endl;
-	myfile << "(:action classify_object" << std::endl;
+	myfile << "(:action observe-classifiable_from" << std::endl;
 	
-	myfile << "\t:parameters (?o - object ?r - robot ?from ?view - waypoint ?l ?l2 - level ?kb - knowledgebase)" << std::endl;
+	myfile << "\t:parameters (?from ?view - waypoint ?o - object ?r - robot  ?l ?l2 - level ?kb - knowledgebase)" << std::endl;
 	myfile << "\t:precondition (and" << std::endl;
 	myfile << "\t\t(not (resolve-axioms))" << std::endl;
 	myfile << "\t\t(next ?l ?l2)" << std::endl;
@@ -979,11 +978,12 @@ void ContingentTacticalClassifyPDDLGenerator::createPDDL(const std::string& path
 			Location* other_location = *ci;
 			location->connected_locations_.push_back(other_location);
 			other_location->connected_locations_.push_back(location);
+			
+			//std::cout << location->name_ << " is connected to " << other_location->name_ << std::endl;
 		}
+		//std::cout << "Processed: " << location->name_ << std::endl;
 	}
 	
-	std::cout << "Creating all possible states..." << std::endl;
-
 	std::vector<const KnowledgeBase*> knowledge_bases;
 	std::map<const Object*, const Location*> empty_stacked_objects_mapping;
 	State basic_state("basic", empty_stacked_objects_mapping);
@@ -1026,7 +1026,7 @@ void ContingentTacticalClassifyPDDLGenerator::createPDDL(const std::string& path
 				classifiable_from.clear();
 				classifiable_from[object] = location;
 				
-				std::cout << object->name_ << " is visable from " << location->name_ << std::endl;
+				//std::cout << object->name_ << " is visable from " << location->name_ << std::endl;
 			
 				ss.str(std::string());
 				ss << "s" << state_id;
@@ -1039,11 +1039,11 @@ void ContingentTacticalClassifyPDDLGenerator::createPDDL(const std::string& path
 	
 	ss.str(std::string());
 	ss << path << domain_file;
-	std::cout << "Generate domain... " << ss.str() << std::endl;
+	ROS_INFO("KCL: (ContingentTacticalClassifyPDDLGenerator) Generate domain... %s", ss.str().c_str());
 	generateDomainFile(ss.str(), basis_kb, knowledge_bases, *robot_location, locations, objects);
 	ss.str(std::string());
 	ss << path  << problem_file;
-	std::cout << "Generate problem... " << ss.str() << std::endl;
+	ROS_INFO("KCL: (ContingentTacticalClassifyPDDLGenerator) Generate problem... %s", ss.str().c_str());
 	generateProblemFile(ss.str(), basis_kb, knowledge_bases, *robot_location,locations, objects);
 }
 

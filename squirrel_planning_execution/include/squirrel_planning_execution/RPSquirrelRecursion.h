@@ -18,6 +18,7 @@
 #include "rosplan_knowledge_msgs/GetInstanceService.h"
 #include "rosplan_knowledge_msgs/GetAttributeService.h"
 #include "rosplan_knowledge_msgs/GenerateProblemService.h"
+#include "rosplan_knowledge_msgs/KnowledgeQueryService.h"
 #include "rosplan_dispatch_msgs/PlanningService.h"
 
 #include "rosplan_planning_system/PlanningEnvironment.h"
@@ -53,6 +54,7 @@ namespace KCL_rosplan {
 		ros::ServiceClient update_knowledge_client;
 		ros::ServiceClient get_instance_client;
 		ros::ServiceClient get_attribute_client;
+		ros::ServiceClient query_knowledge_client;
 		
 		// waypoint request services
 		ros::ServiceClient classify_object_waypoint_client;
@@ -62,11 +64,6 @@ namespace KCL_rosplan {
 		
 		// Cache the last message sent.
 		std::vector<rosplan_dispatch_msgs::ActionDispatch> last_received_msg;
-		
-		// The file names and the path for the domain and problem files.
-		//std::string domain_name;
-		//std::string problem_name;
-		//std::string path;
 		
 		// View point generator.
 		ViewConeGenerator* view_cone_generator;
@@ -87,6 +84,9 @@ namespace KCL_rosplan {
 		void setupSimulation();
 		
 		bool initial_problem_generated;
+		
+		// Determine whether this is a simulation or not.
+		bool simulated;
 
 	public:
 

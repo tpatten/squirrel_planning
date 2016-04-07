@@ -7,6 +7,7 @@
 #include <map>
 #include <set>
 #include <string>
+#include <ros/ros.h>
 
 #include "squirrel_planning_execution/ContingentStrategicClassifyPDDLGenerator.h"
 
@@ -79,6 +80,13 @@ void ContingentStrategicClassifyPDDLGenerator::generateProblemFile(const std::st
 			const Location* location2 = *ci;
 			if (location == location2) continue;
 			myfile << "\t(connected " << location->name_ << " " << location2->name_ << ")" << std::endl;
+		}
+		
+		for (std::vector<const Location*>::const_iterator ci = location->near_locations_.begin(); ci != location->near_locations_.end(); ++ci)
+		{
+			const Location* location2 = *ci;
+			if (location == location2) continue;
+			myfile << "\t(near " << location->name_ << " " << location2->name_ << ")" << std::endl;
 		}
 		
 		if (location->is_clear_)
@@ -215,12 +223,10 @@ void ContingentStrategicClassifyPDDLGenerator::generateDomainFile(const std::str
 	
 	myfile << "\t(connected ?from ?to - waypoint)" << std::endl;
 	myfile << "\t(clear_area ?w - waypoint)" << std::endl;
+	myfile << "\t(near ?wp1 ?wp2 - waypoint)" << std::endl;
 	
-	//myfile << "\t(remaining_examination_attempts ?o - object ?c - counter ?s - state)" << std::endl;
-	//myfile << "\t(Rremaining_examination_attempts ?o - object ?c - counter ?s - state)" << std::endl;
 	myfile << "\t(classifiable_on_attempt ?o - object ?c - counter ?s - state)" << std::endl;
 	myfile << "\t(Rclassifiable_on_attempt ?o - object ?c - counter ?s - state)" << std::endl;
-	
 	
 	myfile << "\t(plus ?c ?c2 - counter)" << std::endl;
 	myfile << "\t(contains ?o - object ?s - state)" << std::endl;
@@ -243,7 +249,7 @@ void ContingentStrategicClassifyPDDLGenerator::generateDomainFile(const std::str
 	
 	/**
 	 * PICK-UP OBJECT.
-	 */
+	 *
 	myfile << "(:action pickup_object" << std::endl;
 	myfile << "\t:parameters (?r - robot ?wp - waypoint ?o - object)" << std::endl;
 	myfile << "\t:precondition (and" << std::endl;
@@ -283,9 +289,9 @@ void ContingentStrategicClassifyPDDLGenerator::generateDomainFile(const std::str
 	myfile << ")" << std::endl;
 	myfile << std::endl;
 	
-	/**
+	**
 	 * PUT-DOWN OBJECT.
-	 */
+	 *
 	myfile << "(:action putdown_object" << std::endl;
 	myfile << "\t:parameters (?r - robot ?wp - waypoint ?o - object)" << std::endl;
 	myfile << "\t:precondition (and" << std::endl;
@@ -321,7 +327,7 @@ void ContingentStrategicClassifyPDDLGenerator::generateDomainFile(const std::str
 	myfile << "\t)" << std::endl;
 	myfile << ")" << std::endl;
 	myfile << std::endl;
-	
+	*/
 	/**
 	 * GOTO WAYPOINT.
 	 */
@@ -365,7 +371,7 @@ void ContingentStrategicClassifyPDDLGenerator::generateDomainFile(const std::str
 	 * PUSH OBJECT.
 	 */
 	myfile << "(:action push_object" << std::endl;
-	myfile << "\t:parameters (?r - robot ?ob - object ?from ?to - waypoint)" << std::endl;
+	myfile << "\t:parameters (?r - robot ?ob - object ?from ?to ?near_from - waypoint)" << std::endl;
 	myfile << "\t:precondition (and" << std::endl;
 	myfile << "\t\t(connected ?from ?to)" << std::endl;
 	myfile << "\t\t(not (resolve-axioms))" << std::endl;
@@ -374,9 +380,10 @@ void ContingentStrategicClassifyPDDLGenerator::generateDomainFile(const std::str
 		const KnowledgeBase* knowledge_base = *ci;
 		for (std::vector<const State*>::const_iterator ci = knowledge_base->states_.begin(); ci != knowledge_base->states_.end(); ++ci)
 		{
-			myfile << "\t\t(Rrobot_at ?r ?from " << (*ci)->state_name_ << ")" << std::endl;
+			myfile << "\t\t(Rrobot_at ?r ?near_from " << (*ci)->state_name_ << ")" << std::endl;
 			myfile << "\t\t(Robject_at ?ob ?from " << (*ci)->state_name_ << ")" << std::endl;
 		}
+		myfile << "\t\t(near ?near_from ?from)" << std::endl;
 	}
 	
 	myfile << "\t)" << std::endl;
@@ -388,8 +395,8 @@ void ContingentStrategicClassifyPDDLGenerator::generateDomainFile(const std::str
 		myfile << "\t\t(when (m " << (*ci)->state_name_ << ")" << std::endl;
 		myfile << "\t\t\t(and" << std::endl;
 		
-		myfile << "\t\t\t\t(not (robot_at ?r ?from " << (*ci)->state_name_ << "))" << std::endl;
-		myfile << "\t\t\t\t(not (Rrobot_at ?r ?from " << (*ci)->state_name_ << "))" << std::endl;
+		myfile << "\t\t\t\t(not (robot_at ?r ?near_from " << (*ci)->state_name_ << "))" << std::endl;
+		myfile << "\t\t\t\t(not (Rrobot_at ?r ?near_from " << (*ci)->state_name_ << "))" << std::endl;
 		myfile << "\t\t\t\t(not (object_at ?ob ?from " << (*ci)->state_name_ << "))" << std::endl;
 		myfile << "\t\t\t\t(not (Robject_at ?ob ?from " << (*ci)->state_name_ << "))" << std::endl;
 		myfile << "\t\t\t\t(robot_at ?r ?to " << (*ci)->state_name_ << ")" << std::endl;
@@ -448,9 +455,9 @@ void ContingentStrategicClassifyPDDLGenerator::generateDomainFile(const std::str
 	 * Abstract classify action.
 	 */
 	myfile << ";; Attempt to classify the object." << std::endl;
-	myfile << "(:action abstract_classify_object" << std::endl;
+	myfile << "(:action observe-classifiable_on_attempt" << std::endl;
 
-	myfile << "\t:parameters (?o - object ?r - robot ?from - waypoint ?c ?c2 - counter ?l ?l2 - level ?kb - knowledgebase)" << std::endl;
+	myfile << "\t:parameters (?o - object ?c - counter ?r - robot ?from - waypoint ?c2 - counter ?l ?l2 - level ?kb - knowledgebase)" << std::endl;
 	myfile << "\t:precondition (and" << std::endl;
 	myfile << "\t\t(not (resolve-axioms))" << std::endl;
 	myfile << "\t\t(next ?l ?l2)" << std::endl;
@@ -1148,11 +1155,8 @@ void ContingentStrategicClassifyPDDLGenerator::generateDomainFile(const std::str
 	myfile.close();
 }
 
-void ContingentStrategicClassifyPDDLGenerator::createPDDL(const std::string& path, const std::string& domain_file, const std::string& problem_file, const std::string& robot_location_predicate, const std::map<std::string, std::string>& object_location_predicates, unsigned int max_classification_attemps)
+void ContingentStrategicClassifyPDDLGenerator::createPDDL(const std::string& path, const std::string& domain_file, const std::string& problem_file, const std::string& robot_location_predicate, const std::map<std::string, std::string>& object_location_predicates, const std::map<std::string, std::vector<std::string> >& near_waypoint_mapping, unsigned int max_classification_attemps)
 {
-	
-	std::cout << "ContingentStrategicClassifyPDDLGenerator::createPDDL PATH=" << path << "; DOMAIN_FILE=" << domain_file << "; PROBLEM_FILE=" << problem_file << std::endl;
-	
 	std::vector<Location*> locations;
 	std::vector<Object*> objects;
 	std::map<std::string, Object*> predicate_to_object_mapping;
@@ -1170,6 +1174,20 @@ void ContingentStrategicClassifyPDDLGenerator::createPDDL(const std::string& pat
 		objects.push_back(object);
 		
 		predicate_to_object_mapping[object_predicate] = object;
+		
+		// Check if this location has any waypoints near it.
+		std::map<std::string, std::vector<std::string> >::const_iterator mi = near_waypoint_mapping.find(location_predicate);
+		if (mi != near_waypoint_mapping.end())
+		{
+			const std::vector<std::string>& near_waypoints = (*mi).second;
+			for (std::vector<std::string>::const_iterator ci = near_waypoints.begin(); ci != near_waypoints.end(); ++ci)
+			{
+				const std::string& near_location_predicate = *ci;
+				Location* near_location = new Location(near_location_predicate, false);
+				locations.push_back(near_location);
+				near_location->near_locations_.push_back(object_location);
+			}
+		}
 	}
 	
 	Location* robot_location = new Location(robot_location_predicate, false);
@@ -1187,7 +1205,6 @@ void ContingentStrategicClassifyPDDLGenerator::createPDDL(const std::string& pat
 		}
 	}
 	std::stringstream ss;
-	std::cout << "Creating all possible states..." << std::endl;
 
 	std::vector<const KnowledgeBase*> knowledge_bases;
 	std::map<const Object*, unsigned int> empty_classifiable_when;
@@ -1226,11 +1243,11 @@ void ContingentStrategicClassifyPDDLGenerator::createPDDL(const std::string& pat
 	
 	ss.str(std::string());
 	ss << path << domain_file;
-	std::cout << "Generate domain... " << ss.str() << std::endl;
+	ROS_INFO("KCL: (ContingentStrategicClassifyPDDLGenerator) Generate domain... %s", ss.str().c_str());
 	generateDomainFile(ss.str(), basis_kb, knowledge_bases, *robot_location, locations, objects, max_classification_attemps);
 	ss.str(std::string());
 	ss << path  << problem_file;
-	std::cout << "Generate problem... " << ss.str() << std::endl;
+	ROS_INFO("KCL: (ContingentStrategicClassifyPDDLGenerator) Generate problem... %s", ss.str().c_str());
 	generateProblemFile(ss.str(), basis_kb, knowledge_bases, *robot_location, locations, objects, max_classification_attemps);
 }
 

@@ -7,6 +7,7 @@
 #include <map>
 #include <set>
 #include <string>
+#include <ros/ros.h>
 
 #include "squirrel_planning_execution/ContingentTidyPDDLGenerator.h"
 
@@ -113,20 +114,24 @@ void ContingentTidyPDDLGenerator::generateProblemFile(const std::string& file_na
 			}
 		}
 	}
-	
+	/*
 	// Location constants.
 	for (std::vector<const Location*>::const_iterator ci = locations.begin(); ci != locations.end(); ++ci)
 	{
 		const Location* location = *ci;
-		for (std::vector<const Location*>::const_iterator ci = location->connected_locations_.begin(); ci != location->connected_locations_.end(); ++ci)
+		std::cout << "Process the location: " << location->name_ << std::endl;
+		//for (std::vector<const Location*>::const_iterator ci = location->connected_locations_.begin(); ci != location->connected_locations_.end(); ++ci)
+		for (std::vector<const Location*>::const_iterator ci = locations.begin(); ci != locations.end(); ++ci)
 		{
 			const Location* location2 = *ci;
-			if (location == location2) continue;
+			//if (location == location2) continue;
 			myfile << "\t(connected " << location->name_ << " " << location2->name_ << ")" << std::endl;
+			
+			//std::cout << "\t is connected to " << location2->name_ << std::endl;
 			//myfile << "\t(connected " << location2->name_ << " " << location->name_ << ")" << std::endl;
 		}
 	}
-	
+	*/
 	// Locations of the objects.
 	for (std::vector<const KnowledgeBase*>::const_iterator ci = knowledge_base.begin(); ci != knowledge_base.end(); ++ci)
 	{
@@ -569,9 +574,9 @@ void ContingentTidyPDDLGenerator::generateDomainFile(const std::string& file_nam
 	 * Sense the type of an object.
 	 */
 	myfile << ";; Sense the type of object." << std::endl;
-	myfile << "(:action observe-type" << std::endl;
+	myfile << "(:action observe-is_of_type" << std::endl;
 
-	myfile << "\t:parameters (?t - type ?o - object ?r - robot ?wp ?wp2 - waypoint ?l ?l2 - level ?kb - knowledgebase)" << std::endl;
+	myfile << "\t:parameters (?o - object ?t - type ?r - robot ?wp ?wp2 - waypoint ?l ?l2 - level ?kb - knowledgebase)" << std::endl;
 	myfile << "\t:precondition (and" << std::endl;
 	myfile << "\t\t(not (resolve-axioms))" << std::endl;
 	myfile << "\t\t(next ?l ?l2)" << std::endl;
@@ -619,9 +624,9 @@ void ContingentTidyPDDLGenerator::generateDomainFile(const std::string& file_nam
 	 * Recall a previously performed observation.
 	 */
 	myfile << ";; Sense the type of object." << std::endl;
-	myfile << "(:action recall-observe-type" << std::endl;
+	myfile << "(:action recall-observe-is_of_type" << std::endl;
 
-	myfile << "\t:parameters (?t - type ?o - object ?l ?l2 - level ?kb - knowledgebase)" << std::endl;
+	myfile << "\t:parameters (?o - object ?t - type ?l ?l2 - level ?kb - knowledgebase)" << std::endl;
 	myfile << "\t:precondition (and" << std::endl;
 	myfile << "\t\t(not (resolve-axioms))" << std::endl;
 	myfile << "\t\t(next ?l ?l2)" << std::endl;
@@ -1698,7 +1703,7 @@ void ContingentTidyPDDLGenerator::generateDomainFile(const std::string& file_nam
 	myfile.close();
 }
 
-void ContingentTidyPDDLGenerator::createPDDL(const std::string& path, const std::string& domain_file, const std::string& problem_file, const std::string& robot_location_predicate, const std::map<std::string, std::string>& object_to_location_mapping, const std::map<std::string, std::string>& object_to_type_mapping, const std::map<std::string, std::string>& box_to_location_mapping, const std::map<std::string, std::string>& box_to_type_mapping)
+void ContingentTidyPDDLGenerator::createPDDL(const std::string& path, const std::string& domain_file, const std::string& problem_file, const std::string& robot_location_predicate, const std::map<std::string, std::string>& object_to_location_mapping, std::map<std::string, std::vector<std::string> >& near_waypoint_mappings, const std::map<std::string, std::string>& object_to_type_mapping, const std::map<std::string, std::string>& box_to_location_mapping, const std::map<std::string, std::string>& box_to_type_mapping)
 {
 	// Now generate the waypoints / boxes / toys / etc.
 	std::vector<const Location*> locations;
@@ -1715,6 +1720,19 @@ void ContingentTidyPDDLGenerator::createPDDL(const std::string& path, const std:
 		Object* object = new Object(object_predicate, *location);
 		locations.push_back(location);
 		objects.push_back(object);
+		
+		std::map<std::string, std::vector<std::string> >::const_iterator mi = near_waypoint_mappings.find(location_predicate);
+		if (mi != near_waypoint_mappings.end())
+		{
+			const std::vector<std::string>& near_locations = (*mi).second;
+			for (std::vector<std::string>::const_iterator ci = near_locations.begin(); ci != near_locations.end(); ++ci)
+			{
+				const std::string& near_location_name = *ci;
+				Location* near_location = new Location(near_location_name, false);
+				locations.push_back(near_location);
+				location->near_locations_.push_back(near_location);
+			}
+		}
 	}
 	
 	// Create all the boxes.
@@ -1753,7 +1771,7 @@ void ContingentTidyPDDLGenerator::createPDDL(const std::string& path, const std:
 	Location* robot_location = new Location(robot_location_predicate, false);
 	locations.push_back(robot_location);
 
-	std::cout << "Creating all possible states..." << std::endl;
+	//std::cout << "(ContingentTidyPDDLGenerator) Creating all possible states..." << std::endl;
 
 	std::vector<const KnowledgeBase*> knowledge_bases;
 	//std::map<const Object*, const Location*> empty_object_location_mapping;
@@ -1819,11 +1837,11 @@ void ContingentTidyPDDLGenerator::createPDDL(const std::string& path, const std:
 	
 	ss.str(std::string());
 	ss << path << domain_file;
-	std::cout << "Generate domain... " << ss.str() << std::endl;
+	ROS_INFO("KCL: (ContingentTidyPDDLGenerator) Generate domain... %s", ss.str().c_str());
 	generateDomainFile(ss.str(), basis_kb, knowledge_bases, *robot_location, locations, objects, boxes, types);
 	ss.str(std::string());
 	ss << path  << problem_file;
-	std::cout << "Generate problem... " << ss.str() << std::endl;
+	ROS_INFO("KCL: (ContingentTidyPDDLGenerator) Generate problem... %s", ss.str().c_str());
 	generateProblemFile(ss.str(), basis_kb, knowledge_bases, *robot_location, locations, objects, boxes, types);
 }
 
