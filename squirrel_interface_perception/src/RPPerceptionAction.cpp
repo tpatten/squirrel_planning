@@ -40,7 +40,6 @@ namespace KCL_rosplan {
 		// ignore non-perception actions
 		if(0==msg->name.compare("explore_waypoint")) exploreAction(msg);
 		if(0==msg->name.compare("observe-classifiable_from")) examineAction(msg);
-
 	}
 
 	
@@ -83,6 +82,7 @@ namespace KCL_rosplan {
 
 			// add the new object
 			rosplan_knowledge_msgs::KnowledgeUpdateService knowledge_update_service;
+			knowledge_update_service.request.update_type = rosplan_knowledge_msgs::KnowledgeUpdateService::Request::ADD_KNOWLEDGE;
 			knowledge_update_service.request.knowledge.knowledge_type = rosplan_knowledge_msgs::KnowledgeItem::INSTANCE;
 			knowledge_update_service.request.knowledge.instance_type = "object";
 			knowledge_update_service.request.knowledge.instance_name = so.id;
@@ -187,21 +187,24 @@ namespace KCL_rosplan {
 		publishFeedback(msg->action_id,"action achieved");
 	}
 
-	/* action dispatch callback; examine action (?from ?view - waypoint ?o - object) */
+	/*
+	 * examine action dispatch callback;
+	 * parameters (?from ?view - waypoint ?o - object ?r - robot  ?l ?l2 - level ?kb - knowledgebase)
+	 */
 	void RPPerceptionAction::examineAction(const rosplan_dispatch_msgs::ActionDispatch::ConstPtr& msg) {
 
 		ROS_INFO("KCL: (PerceptionAction) explore action recieved");
 
 		// get waypoint ID from action dispatch
-		std::string explored_waypoint;
-		bool foundWP = false;
+		std::string objectID;
+		bool foundObject = false;
 		for(size_t i=0; i<msg->parameters.size(); i++) {
-			if(0==msg->parameters[i].key.compare("wp")) {
-				explored_waypoint = msg->parameters[i].value;
-				foundWP = true;
+			if(0==msg->parameters[i].key.compare("o")) {
+				objectID = msg->parameters[i].value;
+				foundObject = true;
 			}
 		}
-		if(!foundWP) {
+		if(!foundObject) {
 			ROS_INFO("KCL: (PerceptionAction) aborting action dispatch; malformed parameters");
 			return;
 		}
@@ -211,19 +214,24 @@ namespace KCL_rosplan {
 
 		// dispatch Perception action
 		squirrel_object_perception_msgs::LookForObjectsGoal perceptionGoal;
-		perceptionGoal.look_for_object = squirrel_object_perception_msgs::LookForObjectsGoal::EXPLORE;
+		perceptionGoal.look_for_object = squirrel_object_perception_msgs::LookForObjectsGoal::CHECK;
+		perceptionGoal.id = objectID;
 		examine_action_client.sendGoal(perceptionGoal);
 
-		bool finished_before_timeout = examine_action_client.waitForResult(ros::Duration(msg->duration));
+		examine_action_client.waitForResult();
 		actionlib::SimpleClientGoalState state = examine_action_client.getState();
-		bool success = (finished_before_timeout);
-		ROS_INFO("KCL: (PerceptionAction) observe finished: %s", state.toString().c_str());
+		bool success =  (state == actionlib::SimpleClientGoalState::SUCCEEDED);
+		ROS_INFO("KCL: (PerceptionAction) chack object finished: %s", state.toString().c_str());
 
 		if (success) {
+
+			// update knowledge base and MongoDB
+
+			// publish feedback
 			ROS_INFO("KCL: (PerceptionAction) action complete");
 			publishFeedback(msg->action_id, "action achieved");
 		} else {
-			ROS_INFO("KCL: (PerceptionAction) action timed out");
+			ROS_INFO("KCL: (PerceptionAction) action failed");
 			publishFeedback(msg->action_id, "action failed");
 		}
 	}

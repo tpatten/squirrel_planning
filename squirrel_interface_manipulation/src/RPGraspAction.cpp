@@ -14,6 +14,9 @@ namespace KCL_rosplan {
 
 		// create the action feedback publisher
 		action_feedback_pub = nh.advertise<rosplan_dispatch_msgs::ActionFeedback>("/kcl_rosplan/action_feedback", 10, true);
+
+		// create knowledge base link
+		update_knowledge_client = nh.serviceClient<rosplan_knowledge_msgs::KnowledgeUpdateService>("/kcl_rosplan/update_knowledge_base");
 	}
 
 	/* action dispatch callback */
@@ -35,7 +38,7 @@ namespace KCL_rosplan {
 		}
 
 		// ignore non-drop objects
-		else if(0==msg->name.compare("drop_object")) {
+		else if(0==msg->name.compare("putdown_object")) {
 
 			publishFeedback(msg->action_id, "action enabled");
 			if(dispatchDropAction(msg)) {
@@ -46,21 +49,98 @@ namespace KCL_rosplan {
 		}
 	}
 
-	/* blind grasp action dispatch */
+	/* blind grasp action dispatch
+		:parameters (?r - robot ?wp - waypoint ?o - object)
+		:effect (and
+				(not (holding ?r ?o))
+				(gripper_empty ?r)
+				(object_at ?o ?wp)
+	*/
 	bool RPGraspAction::dispatchDropAction(const rosplan_dispatch_msgs::ActionDispatch::ConstPtr& msg) {
+
+		// get object ID from action dispatch
+		std::string robotID, objectID, wpID;
+		bool foundObject = false;
+		for(size_t i=0; i<msg->parameters.size(); i++) {
+			if(0==msg->parameters[i].key.compare("wp"))
+				wpID = msg->parameters[i].value;
+			if(0==msg->parameters[i].key.compare("r"))
+				robotID = msg->parameters[i].value;
+			if(0==msg->parameters[i].key.compare("o")) {
+				objectID = msg->parameters[i].value;
+				foundObject = true;
+			}
+		}
+		if(!foundObject) {
+			ROS_INFO("KCL: (GraspAction) aborting action dispatch; malformed parameters");
+			return false;
+		}
+
+		// dispatch action as service
 		kclhand_control::graspPreparation srv;
-		return drop_client.call(srv);
+		if(drop_client.call(srv)) {
+
+			// gripper_empty fact
+			rosplan_knowledge_msgs::KnowledgeUpdateService knowledge_update_service;
+			knowledge_update_service.request.update_type = rosplan_knowledge_msgs::KnowledgeUpdateService::Request::ADD_KNOWLEDGE;
+			knowledge_update_service.request.knowledge.knowledge_type = rosplan_knowledge_msgs::KnowledgeItem::FACT;
+			knowledge_update_service.request.knowledge.attribute_name = "gripper_empty";
+			diagnostic_msgs::KeyValue kv;
+			kv.key = "r";
+			kv.value = robotID;
+			knowledge_update_service.request.knowledge.values.push_back(kv);
+			if (!update_knowledge_client.call(knowledge_update_service)) {
+				ROS_ERROR("KCL: (PerceptionAction) Could not add gripper_empty predicate to the knowledge base.");
+			}
+
+			// holding fact
+			knowledge_update_service.request.update_type = rosplan_knowledge_msgs::KnowledgeUpdateService::Request::REMOVE_KNOWLEDGE;
+			knowledge_update_service.request.knowledge.attribute_name = "holding";
+			kv.key = "o";
+			kv.value = objectID;
+			knowledge_update_service.request.knowledge.values.push_back(kv);
+			if (!update_knowledge_client.call(knowledge_update_service)) {
+				ROS_ERROR("KCL: (PerceptionAction) Could not remove holding predicate from the knowledge base.");
+			}
+
+			// object_at fact
+			knowledge_update_service.request.update_type = rosplan_knowledge_msgs::KnowledgeUpdateService::Request::ADD_KNOWLEDGE;
+			knowledge_update_service.request.knowledge.attribute_name = "object_at";
+			knowledge_update_service.request.knowledge.values.clear();
+			kv.key = "o";
+			kv.value = objectID;
+			knowledge_update_service.request.knowledge.values.push_back(kv);
+			kv.key = "wp";
+			kv.value = wpID;
+			knowledge_update_service.request.knowledge.values.push_back(kv);
+			if (!update_knowledge_client.call(knowledge_update_service)) {
+				ROS_ERROR("KCL: (PerceptionAction) Could not remove object_at predicate to the knowledge base.");
+			}
+			
+			return true;
+		}
+		return false;
 	}
 
-	/* blind grasp action dispatch */
+	/*
+	 * blind grasp action dispatch
+	 *	:parameters (?r - robot ?wp - waypoint ?o - object ?t - type)
+	 *	:effect (and
+	 *		(not (gripper_empty ?r))
+	 *		(not (object_at ?o ?wp))
+	 *		(holding ?r ?o)
+	 */
 	bool RPGraspAction::dispatchBlindGraspAction(const rosplan_dispatch_msgs::ActionDispatch::ConstPtr& msg) {
 
 		ROS_INFO("KCL: (GraspAction) blind grasp action recieved");
 
 		// get object ID from action dispatch
+		std::string robotID;
 		std::string objectID;
 		bool foundObject = false;
 		for(size_t i=0; i<msg->parameters.size(); i++) {
+			if(0==msg->parameters[i].key.compare("r"))
+				robotID = msg->parameters[i].value;
 			if(0==msg->parameters[i].key.compare("ob")) {
 				objectID = msg->parameters[i].value;
 				foundObject = true;
@@ -106,7 +186,45 @@ namespace KCL_rosplan {
 			actionlib::SimpleClientGoalState state = blind_grasp_action_client.getState();
 			ROS_INFO("KCL: (GraspAction) action finished: %s", state.toString().c_str());
 			
-			return (state == actionlib::SimpleClientGoalState::SUCCEEDED);	
+			if (state == actionlib::SimpleClientGoalState::SUCCEEDED) {
+
+				// gripper_empty fact (remove)
+				rosplan_knowledge_msgs::KnowledgeUpdateService knowledge_update_service;
+				knowledge_update_service.request.update_type = rosplan_knowledge_msgs::KnowledgeUpdateService::Request::REMOVE_KNOWLEDGE;
+				knowledge_update_service.request.knowledge.knowledge_type = rosplan_knowledge_msgs::KnowledgeItem::FACT;
+				knowledge_update_service.request.knowledge.attribute_name = "gripper_empty";
+				diagnostic_msgs::KeyValue kv;
+				kv.key = "r";
+				kv.value = robotID;
+				knowledge_update_service.request.knowledge.values.push_back(kv);
+				if (!update_knowledge_client.call(knowledge_update_service)) {
+					ROS_ERROR("KCL: (PerceptionAction) Could not remove gripper_empty predicate from the knowledge base.");
+				}
+
+				// holding fact	
+				knowledge_update_service.request.update_type = rosplan_knowledge_msgs::KnowledgeUpdateService::Request::ADD_KNOWLEDGE;
+				knowledge_update_service.request.knowledge.attribute_name = "holding";
+				kv.key = "o";
+				kv.value = objectID;
+				knowledge_update_service.request.knowledge.values.push_back(kv);
+				if (!update_knowledge_client.call(knowledge_update_service)) {
+					ROS_ERROR("KCL: (PerceptionAction) Could not add holding predicate to the knowledge base.");
+				}
+
+				// object_at fact (remove)
+				knowledge_update_service.request.update_type = rosplan_knowledge_msgs::KnowledgeUpdateService::Request::REMOVE_KNOWLEDGE;
+				knowledge_update_service.request.knowledge.attribute_name = "object_at";
+				knowledge_update_service.request.knowledge.values.clear();
+				kv.key = "o";
+				kv.value = objectID;
+				knowledge_update_service.request.knowledge.values.push_back(kv);
+				if (!update_knowledge_client.call(knowledge_update_service)) {
+					ROS_ERROR("KCL: (PerceptionAction) Could not remove object_at predicate from the knowledge base.");
+				}
+			
+				return true;
+
+			} else return false;
 
 		} else {
 			ROS_INFO("KCL: (GraspAction) aborting action dispatch; query to sceneDB failed");
