@@ -226,7 +226,10 @@ namespace KCL_rosplan {
 		knowledge_update_service.request.knowledge.attribute_name = "is_of_type";
 		knowledge_update_service.request.knowledge.values.pop_back();
 		kv.key = "t";
-		kv.value = "unknown";
+        // TODO remove this after demo
+        if(object.category.find("dinosaur") != std::string::npos)
+                kv.value = "dinosaur";
+        else kv.value = object.category;
 		knowledge_update_service.request.knowledge.values.push_back(kv);
 		if (!update_knowledge_client.call(knowledge_update_service)) {
 			ROS_ERROR("KCL: (PerceptionAction) Could not add is_of_type predicate to the knowledge base.");
