@@ -428,6 +428,22 @@ namespace KCL_rosplan {
 		}
 		ROS_INFO("KCL: (SortingGame) Added (not (has_commanded kid_0 links)) to the knowledge base.");
 		knowledge_item.values.clear();
+		
+		kv.key = "k";
+		kv.value = "kid_0";
+		knowledge_item.values.push_back(kv);
+		
+		kv.key ="c";
+		kv.value = "gone";
+		knowledge_item.values.push_back(kv);
+		
+		knowledge_update_service.request.knowledge = knowledge_item;
+		if (!update_knowledge_client.call(knowledge_update_service)) {
+			ROS_ERROR("KCL: (SortingGame) Could not add the fact (not (has_commanded kid_0 gone)) to the knowledge base.");
+			exit(-1);
+		}
+		ROS_INFO("KCL: (SortingGame) Added (not (has_commanded kid_0 gone)) to the knowledge base.");
+		knowledge_item.values.clear();
 	}
 	
 } // close namespace

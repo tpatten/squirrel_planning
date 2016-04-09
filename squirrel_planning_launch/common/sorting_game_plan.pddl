@@ -38,7 +38,14 @@ step    0: ramificate
      35: next_turn kid_0 kid_1
      36: pop l1 l0
      37: ramificate
-     38: jump 5
-     39: shed_knowledge kid_0_kb basis_kb
+     38: observe-has_commanded kid_0 gone l3 l2 kid_0_kb
+     39: ramificate
+     40: goto_waypoint kenny idle_wp pickup_wp
+     41: emote kenny sound_no wiggle_idle
+     42: goto_waypoint kenny pickup_wp idle_wp
+     43: jump 5
+     44: ramificate
+     45: jump 5
+     46: shed_knowledge kid_0_kb basis_kb
 
 time spent:    0.00 seconds
