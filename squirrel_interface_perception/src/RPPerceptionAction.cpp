@@ -52,7 +52,7 @@ namespace KCL_rosplan {
 		std::string explored_waypoint;
 		bool foundWP = false;
 		for(size_t i=0; i<msg->parameters.size(); i++) {
-			if(0==msg->parameters[i].key.compare("view")) {
+			if(0==msg->parameters[i].key.compare("wp")) {
 				explored_waypoint = msg->parameters[i].value;
 				foundWP = true;
 			}
@@ -186,7 +186,7 @@ namespace KCL_rosplan {
 	void RPPerceptionAction::addObject(squirrel_object_perception_msgs::SceneObject &object) {
 
 		std::stringstream wpid;
-		wpid << "waypoint_" << object.id << std::endl;
+		wpid << "waypoint_" << object.id;
 		std::string wpName(wpid.str());
 
 		// add the new object
@@ -233,15 +233,25 @@ namespace KCL_rosplan {
 		}
 
 		//data
-		db_name_map[wpName] = message_store.insertNamed(wpName, object.pose);
+		geometry_msgs::PoseStamped ps;
+		ps.header = object.header;
+		ps.pose = object.pose;
+		db_name_map[wpName] = message_store.insertNamed(wpName, ps);
 		db_name_map[object.id] = message_store.insertNamed(object.id, object);
 	}
 
 	void RPPerceptionAction::updateObject(squirrel_object_perception_msgs::SceneObject &object, std::string newWaypoint) {
 
-			//data
-			//db_name_map[wpName] = message_store.updateNamed(wpName, ci->pose);
-			db_name_map[object.id] = message_store.updateNamed(object.id, object);
+		std::stringstream wpid;
+		wpid << "waypoint_" << object.id;
+		std::string wpName(wpid.str());
+
+		//data
+		geometry_msgs::PoseStamped ps;
+		ps.header = object.header;
+		ps.pose = object.pose;
+		db_name_map[wpName] = message_store.insertNamed(wpName, ps);
+		db_name_map[object.id] = message_store.updateNamed(object.id, object);
 	}
 
 	void RPPerceptionAction::removeObject(squirrel_object_perception_msgs::SceneObject &object) {
@@ -269,7 +279,7 @@ namespace KCL_rosplan {
 		ros::NodeHandle nh;
 
 		std::string actionserver;
-		nh.param("action_server", actionserver, std::string("/look_for_objects"));
+		nh.param("action_server", actionserver, std::string("/squirrel_look_for_objects"));
 
 		// create PDDL action subscriber
 		KCL_rosplan::RPPerceptionAction rppa(nh, actionserver);
