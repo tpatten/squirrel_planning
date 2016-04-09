@@ -100,6 +100,7 @@ void ClassifyObjectPDDLAction::dispatchCallback(const rosplan_dispatch_msgs::Act
 	{
 		knowledge_item.is_negative = (float)rand() / (float)RAND_MAX >= classification_probability_;
 	}
+	bool classification_succeeded = !knowledge_item.is_negative;
 	
 	diagnostic_msgs::KeyValue kv;
 	kv.key = "from";
@@ -135,7 +136,7 @@ void ClassifyObjectPDDLAction::dispatchCallback(const rosplan_dispatch_msgs::Act
 
 	
 	// If the fact is not negative, we need to decide upon the type of this object.
-	if (!knowledge_item.is_negative)
+	if (classification_succeeded)
 	{
 		// Check if this object has been classified or not.
 		rosplan_knowledge_msgs::GetInstanceService get_instance;
