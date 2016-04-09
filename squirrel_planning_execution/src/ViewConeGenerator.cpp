@@ -415,10 +415,7 @@ void ViewConeGenerator::visualiseViewCones(const std::vector<geometry_msgs::Pose
 	marker.scale.z = 1.;
 	marker_array.markers.push_back(marker);
 	
-	if (rejected)
-		rivz_pub_reject_.publish(marker_array);
-	else
-		rivz_pub_.publish(marker_array);
+	rivz_pub_.publish(marker_array);
 }
 
 bool ViewConeGenerator::canConnect(const geometry_msgs::Point& w1, const geometry_msgs::Point& w2, int occupancy_threshold)
