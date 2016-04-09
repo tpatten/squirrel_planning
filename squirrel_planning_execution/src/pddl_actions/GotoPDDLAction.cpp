@@ -8,7 +8,6 @@
 
 
 #include "GotoPDDLAction.h"
-#include "squirrel_planning_execution/ViewConeGenerator.h"
 
 namespace KCL_rosplan
 {

@@ -34,11 +34,10 @@ void ViewConeGenerator::createViewCones(std::vector<geometry_msgs::Pose>& poses,
 	ROS_INFO("(ViewConeGenerator) View code generation started.");
 	// Initialise the processed cells list.
 	std::vector<bool> processed_cells(last_received_occupancy_grid_msgs_.info.width * last_received_occupancy_grid_msgs_.info.height, false);
-	for (int y = 0; y < last_received_occupancy_grid_msgs_.info.width; ++y) {
-		for (int x = 0; x < last_received_occupancy_grid_msgs_.info.height; ++x) {
+	for (int y = 0; y < last_received_occupancy_grid_msgs_.info.height; ++y) {
+		for (int x = 0; x < last_received_occupancy_grid_msgs_.info.width; ++x) {
 			if (last_received_occupancy_grid_msgs_.data[x + y * last_received_occupancy_grid_msgs_.info.width] > occupancy_threshold ||
-			    last_received_occupancy_grid_msgs_.data[x + y * last_received_occupancy_grid_msgs_.info.width == -1]
-			) {
+			    last_received_occupancy_grid_msgs_.data[x + y * last_received_occupancy_grid_msgs_.info.width] == -1) {
 				processed_cells[x + y * last_received_occupancy_grid_msgs_.info.width] = true;
 			} else {
 				processed_cells[x + y * last_received_occupancy_grid_msgs_.info.width] = false;
@@ -49,13 +48,13 @@ void ViewConeGenerator::createViewCones(std::vector<geometry_msgs::Pose>& poses,
 	ROS_INFO("(ViewConeGenerator) Initialised the processed cells.");
 	
 	for (unsigned int i = 0; i < max_view_cones; ++i) {
-		ROS_INFO("(ViewConeGenerator) Process view cone: %d.", i);
+		//ROS_INFO("(ViewConeGenerator) Process view cone: %d.", i);
 		// First we generate a bunch of random view cones and rate them.
 		geometry_msgs::Pose best_pose;
 		std::vector<occupancy_grid_utils::Cell> best_visible_cells;
 		for (unsigned int j = 0; j < sample_size; ++j) {
-			int grid_x = ((float)rand() / (float)RAND_MAX) * last_received_occupancy_grid_msgs_.info.height;
-			int grid_y = ((float)rand() / (float)RAND_MAX) * last_received_occupancy_grid_msgs_.info.width;
+			int grid_x = ((float)rand() / (float)RAND_MAX) * last_received_occupancy_grid_msgs_.info.width;
+			int grid_y = ((float)rand() / (float)RAND_MAX) * last_received_occupancy_grid_msgs_.info.height;
 			
 			occupancy_grid_utils::Cell c(grid_x, grid_y);
 			
@@ -241,11 +240,12 @@ void ViewConeGenerator::createViewCones(std::vector<geometry_msgs::Pose>& poses,
 				tf::Quaternion q(best_pose.orientation.x, best_pose.orientation.y, best_pose.orientation.z, best_pose.orientation.w);
 				float best_yaw = tf::getYaw(q);
 				
-				ROS_INFO("(ViewConeGenerator) Best new pose(%f, %f, %f), yaw=%f (actual=%f) with %d cells.", best_pose.position.x, best_pose.position.y, best_pose.position.z, best_yaw, yaw, visible_cells.size());
+				//ROS_INFO("(ViewConeGenerator) Best new pose(%f, %f, %f), yaw=%f (actual=%f) with %d cells.", best_pose.position.x, best_pose.position.y, best_pose.position.z, best_yaw, yaw, visible_cells.size());
 			}
 		}
 		
 		if (best_visible_cells.empty()) {
+			ROS_INFO("(ViewConeGenerator) No good poses found!");
 			continue;
 		}
 		
@@ -272,8 +272,6 @@ void ViewConeGenerator::createViewCones(std::vector<geometry_msgs::Pose>& poses,
 
 void ViewConeGenerator::visualiseViewCones(const std::vector<geometry_msgs::Pose>& poses, float view_distance, float fov) const
 {
-	ROS_INFO("Got the view cones, there are %d!", poses.size());
-
 	std::vector<geometry_msgs::Point> waypoints;
 	std::vector<std_msgs::ColorRGBA> waypoint_colours;
 	std::vector<geometry_msgs::Point> triangle_points;
@@ -416,7 +414,11 @@ void ViewConeGenerator::visualiseViewCones(const std::vector<geometry_msgs::Pose
 	marker.scale.y = 1.;
 	marker.scale.z = 1.;
 	marker_array.markers.push_back(marker);
-	rivz_pub_.publish(marker_array);
+	
+	if (rejected)
+		rivz_pub_reject_.publish(marker_array);
+	else
+		rivz_pub_.publish(marker_array);
 }
 
 bool ViewConeGenerator::canConnect(const geometry_msgs::Point& w1, const geometry_msgs::Point& w2, int occupancy_threshold)

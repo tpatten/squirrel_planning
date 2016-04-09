@@ -120,7 +120,19 @@ void ClassifyObjectPDDLAction::dispatchCallback(const rosplan_dispatch_msgs::Act
 		exit(-1);
 	}
 	ROS_INFO("KCL: (ClassifyObjectPDDLAction) Added %s (classifiable_from %s %s %s) to the knowledge base.", knowledge_item.is_negative ? "NOT" : "", from.c_str(), view.c_str(), object.c_str());
+	
+	// Remove the opposite option from the knowledge base.
+	knowledge_update_service.request.update_type = rosplan_knowledge_msgs::KnowledgeUpdateService::Request::REMOVE_KNOWLEDGE;
+	knowledge_item.is_negative = !knowledge_item.is_negative;
+	knowledge_update_service.request.knowledge = knowledge_item;
+	if (!update_knowledge_client_.call(knowledge_update_service)) {
+		ROS_ERROR("KCL: (ClassifyObjectPDDLAction) Could not remove the classifiable_from predicate to the knowledge base.");
+		exit(-1);
+	}
+	ROS_INFO("KCL: (ClassifyObjectPDDLAction) Removed %s (classifiable_from %s %s %s) to the knowledge base.", knowledge_item.is_negative ? "NOT" : "", from.c_str(), view.c_str(), object.c_str());
+	
 	knowledge_item.values.clear();
+
 	
 	// If the fact is not negative, we need to decide upon the type of this object.
 	if (!knowledge_item.is_negative)
@@ -134,6 +146,8 @@ void ClassifyObjectPDDLAction::dispatchCallback(const rosplan_dispatch_msgs::Act
 			ROS_ERROR("KCL: (ClassifyObjectPDDLAction) Could not get the instances of type 'type'.");
 			exit(1);
 		}
+		
+		knowledge_update_service.request.update_type = rosplan_knowledge_msgs::KnowledgeUpdateService::Request::ADD_KNOWLEDGE;
 		
 		// Select one type at random.
 		const std::string type = get_instance.response.instances[rand() % get_instance.response.instances.size()];
@@ -160,6 +174,51 @@ void ClassifyObjectPDDLAction::dispatchCallback(const rosplan_dispatch_msgs::Act
 			exit(1);
 		}
 		ROS_INFO("KCL: (ClassifyObjectPDDLAction) Added the (is_of_type %s %s) predicate to the knowledge base.", object.c_str(), type.c_str());
+		
+		// Remove the negative option from the KB.
+		knowledge_update_service.request.update_type = rosplan_knowledge_msgs::KnowledgeUpdateService::Request::REMOVE_KNOWLEDGE;
+		knowledge_item.is_negative = true;
+		knowledge_update_service.request.knowledge = knowledge_item;
+		if (!update_knowledge_client_.call(knowledge_update_service))
+		{
+			ROS_ERROR("KCL: (ClassifyObjectPDDLAction) Could not remove the (not (is_of_type %s %s)) predicate to the knowledge base.", object.c_str(), type.c_str());
+			exit(1);
+		}
+		ROS_INFO("KCL: (ClassifyObjectPDDLAction) Removed the (not (is_of_type %s %s)) predicate to the knowledge base.", object.c_str(), type.c_str());
+		
+		// Make it NOT of the other types.
+		for (std::vector<std::string>::const_iterator ci = get_instance.response.instances.begin(); ci != get_instance.response.instances.end(); ++ci)
+		{
+			const std::string& other_type = *ci;
+			if (type != other_type)
+			{
+				knowledge_item.values.pop_back();
+				kv.key = "t";
+				kv.value = other_type;
+				knowledge_item.values.push_back(kv);
+				knowledge_item.is_negative = true;
+				
+				knowledge_update_service.request.update_type = rosplan_knowledge_msgs::KnowledgeUpdateService::Request::ADD_KNOWLEDGE;
+				knowledge_update_service.request.knowledge = knowledge_item;
+				if (!update_knowledge_client_.call(knowledge_update_service))
+				{
+					ROS_ERROR("KCL: (ClassifyObjectPDDLAction) Could not add the (not (is_of_type %s %s)) predicate to the knowledge base.", object.c_str(), other_type.c_str());
+					exit(1);
+				}
+				ROS_INFO("KCL: (ClassifyObjectPDDLAction) Added the (not (is_of_type %s %s)) predicate to the knowledge base.", object.c_str(), other_type.c_str());
+				
+				knowledge_update_service.request.update_type = rosplan_knowledge_msgs::KnowledgeUpdateService::Request::REMOVE_KNOWLEDGE;
+				
+				knowledge_item.is_negative = false;
+				knowledge_update_service.request.knowledge = knowledge_item;
+				if (!update_knowledge_client_.call(knowledge_update_service))
+				{
+					ROS_ERROR("KCL: (ClassifyObjectPDDLAction) Could not remove the (is_of_type %s %s) predicate to the knowledge base.", object.c_str(), other_type.c_str());
+					exit(1);
+				}
+				ROS_INFO("KCL: (ClassifyObjectPDDLAction) Removed the (is_of_type %s %s) predicate to the knowledge base.", object.c_str(), other_type.c_str());
+			}
+		}
 	}
 	
 	fb.action_id = msg->action_id;

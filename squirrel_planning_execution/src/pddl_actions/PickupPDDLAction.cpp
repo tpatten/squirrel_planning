@@ -58,20 +58,12 @@ void PickupPDDLAction::dispatchCallback(const rosplan_dispatch_msgs::ActionDispa
 	fb.status = "action enabled";
 	action_feedback_pub_.publish(fb);
 	
-	// Add a random chance that this action fails!
-	if (rand() % 5 == 0)
-	{
-		fb.action_id = msg->action_id;
-		fb.status = "action failed";
-		action_feedback_pub_.publish(fb);
-		return;
-	}
-	
 	// Update the domain.
 	const std::string& robot = msg->parameters[0].value;
-	const std::string& waypoint = msg->parameters[1].value;
-	const std::string& object = msg->parameters[2].value;
-	const std::string& type = msg->parameters[3].value;
+	const std::string& object_waypoint = msg->parameters[1].value;
+	const std::string& robot_waypoint = msg->parameters[2].value;
+	const std::string& object = msg->parameters[3].value;
+	const std::string& type = msg->parameters[4].value;
 	
 	ROS_INFO("KCL: (PickupPDDLAction) Process the action: %s, Pickup %s(%s) by %s", normalised_action_name.c_str(), object.c_str(), type.c_str(), robot.c_str());
 	
@@ -89,15 +81,15 @@ void PickupPDDLAction::dispatchCallback(const rosplan_dispatch_msgs::ActionDispa
 	kenny_knowledge.values.push_back(kv);
 	
 	kv.key = "wp";
-	kv.value = waypoint;
+	kv.value = object_waypoint;
 	kenny_knowledge.values.push_back(kv);
 	
 	knowledge_update_service.request.knowledge = kenny_knowledge;
 	if (!update_knowledge_client_.call(knowledge_update_service)) {
-		ROS_ERROR("KCL: (PickupPDDLAction) Could not remove the previous (object_at %s %s) predicate from the knowledge base.", object.c_str(), waypoint.c_str());
+		ROS_ERROR("KCL: (PickupPDDLAction) Could not remove the previous (object_at %s %s) predicate from the knowledge base.", object.c_str(), object_waypoint.c_str());
 		exit(-1);
 	}
-	ROS_INFO("KCL: (PickupPDDLAction) Removed the previous (object_at %s %s) predicate from the knowledge base.", object.c_str(), waypoint.c_str());
+	ROS_INFO("KCL: (PickupPDDLAction) Removed the previous (object_at %s %s) predicate from the knowledge base.", object.c_str(), object_waypoint.c_str());
 	kenny_knowledge.values.clear();
 	
 	// Make the gripper not free.
