@@ -297,7 +297,7 @@ namespace KCL_rosplan {
 		std::string problem_name = ss.str();
 		
 		ss.str(std::string());
-		ss << "timeout 60 " << planner_path << "ff -o DOMAIN -f PROBLEM";
+		ss << "timeout 180 " << planner_path << "ff -o DOMAIN -f PROBLEM";
 		std::string planner_command = ss.str();
 		
 		// Before calling the planner we create the domain so it can be parsed.
@@ -653,7 +653,7 @@ namespace KCL_rosplan {
 				bounding_box.push_back(p3);
 				bounding_box.push_back(p4);
 				bounding_box.push_back(p2);
-				view_cone_generator->createViewCones(view_poses, bounding_box, 10, 5, 30.0f, 1.0f, 100, 0.5f);
+				view_cone_generator->createViewCones(view_poses, bounding_box, 10, 5, 30.0f, 1.0f, 100, 0.35f);
 			}
 			else
 			{
@@ -765,7 +765,12 @@ namespace KCL_rosplan {
 			
 			std::map<std::string, std::string> object_to_location_mappings;
 			std::map<std::string, std::vector<std::string> > near_waypoint_mappings;
+			int max_objects = 3;
 			for (std::vector<rosplan_knowledge_msgs::KnowledgeItem>::const_iterator ci = get_attribute.response.attributes.begin(); ci != get_attribute.response.attributes.end(); ++ci) {
+
+				max_objects++;
+				if(max_objects > 3) break;
+
 				const rosplan_knowledge_msgs::KnowledgeItem& knowledge_item = *ci;
 				std::string object_predicate;
 				std::string location_predicate;
@@ -950,8 +955,9 @@ namespace KCL_rosplan {
 			if (!simulated)
 			{
 				// fetch position of object from message store
-				std::vector< boost::shared_ptr<geometry_msgs::PoseStamped> > results;
-				if(message_store.queryNamed<geometry_msgs::PoseStamped>(object_name, results)) {
+				std::vector< boost::shared_ptr<squirrel_object_perception_msgs::SceneObject> > results;
+				if(message_store.queryNamed<squirrel_object_perception_msgs::SceneObject>(object_name, results)) {
+
 					if(results.size()<1) {
 						ROS_ERROR("KCL: (RPSquirrelRoadmap) aborting waypoint request; no matching obID %s", object_name.c_str());
 						return false;
@@ -962,10 +968,10 @@ namespace KCL_rosplan {
 				}
 
 				// request classification waypoints for object
-				geometry_msgs::PoseStamped &objPose = *results[0];
+				geometry_msgs::PoseStamped &obj = *results[0];
 				
-				getTaskPose.request.object_pose.header = objPose.header;
-				getTaskPose.request.object_pose.pose = objPose.pose;
+				getTaskPose.request.object_pose.header = obj.header;
+				getTaskPose.request.object_pose.pose = obj.pose;
 				if (!classify_object_waypoint_client.call(getTaskPose)) {
 					ROS_ERROR("KCL: (RPSquirrelRoadmap) Failed to recieve classification waypoints for %s.", object_name.c_str());
 					return false;
