@@ -30,11 +30,6 @@
             <param name="generate_default_problem" value="false" />
 	</node>
 
-	<!-- RPSquirrelRecursion actions -->
-	<node name="squirrel_planning_execution" pkg="squirrel_planning_execution" type="rpsquirrelRecursion" output="screen">
-		<param name="simulated" value="false" />
-	</node>
-
 	<!-- Interface nodes -->
 	<node name="squirrel_planning_interface_perception" pkg="squirrel_interface_perception" type="rpperceptionServer" output="screen">
 		<param name="action_server" value="/squirrel_look_for_objects" />
@@ -42,11 +37,7 @@
 
 	<node name="squirrel_planning_interface_objects" pkg="squirrel_interface_perception" type="rpObjectPerception" output="screen">
 	</node>
-
-	<node name="rosplan_interface_movebase" pkg="rosplan_interface_movebase" type="rpmovebase" output="screen">
-		<param name="action_server" value="/move_base" />
-	</node>
-
+	
 	<!-- simulation acitons -->
 	<node name="simulated_actions" pkg="squirrel_planning_execution" type="simulatedPDDLActionsNode" output="screen">
 		<param name="query_user" value="false" />

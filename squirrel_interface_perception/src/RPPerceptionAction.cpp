@@ -40,7 +40,6 @@ namespace KCL_rosplan {
 		// ignore non-perception actions
 		if(0==msg->name.compare("explore_waypoint")) exploreAction(msg);
 		if(0==msg->name.compare("observe-classifiable_from")) examineAction(msg);
-
 	}
 
 	
@@ -53,7 +52,7 @@ namespace KCL_rosplan {
 		std::string explored_waypoint;
 		bool foundWP = false;
 		for(size_t i=0; i<msg->parameters.size(); i++) {
-			if(0==msg->parameters[i].key.compare("view")) {
+			if(0==msg->parameters[i].key.compare("wp")) {
 				explored_waypoint = msg->parameters[i].value;
 				foundWP = true;
 			}
@@ -75,96 +74,22 @@ namespace KCL_rosplan {
 		// add all new objects
 		std::vector<squirrel_object_perception_msgs::SceneObject>::const_iterator ci = fdSrv.response.dynamic_objects_added.begin();
 		for (; ci != fdSrv.response.dynamic_objects_added.end(); ++ci) {
-
 			squirrel_object_perception_msgs::SceneObject so = (*ci);
-			std::stringstream wpid;
-			wpid << "waypoint_" << so.id << std::endl;
-			std::string wpName(wpid.str());
-
-			// add the new object
-			rosplan_knowledge_msgs::KnowledgeUpdateService knowledge_update_service;
-			knowledge_update_service.request.knowledge.knowledge_type = rosplan_knowledge_msgs::KnowledgeItem::INSTANCE;
-			knowledge_update_service.request.knowledge.instance_type = "object";
-			knowledge_update_service.request.knowledge.instance_name = so.id;
-			if (!update_knowledge_client.call(knowledge_update_service)) {
-				ROS_ERROR("KCL: (PerceptionAction) Could not add the object %s to the knowledge base.", so.id.c_str());
-			}
-
-			// add the new object's waypoint
-			knowledge_update_service.request.knowledge.knowledge_type = rosplan_knowledge_msgs::KnowledgeItem::INSTANCE;
-			knowledge_update_service.request.knowledge.instance_type = "waypoint";
-			knowledge_update_service.request.knowledge.instance_name = wpName;
-			if (!update_knowledge_client.call(knowledge_update_service)) {
-				ROS_ERROR("KCL: (PerceptionAction) Could not add the object %s to the knowledge base.", wpName.c_str());
-			}
-
-			// object_at fact	
-			knowledge_update_service.request.knowledge.knowledge_type = rosplan_knowledge_msgs::KnowledgeItem::FACT;
-			knowledge_update_service.request.knowledge.attribute_name = "object_at";
-			diagnostic_msgs::KeyValue kv;
-			kv.key = "o";
-			kv.value = so.id;
-			knowledge_update_service.request.knowledge.values.push_back(kv);
-			kv.key = "wp";
-			kv.value = wpName;
-			knowledge_update_service.request.knowledge.values.push_back(kv);
-			if (!update_knowledge_client.call(knowledge_update_service)) {
-				ROS_ERROR("KCL: (PerceptionAction) Could not add object_at predicate to the knowledge base.");
-			}
-
-			// is_of_type fact	
-			knowledge_update_service.request.knowledge.knowledge_type = rosplan_knowledge_msgs::KnowledgeItem::FACT;
-			knowledge_update_service.request.knowledge.attribute_name = "is_of_type";
-			knowledge_update_service.request.knowledge.values.pop_back();
-			kv.key = "t";
-			kv.value = "unknown";
-			knowledge_update_service.request.knowledge.values.push_back(kv);
-			if (!update_knowledge_client.call(knowledge_update_service)) {
-				ROS_ERROR("KCL: (PerceptionAction) Could not add is_of_type predicate to the knowledge base.");
-			}
-
-			//data
-			db_name_map[wpName] = message_store.insertNamed(wpName, ci->pose);
-			db_name_map[so.id] = message_store.insertNamed(so.id, so);
+			addObject(so);
 		}
 
 		// update all new objects
 		ci = fdSrv.response.dynamic_objects_updated.begin();
 		for (; ci != fdSrv.response.dynamic_objects_updated.end(); ++ci) {
-
 			squirrel_object_perception_msgs::SceneObject so = (*ci);
-			std::stringstream wpid;
-			wpid << "waypoint_" << so.id << std::endl;
-			std::string wpName(wpid.str());
-
-			//data
-			db_name_map[wpName] = message_store.updateNamed(wpName, ci->pose);
-			db_name_map[so.id] = message_store.updateNamed(so.id, so);
+			updateObject(so, explored_waypoint);
 		}
 
 		// remove ghost objects
 		ci = fdSrv.response.dynamic_objects_removed.begin();
 		for (; ci != fdSrv.response.dynamic_objects_removed.end(); ++ci) {
-
 			squirrel_object_perception_msgs::SceneObject so = (*ci);
-			std::stringstream wpid;
-			wpid << "waypoint_" << so.id << std::endl;
-			std::string wpName(wpid.str());
-
-			rosplan_knowledge_msgs::KnowledgeUpdateService updateSrv;
-			updateSrv.request.update_type = rosplan_knowledge_msgs::KnowledgeUpdateService::Request::REMOVE_KNOWLEDGE;
-			updateSrv.request.knowledge.knowledge_type = rosplan_knowledge_msgs::KnowledgeItem::INSTANCE;
-			updateSrv.request.knowledge.instance_type = "waypoint";
-			updateSrv.request.knowledge.instance_name = wpName;
-			update_knowledge_client.call(updateSrv);
-
-			updateSrv.request.knowledge.instance_type = "object";
-			updateSrv.request.knowledge.instance_name = so.id;
-			update_knowledge_client.call(updateSrv);
-
-			//data
-			message_store.deleteID(db_name_map[wpName]);
-			message_store.deleteID(db_name_map[so.id]);
+			removeObject(so);
 		}
 
 		// add the new knowledge
@@ -187,21 +112,26 @@ namespace KCL_rosplan {
 		publishFeedback(msg->action_id,"action achieved");
 	}
 
-	/* action dispatch callback; examine action (?from ?view - waypoint ?o - object) */
+	/*
+	 * examine action dispatch callback;
+	 * parameters (?from ?view - waypoint ?o - object ?r - robot  ?l ?l2 - level ?kb - knowledgebase)
+	 */
 	void RPPerceptionAction::examineAction(const rosplan_dispatch_msgs::ActionDispatch::ConstPtr& msg) {
 
 		ROS_INFO("KCL: (PerceptionAction) explore action recieved");
 
 		// get waypoint ID from action dispatch
-		std::string explored_waypoint;
-		bool foundWP = false;
+		std::string objectID, wpID;
+		bool foundObject = false;
 		for(size_t i=0; i<msg->parameters.size(); i++) {
-			if(0==msg->parameters[i].key.compare("view")) {
-				explored_waypoint = msg->parameters[i].value;
-				foundWP = true;
+			if(0==msg->parameters[i].key.compare("view"))
+				wpID = msg->parameters[i].value;
+			if(0==msg->parameters[i].key.compare("o")) {
+				objectID = msg->parameters[i].value;
+				foundObject = true;
 			}
 		}
-		if(!foundWP) {
+		if(!foundObject) {
 			ROS_INFO("KCL: (PerceptionAction) aborting action dispatch; malformed parameters");
 			return;
 		}
@@ -211,19 +141,36 @@ namespace KCL_rosplan {
 
 		// dispatch Perception action
 		squirrel_object_perception_msgs::LookForObjectsGoal perceptionGoal;
-		perceptionGoal.look_for_object = squirrel_object_perception_msgs::LookForObjectsGoal::EXPLORE;
+		perceptionGoal.look_for_object = squirrel_object_perception_msgs::LookForObjectsGoal::CHECK;
+		perceptionGoal.id = objectID;
 		examine_action_client.sendGoal(perceptionGoal);
 
-		bool finished_before_timeout = examine_action_client.waitForResult(ros::Duration(msg->duration));
+		examine_action_client.waitForResult();
 		actionlib::SimpleClientGoalState state = examine_action_client.getState();
-		bool success = (finished_before_timeout);
-		ROS_INFO("KCL: (PerceptionAction) observe finished: %s", state.toString().c_str());
+		bool success =  (state == actionlib::SimpleClientGoalState::SUCCEEDED);
+		ROS_INFO("KCL: (PerceptionAction) chack object finished: %s", state.toString().c_str());
 
 		if (success) {
+
+			// add all new objects
+			std::vector<squirrel_object_perception_msgs::SceneObject>::const_iterator ci = examine_action_client.getResult()->objects_added.begin();
+			for (; ci != examine_action_client.getResult()->objects_added.end(); ++ci) {
+				squirrel_object_perception_msgs::SceneObject so = (*ci);
+				addObject(so);
+			}
+
+			// update all new objects
+			ci = examine_action_client.getResult()->objects_updated.begin();
+			for (; ci != examine_action_client.getResult()->objects_updated.end(); ++ci) {
+				squirrel_object_perception_msgs::SceneObject so = (*ci);
+				updateObject(so, wpID);
+			}
+
+			// publish feedback
 			ROS_INFO("KCL: (PerceptionAction) action complete");
 			publishFeedback(msg->action_id, "action achieved");
 		} else {
-			ROS_INFO("KCL: (PerceptionAction) action timed out");
+			ROS_INFO("KCL: (PerceptionAction) action failed");
 			publishFeedback(msg->action_id, "action failed");
 		}
 	}
@@ -235,6 +182,94 @@ namespace KCL_rosplan {
 		fb.status = feedback;
 		action_feedback_pub.publish(fb);
 	}
+
+	void RPPerceptionAction::addObject(squirrel_object_perception_msgs::SceneObject &object) {
+
+		std::stringstream wpid;
+		wpid << "waypoint_" << object.id;
+		std::string wpName(wpid.str());
+
+		// add the new object
+		rosplan_knowledge_msgs::KnowledgeUpdateService knowledge_update_service;
+		knowledge_update_service.request.update_type = rosplan_knowledge_msgs::KnowledgeUpdateService::Request::ADD_KNOWLEDGE;
+		knowledge_update_service.request.knowledge.knowledge_type = rosplan_knowledge_msgs::KnowledgeItem::INSTANCE;
+		knowledge_update_service.request.knowledge.instance_type = "object";
+		knowledge_update_service.request.knowledge.instance_name = object.id;
+		if (!update_knowledge_client.call(knowledge_update_service)) {
+			ROS_ERROR("KCL: (PerceptionAction) Could not add the object %s to the knowledge base.", object.id.c_str());
+		}
+
+		// add the new object's waypoint
+		knowledge_update_service.request.knowledge.knowledge_type = rosplan_knowledge_msgs::KnowledgeItem::INSTANCE;
+		knowledge_update_service.request.knowledge.instance_type = "waypoint";
+		knowledge_update_service.request.knowledge.instance_name = wpName;
+		if (!update_knowledge_client.call(knowledge_update_service)) {
+			ROS_ERROR("KCL: (PerceptionAction) Could not add the object %s to the knowledge base.", wpName.c_str());
+		}
+
+		// object_at fact	
+		knowledge_update_service.request.knowledge.knowledge_type = rosplan_knowledge_msgs::KnowledgeItem::FACT;
+		knowledge_update_service.request.knowledge.attribute_name = "object_at";
+		diagnostic_msgs::KeyValue kv;
+		kv.key = "o";
+		kv.value = object.id;
+		knowledge_update_service.request.knowledge.values.push_back(kv);
+		kv.key = "wp";
+		kv.value = wpName;
+		knowledge_update_service.request.knowledge.values.push_back(kv);
+		if (!update_knowledge_client.call(knowledge_update_service)) {
+			ROS_ERROR("KCL: (PerceptionAction) Could not add object_at predicate to the knowledge base.");
+		}
+
+		// is_of_type fact	
+		knowledge_update_service.request.knowledge.knowledge_type = rosplan_knowledge_msgs::KnowledgeItem::FACT;
+		knowledge_update_service.request.knowledge.attribute_name = "is_of_type";
+		knowledge_update_service.request.knowledge.values.pop_back();
+		kv.key = "t";
+        // TODO remove this after demo
+        if(object.category.find("dinosaur") != std::string::npos)
+                kv.value = "dinosaur";
+        else kv.value = object.category;
+		knowledge_update_service.request.knowledge.values.push_back(kv);
+		if (!update_knowledge_client.call(knowledge_update_service)) {
+			ROS_ERROR("KCL: (PerceptionAction) Could not add is_of_type predicate to the knowledge base.");
+		}
+
+		//data
+		geometry_msgs::PoseStamped ps;
+		ps.header = object.header;
+		ps.pose = object.pose;
+		db_name_map[wpName] = message_store.insertNamed(wpName, ps);
+		db_name_map[object.id] = message_store.insertNamed(object.id, object);
+	}
+
+	void RPPerceptionAction::updateObject(squirrel_object_perception_msgs::SceneObject &object, std::string newWaypoint) {
+
+		std::stringstream wpid;
+		wpid << "waypoint_" << object.id;
+		std::string wpName(wpid.str());
+
+		//data
+		geometry_msgs::PoseStamped ps;
+		ps.header = object.header;
+		ps.pose = object.pose;
+		db_name_map[wpName] = message_store.insertNamed(wpName, ps);
+		db_name_map[object.id] = message_store.updateNamed(object.id, object);
+	}
+
+	void RPPerceptionAction::removeObject(squirrel_object_perception_msgs::SceneObject &object) {
+
+			rosplan_knowledge_msgs::KnowledgeUpdateService updateSrv;
+			updateSrv.request.update_type = rosplan_knowledge_msgs::KnowledgeUpdateService::Request::REMOVE_KNOWLEDGE;
+			updateSrv.request.knowledge.knowledge_type = rosplan_knowledge_msgs::KnowledgeItem::INSTANCE;
+			updateSrv.request.knowledge.instance_type = "object";
+			updateSrv.request.knowledge.instance_name = object.id;
+			update_knowledge_client.call(updateSrv);
+
+			//data
+			message_store.deleteID(db_name_map[object.id]);
+	}
+
 } // close namespace
 
 	/*-------------*/
@@ -247,7 +282,7 @@ namespace KCL_rosplan {
 		ros::NodeHandle nh;
 
 		std::string actionserver;
-		nh.param("action_server", actionserver, std::string("/look_for_objects"));
+		nh.param("action_server", actionserver, std::string("/squirrel_look_for_objects"));
 
 		// create PDDL action subscriber
 		KCL_rosplan::RPPerceptionAction rppa(nh, actionserver);

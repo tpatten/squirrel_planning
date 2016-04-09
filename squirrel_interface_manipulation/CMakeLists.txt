@@ -44,12 +44,8 @@ include_directories(
   include
 )
 
-## Pointing service
-set(SIM_SOURCES
-	src/RPPushAction.cpp)
-
 ## Declare cpp executables
-add_executable(rppushServer ${SIM_SOURCES})
+add_executable(rppushServer src/RPPushAction.cpp)
 add_executable(rpgraspServer src/RPGraspAction.cpp)
 add_dependencies(rppushServer ${catkin_EXPORTED_TARGETS})
 add_dependencies(rpgraspServer ${catkin_EXPORTED_TARGETS})

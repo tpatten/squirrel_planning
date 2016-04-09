@@ -40,6 +40,11 @@ namespace KCL_rosplan {
 		void exploreAction(const rosplan_dispatch_msgs::ActionDispatch::ConstPtr& msg);
 		void examineAction(const rosplan_dispatch_msgs::ActionDispatch::ConstPtr& msg);
 
+		/* objects to database */
+		void addObject(squirrel_object_perception_msgs::SceneObject &object);
+		void updateObject(squirrel_object_perception_msgs::SceneObject &object, std::string newWaypoint);
+		void removeObject(squirrel_object_perception_msgs::SceneObject &object);
+
 	public:
 
 		/* constructor */

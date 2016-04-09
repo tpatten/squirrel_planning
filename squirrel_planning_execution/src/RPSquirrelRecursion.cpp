@@ -15,6 +15,9 @@
 #include "pddl_actions/FinaliseClassificationPDDLAction.h"
 #include "pddl_actions/PlannerInstance.h"
 
+#include <visualization_msgs/MarkerArray.h>
+#include <visualization_msgs/Marker.h>
+
 
 /* The implementation of RPSquirrelRecursion.h */
 namespace KCL_rosplan {
@@ -294,7 +297,7 @@ namespace KCL_rosplan {
 		std::string problem_name = ss.str();
 		
 		ss.str(std::string());
-		ss << "timeout 60 " << planner_path << "ff -o DOMAIN -f PROBLEM";
+		ss << "timeout 180 " << planner_path << "ff -o DOMAIN -f PROBLEM";
 		std::string planner_command = ss.str();
 		
 		// Before calling the planner we create the domain so it can be parsed.
@@ -632,11 +635,25 @@ namespace KCL_rosplan {
 		
  		if (action_name == "explore_area") {
 			
+			//rviz things
+			std::vector<geometry_msgs::Point> waypoints;
+			std::vector<std_msgs::ColorRGBA> waypoint_colours;
+			std::vector<geometry_msgs::Point> triangle_points;
+			std::vector<std_msgs::ColorRGBA> triangle_colours;
+
 			std::vector<geometry_msgs::Pose> view_poses;
 			if (!simulated)
 			{
 				std::vector<tf::Vector3> bounding_box;
-				view_cone_generator->createViewCones(view_poses, bounding_box, 10, 5, 30.0f, 2.0f, 100, 0.5f);
+				tf::Vector3 p1(3.22, 4.36, 0.00);
+				tf::Vector3 p2(-0.5, 4.07, 0.00);
+				tf::Vector3 p3(3.49, 0.01, 0.00);
+				tf::Vector3 p4(-0.35, -0.09, 0.00);
+				bounding_box.push_back(p1);
+				bounding_box.push_back(p3);
+				bounding_box.push_back(p4);
+				bounding_box.push_back(p2);
+				view_cone_generator->createViewCones(view_poses, bounding_box, 10, 5, 30.0f, 1.0f, 100, 0.35f);
 			}
 			else
 			{
@@ -692,7 +709,8 @@ namespace KCL_rosplan {
 				ROS_INFO("KCL: (RPSquirrelRecursion) Added the goal (explored %s) to the knowledge base.", ss.str().c_str());
 				++waypoint_number;
 			}
-			
+
+			// add initial state (robot_at)
 			rosplan_knowledge_msgs::KnowledgeItem waypoint_knowledge;
 			add_waypoints_service.request.update_type = rosplan_knowledge_msgs::KnowledgeUpdateService::Request::ADD_KNOWLEDGE;
 			waypoint_knowledge.knowledge_type = rosplan_knowledge_msgs::KnowledgeItem::INSTANCE;
@@ -747,7 +765,12 @@ namespace KCL_rosplan {
 			
 			std::map<std::string, std::string> object_to_location_mappings;
 			std::map<std::string, std::vector<std::string> > near_waypoint_mappings;
+			int max_objects = 3;
 			for (std::vector<rosplan_knowledge_msgs::KnowledgeItem>::const_iterator ci = get_attribute.response.attributes.begin(); ci != get_attribute.response.attributes.end(); ++ci) {
+
+				max_objects++;
+				if(max_objects > 3) break;
+
 				const rosplan_knowledge_msgs::KnowledgeItem& knowledge_item = *ci;
 				std::string object_predicate;
 				std::string location_predicate;
@@ -932,8 +955,9 @@ namespace KCL_rosplan {
 			if (!simulated)
 			{
 				// fetch position of object from message store
-				std::vector< boost::shared_ptr<geometry_msgs::PoseStamped> > results;
-				if(message_store.queryNamed<geometry_msgs::PoseStamped>(object_name, results)) {
+				std::vector< boost::shared_ptr<squirrel_object_perception_msgs::SceneObject> > results;
+				if(message_store.queryNamed<squirrel_object_perception_msgs::SceneObject>(object_name, results)) {
+
 					if(results.size()<1) {
 						ROS_ERROR("KCL: (RPSquirrelRoadmap) aborting waypoint request; no matching obID %s", object_name.c_str());
 						return false;
@@ -944,10 +968,10 @@ namespace KCL_rosplan {
 				}
 
 				// request classification waypoints for object
-				geometry_msgs::PoseStamped &objPose = *results[0];
+				geometry_msgs::PoseStamped &obj = *results[0];
 				
-				getTaskPose.request.object_pose.header = objPose.header;
-				getTaskPose.request.object_pose.pose = objPose.pose;
+				getTaskPose.request.object_pose.header = obj.header;
+				getTaskPose.request.object_pose.pose = obj.pose;
 				if (!classify_object_waypoint_client.call(getTaskPose)) {
 					ROS_ERROR("KCL: (RPSquirrelRoadmap) Failed to recieve classification waypoints for %s.", object_name.c_str());
 					return false;

@@ -7,10 +7,14 @@
 #include <tf/LinearMath/Quaternion.h>
 #include <tf/transform_listener.h>
 #include <tf/tf.h>
+
 #include <actionlib/client/simple_action_client.h>
 #include "rosplan_dispatch_msgs/ActionDispatch.h"
 #include "rosplan_dispatch_msgs/ActionFeedback.h"
+#include "rosplan_knowledge_msgs/KnowledgeUpdateService.h"
+#include "rosplan_knowledge_msgs/KnowledgeItem.h"
 #include "mongodb_store/message_store.h"
+
 #include "geometry_msgs/PoseStamped.h"
 #include "squirrel_object_perception_msgs/SceneObject.h"
 #include "squirrel_manipulation_msgs/BlindGraspAction.h"
@@ -36,6 +40,7 @@ namespace KCL_rosplan {
 		actionlib::SimpleActionClient<squirrel_manipulation_msgs::BlindGraspAction> blind_grasp_action_client;
 		ros::Publisher action_feedback_pub;
 		ros::ServiceClient drop_client;
+		ros::ServiceClient update_knowledge_client;
 
 		/* execute pushing actions */
 		bool dispatchBlindGraspAction(const rosplan_dispatch_msgs::ActionDispatch::ConstPtr& msg);
