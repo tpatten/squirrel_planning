@@ -50,10 +50,10 @@ namespace KCL_rosplan {
 	}
 
 	/* blind grasp action dispatch
-		:parameters (?r - robot ?wp - waypoint ?o - object)
+		:parameters (?v - robot ?wp - waypoint ?o - object)
 		:effect (and
-				(not (holding ?r ?o))
-				(gripper_empty ?r)
+				(not (holding ?v ?o))
+				(gripper_empty ?v)
 				(object_at ?o ?wp)
 	*/
 	bool RPGraspAction::dispatchDropAction(const rosplan_dispatch_msgs::ActionDispatch::ConstPtr& msg) {
@@ -64,7 +64,7 @@ namespace KCL_rosplan {
 		for(size_t i=0; i<msg->parameters.size(); i++) {
 			if(0==msg->parameters[i].key.compare("wp"))
 				wpID = msg->parameters[i].value;
-			if(0==msg->parameters[i].key.compare("r"))
+			if(0==msg->parameters[i].key.compare("v"))
 				robotID = msg->parameters[i].value;
 			if(0==msg->parameters[i].key.compare("o")) {
 				objectID = msg->parameters[i].value;
@@ -86,7 +86,7 @@ namespace KCL_rosplan {
 			knowledge_update_service.request.knowledge.knowledge_type = rosplan_knowledge_msgs::KnowledgeItem::FACT;
 			knowledge_update_service.request.knowledge.attribute_name = "gripper_empty";
 			diagnostic_msgs::KeyValue kv;
-			kv.key = "r";
+			kv.key = "v";
 			kv.value = robotID;
 			knowledge_update_service.request.knowledge.values.push_back(kv);
 			if (!update_knowledge_client.call(knowledge_update_service)) {
@@ -124,11 +124,11 @@ namespace KCL_rosplan {
 
 	/*
 	 * blind grasp action dispatch
-	 *	:parameters (?r - robot ?wp - waypoint ?o - object ?t - type)
+	 *	:parameters (?v - robot ?wp - waypoint ?o - object ?t - type)
 	 *	:effect (and
-	 *		(not (gripper_empty ?r))
+	 *		(not (gripper_empty ?v))
 	 *		(not (object_at ?o ?wp))
-	 *		(holding ?r ?o)
+	 *		(holding ?v ?o)
 	 */
 	bool RPGraspAction::dispatchBlindGraspAction(const rosplan_dispatch_msgs::ActionDispatch::ConstPtr& msg) {
 
@@ -139,7 +139,7 @@ namespace KCL_rosplan {
 		std::string objectID;
 		bool foundObject = false;
 		for(size_t i=0; i<msg->parameters.size(); i++) {
-			if(0==msg->parameters[i].key.compare("r"))
+			if(0==msg->parameters[i].key.compare("v"))
 				robotID = msg->parameters[i].value;
 			if(0==msg->parameters[i].key.compare("ob")) {
 				objectID = msg->parameters[i].value;
@@ -194,7 +194,7 @@ namespace KCL_rosplan {
 				knowledge_update_service.request.knowledge.knowledge_type = rosplan_knowledge_msgs::KnowledgeItem::FACT;
 				knowledge_update_service.request.knowledge.attribute_name = "gripper_empty";
 				diagnostic_msgs::KeyValue kv;
-				kv.key = "r";
+				kv.key = "v";
 				kv.value = robotID;
 				knowledge_update_service.request.knowledge.values.push_back(kv);
 				if (!update_knowledge_client.call(knowledge_update_service)) {

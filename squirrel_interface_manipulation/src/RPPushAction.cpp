@@ -91,11 +91,11 @@ namespace KCL_rosplan {
 	}
 
 	/* push action dispatch
-		:parameters (?r - robot ?ob - object ?from ?to - waypoint)
+		:parameters (?v - robot ?ob - object ?from ?to - waypoint)
 		:effect (and
-				(not (robot_at ?r ?from basic))
+				(not (robot_at ?v ?from basic))
 				(not (object_at ?ob ?from basic))
-				(robot_at ?r ?to basic)
+				(robot_at ?v ?to basic)
 				(object_at ?ob ?to basic)
 	 */
 	void RPPushAction::dispatchPushAction(const rosplan_dispatch_msgs::ActionDispatch::ConstPtr& msg) {
@@ -108,7 +108,7 @@ namespace KCL_rosplan {
 		bool foundObject = false;
 		for(size_t i=0; i<msg->parameters.size(); i++) {
 
-			if(0==msg->parameters[i].key.compare("r"))
+			if(0==msg->parameters[i].key.compare("v"))
 				robotID = msg->parameters[i].value;
 
 			if(0==msg->parameters[i].key.compare("to")) {

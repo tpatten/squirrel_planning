@@ -242,7 +242,7 @@ namespace KCL_rosplan {
 		knowledge_item.attribute_name = "robot_at";
 		knowledge_item.is_negative = false;
 		diagnostic_msgs::KeyValue kv;
-		kv.key = "r";
+		kv.key = "v";
 		kv.value = "kenny";
 		knowledge_item.values.push_back(kv);
 		kv.key = "wp";
@@ -291,7 +291,7 @@ namespace KCL_rosplan {
 		// gripper_empty.
 		knowledge_item.attribute_name = "gripper_empty";
 		knowledge_item.is_negative = false;
-		kv.key = "r";
+		kv.key = "v";
 		kv.value = "kenny";
 		knowledge_item.values.push_back(kv);
 		

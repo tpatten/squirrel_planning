@@ -77,7 +77,7 @@ void PushObjectPDDLAction::dispatchCallback(const rosplan_dispatch_msgs::ActionD
 	kenny_knowledge.is_negative = false;
 	
 	diagnostic_msgs::KeyValue kv;
-	kv.key = "r";
+	kv.key = "v";
 	kv.value = robot;
 	kenny_knowledge.values.push_back(kv);
 	
@@ -118,7 +118,7 @@ void PushObjectPDDLAction::dispatchCallback(const rosplan_dispatch_msgs::ActionD
 	kenny_knowledge.knowledge_type = rosplan_knowledge_msgs::KnowledgeItem::FACT;
 	kenny_knowledge.attribute_name = "robot_at";
 	
-	kv.key = "r";
+	kv.key = "v";
 	kv.value = robot;
 	kenny_knowledge.values.push_back(kv);
 	

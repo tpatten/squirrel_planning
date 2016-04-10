@@ -95,7 +95,7 @@ void PickupPDDLAction::dispatchCallback(const rosplan_dispatch_msgs::ActionDispa
 	// Make the gripper not free.
 	kenny_knowledge.attribute_name = "gripper_empty";
 	
-	kv.key = "r";
+	kv.key = "v";
 	kv.value = robot;
 	kenny_knowledge.values.push_back(kv);
 	
@@ -112,7 +112,7 @@ void PickupPDDLAction::dispatchCallback(const rosplan_dispatch_msgs::ActionDispa
 	kenny_knowledge.knowledge_type = rosplan_knowledge_msgs::KnowledgeItem::FACT;
 	kenny_knowledge.attribute_name = "holding";
 	
-	kv.key = "r";
+	kv.key = "v";
 	kv.value = robot;
 	kenny_knowledge.values.push_back(kv);
 	

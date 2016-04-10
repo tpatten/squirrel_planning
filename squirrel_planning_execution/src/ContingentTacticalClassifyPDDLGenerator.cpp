@@ -159,8 +159,8 @@ void ContingentTacticalClassifyPDDLGenerator::generateDomainFile(const std::stri
 	myfile << ")" << std::endl;
 	myfile << std::endl;
 	myfile << "(:predicates" << std::endl;
-	myfile << "\t(robot_at ?r - robot ?wp - waypoint ?s - state)" << std::endl;
-	myfile << "\t(Rrobot_at ?r - robot ?wp - waypoint ?s - state)" << std::endl;
+	myfile << "\t(robot_at ?v - robot ?wp - waypoint ?s - state)" << std::endl;
+	myfile << "\t(Rrobot_at ?v - robot ?wp - waypoint ?s - state)" << std::endl;
 	myfile << "\t(object_at ?o - object ?wp - waypoint ?s - state)" << std::endl;
 	myfile << "\t(Robject_at ?o - object ?wp - waypoint ?s - state)" << std::endl;
 	myfile << "\t(classified ?o - object ?s - state)" << std::endl;
@@ -234,7 +234,7 @@ void ContingentTacticalClassifyPDDLGenerator::generateDomainFile(const std::stri
 	 * GOTO WAYPOINT.
 	 */
 	myfile << "(:action goto_waypoint" << std::endl;
-	myfile << "\t:parameters (?r - robot ?from ?to - waypoint)" << std::endl;
+	myfile << "\t:parameters (?v - robot ?from ?to - waypoint)" << std::endl;
 	myfile << "\t:precondition (and" << std::endl;
 	myfile << "\t\t(connected ?from ?to)" << std::endl;
 	myfile << "\t\t(not (resolve-axioms))" << std::endl;
@@ -243,7 +243,7 @@ void ContingentTacticalClassifyPDDLGenerator::generateDomainFile(const std::stri
 		const KnowledgeBase* knowledge_base = *ci;
 		for (std::vector<const State*>::const_iterator ci = knowledge_base->states_.begin(); ci != knowledge_base->states_.end(); ++ci)
 		{
-			myfile << "\t\t(Rrobot_at ?r ?from " << (*ci)->state_name_ << ")" << std::endl;
+			myfile << "\t\t(Rrobot_at ?v ?from " << (*ci)->state_name_ << ")" << std::endl;
 		}
 	}
 	
@@ -256,10 +256,10 @@ void ContingentTacticalClassifyPDDLGenerator::generateDomainFile(const std::stri
 		myfile << "\t\t(when (m " << (*ci)->state_name_ << ")" << std::endl;
 		myfile << "\t\t\t(and" << std::endl;
 
-		myfile << "\t\t\t\t(not (robot_at ?r ?from " << (*ci)->state_name_ << "))" << std::endl;
-		myfile << "\t\t\t\t(not (Rrobot_at ?r ?from " << (*ci)->state_name_ << "))" << std::endl;
-		myfile << "\t\t\t\t(robot_at ?r ?to " << (*ci)->state_name_ << ")" << std::endl;
-		myfile << "\t\t\t\t(Rrobot_at ?r ?to " << (*ci)->state_name_ << ")" << std::endl;
+		myfile << "\t\t\t\t(not (robot_at ?v ?from " << (*ci)->state_name_ << "))" << std::endl;
+		myfile << "\t\t\t\t(not (Rrobot_at ?v ?from " << (*ci)->state_name_ << "))" << std::endl;
+		myfile << "\t\t\t\t(robot_at ?v ?to " << (*ci)->state_name_ << ")" << std::endl;
+		myfile << "\t\t\t\t(Rrobot_at ?v ?to " << (*ci)->state_name_ << ")" << std::endl;
 
 		myfile << "\t\t\t)" << std::endl;
 		myfile << "\t\t)" << std::endl;
@@ -279,7 +279,7 @@ void ContingentTacticalClassifyPDDLGenerator::generateDomainFile(const std::stri
 	myfile << ";; Attempt to classify the object." << std::endl;
 	myfile << "(:action observe-classifiable_from" << std::endl;
 	
-	myfile << "\t:parameters (?from ?view - waypoint ?o - object ?r - robot  ?l ?l2 - level ?kb - knowledgebase)" << std::endl;
+	myfile << "\t:parameters (?from ?view - waypoint ?o - object ?v - robot  ?l ?l2 - level ?kb - knowledgebase)" << std::endl;
 	myfile << "\t:precondition (and" << std::endl;
 	myfile << "\t\t(not (resolve-axioms))" << std::endl;
 	myfile << "\t\t(next ?l ?l2)" << std::endl;
@@ -294,7 +294,7 @@ void ContingentTacticalClassifyPDDLGenerator::generateDomainFile(const std::stri
 		const KnowledgeBase* knowledge_base = *ci;
 		for (std::vector<const State*>::const_iterator ci = knowledge_base->states_.begin(); ci != knowledge_base->states_.end(); ++ci)
 		{
-			myfile << "\t\t(Rrobot_at ?r ?from " << (*ci)->state_name_ << ")" << std::endl;
+			myfile << "\t\t(Rrobot_at ?v ?from " << (*ci)->state_name_ << ")" << std::endl;
 			myfile << "\t\t(Robject_at ?o ?view " << (*ci)->state_name_ << ")" << std::endl;
 		}
 	}

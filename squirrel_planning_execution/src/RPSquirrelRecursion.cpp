@@ -180,7 +180,7 @@ namespace KCL_rosplan {
 			knowledge_item.attribute_name = "can_pickup";
 			knowledge_item.is_negative = false;
 			
-			kv.key = "r";
+			kv.key = "v";
 			kv.value = "kenny";
 			knowledge_item.values.push_back(kv);
 			
@@ -574,7 +574,7 @@ namespace KCL_rosplan {
 		knowledge_item.attribute_name = "robot_in";
 		knowledge_item.is_negative = false;
 		diagnostic_msgs::KeyValue kv;
-		kv.key = "r";
+		kv.key = "v";
 		kv.value = "kenny";
 		knowledge_item.values.push_back(kv);
 		kv.key = "a";
@@ -727,7 +727,7 @@ namespace KCL_rosplan {
 			waypoint_knowledge.attribute_name = "robot_at";
 			waypoint_knowledge.is_negative = false;
 			diagnostic_msgs::KeyValue kv;
-			kv.key = "r";
+			kv.key = "v";
 			kv.value = "kenny";
 			waypoint_knowledge.values.push_back(kv);
 			kv.key = "wp";
@@ -1274,7 +1274,7 @@ namespace KCL_rosplan {
 			}
 			
 			// Get the location of kenny.
-			// (robot_at ?r - robot ?wp - waypoint)
+			// (robot_at ?v - robot ?wp - waypoint)
 			get_attribute.request.predicate_name = "robot_at";
 			if (!get_attribute_client.call(get_attribute)) {
 				ROS_ERROR("KCL: (RPSquirrelRoadmap) Failed to recieve the attributes of the predicate 'robot_at'");

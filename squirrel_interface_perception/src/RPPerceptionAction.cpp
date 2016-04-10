@@ -114,7 +114,7 @@ namespace KCL_rosplan {
 
 	/*
 	 * examine action dispatch callback;
-	 * parameters (?from ?view - waypoint ?o - object ?r - robot  ?l ?l2 - level ?kb - knowledgebase)
+	 * parameters (?from ?view - waypoint ?o - object ?v - robot  ?l ?l2 - level ?kb - knowledgebase)
 	 */
 	void RPPerceptionAction::examineAction(const rosplan_dispatch_msgs::ActionDispatch::ConstPtr& msg) {
 
