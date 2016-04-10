@@ -54,19 +54,20 @@ namespace KCL_rosplan {
 			// get pose in odom frame
 			geometry_msgs::PoseStamped poseMap, pose;
 			poseMap.header = results[0]->header;
+			poseMap.header.frame_id = "/odom";
 			poseMap.pose = results[0]->pose;
-			tf::TransformListener tfl;
+/*			tf::TransformListener tfl;
 			try {
-				tfl.waitForTransform("/odom", "/map", ros::Time::now(), ros::Duration(1.0));
+				tfl.waitForTransform("/odom", "/map", ros::Time::now(), ros::Duration(20.0));
 				tfl.transformPose("/odom", poseMap, pose);
 			} catch ( tf::TransformException& ex ) {
-				ROS_ERROR("%s: error while transforming point", ros::this_node::getName().c_str(), ex.what());
+				ROS_ERROR("%s: error while transforming point %s", ros::this_node::getName().c_str(), ex.what());
 				return;
 			}
-
+*/
 			// dispatch Grasp action
 			squirrel_manipulation_msgs::BlindGraspGoal goal;
-			goal.heap_center_pose = pose;
+			goal.heap_center_pose = poseMap;
 			goal.heap_bounding_cylinder = results[0]->bounding_cylinder;
 			goal.heap_point_cloud = results[0]->cloud;
 			blind_grasp_action_client.sendGoal(goal);
@@ -104,7 +105,7 @@ namespace KCL_rosplan {
 
 
 		std::string GraspActionserver, blindGraspActionServer;
-		nh.param("blind_grasp_action_server", blindGraspActionServer, std::string("/grasp"));
+		nh.param("blind_grasp_action_server", blindGraspActionServer, std::string("/blindGrasp"));
 
 		// create PDDL action subscriber
 		KCL_rosplan::RPGraspAction rpga(nh, blindGraspActionServer);
