@@ -968,7 +968,7 @@ namespace KCL_rosplan {
 				}
 
 				// request classification waypoints for object
-				geometry_msgs::PoseStamped &obj = *results[0];
+				squirrel_object_perception_msgs::SceneObject &obj = *results[0];
 				
 				getTaskPose.request.object_pose.header = obj.header;
 				getTaskPose.request.object_pose.pose = obj.pose;
