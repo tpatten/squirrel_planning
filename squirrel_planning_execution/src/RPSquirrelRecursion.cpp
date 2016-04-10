@@ -653,7 +653,7 @@ namespace KCL_rosplan {
 				bounding_box.push_back(p3);
 				bounding_box.push_back(p4);
 				bounding_box.push_back(p2);
-				view_cone_generator->createViewCones(view_poses, bounding_box, 10, 5, 30.0f, 1.0f, 100, 0.35f);
+				view_cone_generator->createViewCones(view_poses, bounding_box, 3, 5, 30.0f, 2.0f, 100, 0.35f);
 			}
 			else
 			{
