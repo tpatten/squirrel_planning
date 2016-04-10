@@ -25,6 +25,7 @@
 #include "rosplan_planning_system/PDDLProblemGenerator.h"
 
 #include "squirrel_waypoint_msgs/ExamineWaypoint.h"
+#include "squirrel_object_perception_msgs/SceneObject.h"
 
 #ifndef KCL_recursion
 #define KCL_recursion
