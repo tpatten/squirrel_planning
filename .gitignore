@@ -23,7 +23,7 @@
 # Temporary data files
 plan.pddl
 problem.pddl
-*.kde4
+*.kdev4
 *~
 squirrel_planning_launch/common/d3_viz/mbostock-d3-v3.5.14-1-gbf0f88b.zip
 squirrel_planning_launch/common/d3_viz/sample.json
