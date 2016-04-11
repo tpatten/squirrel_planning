@@ -30,40 +30,48 @@ int main(int argc, char **argv) {
 	nh.getParam("simulate_put_object_in_box", put_object_in_box);
 	nh.getParam("simulate_pickup_object", pickup_object);
 	nh.getParam("simulate_drop_object", drop_object);
-	
+
+	KCL_rosplan::GotoPDDLAction* goto_action;
+	KCL_rosplan::ExploreWaypointPDDLAction* explore_waypoint_action;
+	KCL_rosplan::ClearObjectPDDLAction* clear_object_action;
+	KCL_rosplan::ClassifyObjectPDDLAction* classify_object_action;
+	KCL_rosplan::PutObjectInBoxPDDLAction* put_object_in_box_action;
+	KCL_rosplan::PickupPDDLAction* pickup_action;
+	KCL_rosplan::DropObjectPDDLAction* drop_object_action;
+
 	// Setup all the simulated actions.
 	if(goto_waypoint) {
 		ROS_INFO("KCL: (SimulatedPDDLActionsNode) Simulating: goto_waypoint");
-		KCL_rosplan::GotoPDDLAction goto_action(nh);
+		goto_action = new KCL_rosplan::GotoPDDLAction(nh);
 	}
 
 	if(explore_waypoint) {
 		ROS_INFO("KCL: (SimulatedPDDLActionsNode) Simulating: explore_waypoint");
-		KCL_rosplan::ExploreWaypointPDDLAction explore_waypoint_action(nh);
+		explore_waypoint_action = new KCL_rosplan::ExploreWaypointPDDLAction(nh);
 	}
 	if(clear_object) {
 		ROS_INFO("KCL: (SimulatedPDDLActionsNode) Simulating: clear_object");
-		KCL_rosplan::ClearObjectPDDLAction clear_object_action(nh);
+		clear_object_action = new KCL_rosplan::ClearObjectPDDLAction(nh);
 	}
 	if(classify_object) {
 		ROS_INFO("KCL: (SimulatedPDDLActionsNode) Simulating: classify_object");
-		KCL_rosplan::ClassifyObjectPDDLAction classify_object_action(nh, 0.5f);
+		classify_object_action = new KCL_rosplan::ClassifyObjectPDDLAction(nh, 0.5f);
 	}
 	if(put_object_in_box) {
 		ROS_INFO("KCL: (SimulatedPDDLActionsNode) Simulating: put_object_in_box");
-		KCL_rosplan::PutObjectInBoxPDDLAction put_object_in_box_action(nh);
+		put_object_in_box_action = new KCL_rosplan::PutObjectInBoxPDDLAction(nh);
 	}
 	if(pickup_object) {
 		ROS_INFO("KCL: (SimulatedPDDLActionsNode) Simulating: pickup_object");
-		KCL_rosplan::PickupPDDLAction pickup_action(nh);
+		pickup_action = new KCL_rosplan::PickupPDDLAction(nh);
 	}	
 	if(drop_object) {
 		ROS_INFO("KCL: (SimulatedPDDLActionsNode) Simulating: drop_object");
-		KCL_rosplan::DropObjectPDDLAction drop_object_action(nh);
+		drop_object_action = new KCL_rosplan::DropObjectPDDLAction(nh);
 	}
 
 	KCL_rosplan::TidyObjectPDDLAction tidy_object_action(nh);
-	// KCL_rosplan::PushObjectPDDLAction push_object_action(nh);
+	// KCL_rosplan::PushObjectPDDLAction push_object_action;
 
 	ROS_INFO("KCL: (SimulatedPDDLActionsNode) All simulated actions are ready to receive.");
 	
