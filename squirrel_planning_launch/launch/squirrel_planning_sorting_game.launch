@@ -29,14 +29,20 @@
 		<param name="planner_command" value="cat $(find squirrel_planning_launch)/common/sorting_game_plan.pddl" />
 		<param name="generate_default_problem" value="true" />
 	</node>
-	
+
+	<!-- Load the waypoints in the MongoDB -->
+	<param name="waypoint_file" value="$(find squirrel_planning_launch)/common/waypoints.txt" />
+	<node name="rosplan_roadmap_server" pkg="rosplan_interface_mapping" type="rpsimplemapServer" respawn="false" output="screen">
+	    <param name="data_path" value="$(find rosplan_planning_system)/common/" />
+	</node>
+
 	<!-- simulation acitons -->
 	<node name="simulated_actions" pkg="squirrel_planning_execution" type="simulatedPDDLActionsNode" output="screen">
 		<param name="query_user" value="false" />
-		<param name="simulate_goto_waypoint" value="true"/>
-		<param name="simulate_explore_waypoint" value="true"/>
+		<param name="simulate_goto_waypoint" value="false"/>
+		<param name="simulate_explore_waypoint" value="false"/>
 		<param name="simulate_clear_object" value="true"/>
-		<param name="simulate_classify_object" value="true"/>
+		<param name="simulate_classify_object" value="false"/>
 		<param name="simulate_put_object_in_box" value="true"/>
 		<param name="simulate_pickup_object" value="true"/>
 		<param name="simulate_drop_object" value="true"/>
@@ -47,5 +53,18 @@
 	<node name="squirrel_interface_emote" pkg="squirrel_interface_emote" type="rpEmoteServer" output="screen" />
 
 	<node name="sorting_game" pkg="squirrel_planning_execution" type="sortingGame" output="screen" />
+
+	<node name="squirrel_planning_interface_perception" pkg="squirrel_interface_perception" type="rpperceptionServer" output="screen">
+		<param name="action_server" value="/squirrel_look_for_objects" />
+	</node>
+
+	<node name="rosplan_interface_movebase" pkg="rosplan_interface_movebase" type="rpmovebase" output="screen">
+		<param name="action_server" value="/move_base" />
+	</node>
+
+	<node name="squirrel_expression" pkg="squirrel_expression" type="squirrel_expression">
+		<param name="sound_directory" value="$(find squirrel_expression/data/sounds/" />
+	</node>
+	<node name="squirrel_motion_expression" pkg="squirrel_expression" type="squirrel_motion_expression" />
 </launch>
 
