@@ -34,7 +34,7 @@
 		<param name="blind_grasp_action_server" value="/push" />
 	</node>
 
-	<node name="squirrel_grasping_node" pkg="squirrel_grasping" type="squirrel_grasping_node.py" output="screen"/>
+	<node name="squirrel_grasping_node" pkg="squirrel_grasping" type="squirrel_blind_grasping_node.py" output="screen"/>
 
 </launch>
 
