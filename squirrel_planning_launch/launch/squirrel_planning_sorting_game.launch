@@ -31,7 +31,7 @@
 	</node>
 
 	<!-- Load the waypoints in the MongoDB -->
-	<param name="waypoint_file" value="$(find squirrel_planning_launch)/common/waypoints.txt" />
+	<param name="waypoint_file" value="$(find squirrel_planning_launch)/common/waypoints_sorting_game.txt" />
 	<node name="rosplan_roadmap_server" pkg="rosplan_interface_mapping" type="rpsimplemapServer" respawn="false" output="screen">
 	    <param name="data_path" value="$(find rosplan_planning_system)/common/" />
 	</node>
