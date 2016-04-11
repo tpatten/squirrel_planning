@@ -31,7 +31,7 @@
 	</node>
 
 	<node name="squirrel_interface_manipulation" pkg="squirrel_interface_manipulation" type="rpgraspServer" respawn="false" output="screen">
-		<param name="blind_grasp_action_server" value="/push" />
+		<param name="blind_grasp_action_server" value="/blindGrasp" />
 	</node>
 
 	<node name="squirrel_grasping_node" pkg="squirrel_grasping" type="squirrel_blind_grasping_node.py" output="screen"/>
