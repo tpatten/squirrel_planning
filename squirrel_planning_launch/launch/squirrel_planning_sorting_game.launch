@@ -36,7 +36,7 @@
 	    <param name="data_path" value="$(find rosplan_planning_system)/common/" />
 	</node>
 
-	<!-- simulation acitons -->
+	<!-- simulation acitons 
 	<node name="simulated_actions" pkg="squirrel_planning_execution" type="simulatedPDDLActionsNode" output="screen">
 		<param name="query_user" value="false" />
 		<param name="simulate_goto_waypoint" value="false"/>
@@ -47,6 +47,7 @@
 		<param name="simulate_pickup_object" value="true"/>
 		<param name="simulate_drop_object" value="true"/>
 	</node>
+	-->
 	
 	<node name="squirrel_interface_speech" pkg="squirrel_interface_speech" type="rpspeechServer" output="screen" />
 	
@@ -63,8 +64,14 @@
 	</node>
 
 	<node name="squirrel_expression" pkg="squirrel_expression" type="squirrel_expression">
-		<param name="sound_directory" value="$(find squirrel_expression/data/sounds/" />
+		<param name="sound_directory" value="$(find squirrel_expression)/data/sounds/" />
 	</node>
 	<node name="squirrel_motion_expression" pkg="squirrel_expression" type="squirrel_motion_expression" />
+
+	<node name="squirrel_interface_manipulation" pkg="squirrel_interface_manipulation" type="rpgraspServer" respawn="false" output="screen">
+		<param name="blind_grasp_action_server" value="/blindGrasp" />
+	</node>
+
+	<node name="squirrel_grasping_node" pkg="squirrel_grasping" type="squirrel_blind_grasping_node.py" output="screen"/>
 </launch>
 
