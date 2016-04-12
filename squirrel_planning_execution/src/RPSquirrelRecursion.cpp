@@ -1363,8 +1363,8 @@ namespace KCL_rosplan {
 		ROS_INFO("KCL: (RPSquirrelRecursion) Start planning server found");
 		
 		// send goal
-		plan_action_client.sendGoal(psrv);
-		ROS_INFO("KCL: (RPSquirrelRecursion) Goal sent");
+		// plan_action_client.sendGoal(psrv);
+		// ROS_INFO("KCL: (RPSquirrelRecursion) Goal sent");
 
 		/*
 		ros::ServiceClient run_planner_client = nh.serviceClient<rosplan_dispatch_msgs::PlanGoal>("/kcl_rosplan/planning_server");
