@@ -135,10 +135,10 @@ void ExploreWaypointPDDLAction::dispatchCallback(const rosplan_dispatch_msgs::Ac
 		
 		knowledge_update_service.request.knowledge = knowledge_item;
 		if (!update_knowledge_client_.call(knowledge_update_service)) {
-			ROS_ERROR("KCL: (ExploreWaypointPDDLAction) Could not add the new object_at predicate to the knowledge base.");
+			ROS_ERROR("KCL: (ExploreWaypointPDDLAction) Could not add the new (object_at %s %s) predicate to the knowledge base.", object_name.c_str(), waypoint_name.c_str());
 			exit(-1);
 		}
-		ROS_INFO("KCL: (ExploreWaypointPDDLAction) Added the new object_at predicate to the knowledge base.");
+		ROS_INFO("KCL: (ExploreWaypointPDDLAction) Added the new (object_at %s %s)  predicate to the knowledge base.", object_name.c_str(), waypoint_name.c_str());
 		++object_nr;
 	}
 	
