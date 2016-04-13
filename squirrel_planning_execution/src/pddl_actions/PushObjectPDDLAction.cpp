@@ -36,7 +36,7 @@ void PushObjectPDDLAction::dispatchCallback(const rosplan_dispatch_msgs::ActionD
 	std::transform(normalised_action_name.begin(), normalised_action_name.end(), normalised_action_name.begin(), tolower);
 	
 	// Check if this action is to be handled by this class.
-	if (normalised_action_name != "push_object" || msg->parameters.size() != 5)
+	if (normalised_action_name != "push_object" || msg->parameters.size() != 6)
 	{
 		return;
 	}
@@ -64,6 +64,7 @@ void PushObjectPDDLAction::dispatchCallback(const rosplan_dispatch_msgs::ActionD
 	const std::string& type = msg->parameters[2].value;
 	const std::string& from = msg->parameters[3].value;
 	const std::string& to = msg->parameters[4].value;
+	const std::string& near = msg->parameters[5].value;
 	
 	ROS_INFO("KCL: (PushObjectPDDLAction) Process the action: %s, Push %s from %s to %s", normalised_action_name.c_str(), object.c_str(), from.c_str(), to.c_str());
 	
@@ -76,12 +77,12 @@ void PushObjectPDDLAction::dispatchCallback(const rosplan_dispatch_msgs::ActionD
 	kenny_knowledge.is_negative = false;
 	
 	diagnostic_msgs::KeyValue kv;
-	kv.key = "r";
+	kv.key = "v";
 	kv.value = robot;
 	kenny_knowledge.values.push_back(kv);
 	
 	kv.key = "wp";
-	kv.value = from;
+	kv.value = near;
 	kenny_knowledge.values.push_back(kv);
 	
 	knowledge_update_service.request.knowledge = kenny_knowledge;
@@ -117,7 +118,7 @@ void PushObjectPDDLAction::dispatchCallback(const rosplan_dispatch_msgs::ActionD
 	kenny_knowledge.knowledge_type = rosplan_knowledge_msgs::KnowledgeItem::FACT;
 	kenny_knowledge.attribute_name = "robot_at";
 	
-	kv.key = "r";
+	kv.key = "v";
 	kv.value = robot;
 	kenny_knowledge.values.push_back(kv);
 	

@@ -8,6 +8,8 @@
 #include <geometry_msgs/Pose.h>
 #include <geometry_msgs/Point.h>
 #include <nav_msgs/OccupancyGrid.h>
+#include <occupancy_grid_utils/ray_tracer.h>
+#include <occupancy_grid_utils/coordinate_conversions.h>
 
 namespace KCL_rosplan {
 
@@ -30,6 +32,7 @@ namespace KCL_rosplan {
 		/**
 		 * Create a set of viewcones that covers the entire navigation grid.
 		 * @param poses The poses that are found are added to this list.
+		 * @param bounding_box The bounding box where all the view cones must be generated within.
 		 * @param max_view_cones The maximum number of view cones that are generated.
 		 * @param occupancy_threshold The threshold at which a point in the grid is considered occupied. The
 		 * accepted range is [0,100].
@@ -38,13 +41,21 @@ namespace KCL_rosplan {
 		 * @param sample_size How many view cones should be generated at each iteration.
 		 * @param safe_distance Waypoints cannot be generated @ref{safe_distance} away from any obstacles in the occupancy grid.
 		 */
-		void createViewCones(std::vector<geometry_msgs::Pose>& poses, unsigned int max_view_cones, int occupancy_threshold, float fov, float view_distance, unsigned int sample_size, float safe_distance);
+		void createViewCones(std::vector<geometry_msgs::Pose>& poses, const std::vector<tf::Vector3>& bounding_box, unsigned int max_view_cones, int occupancy_threshold, float fov, float view_distance, unsigned int sample_size, float safe_distance);
 		
 		/**
 		 * @return True if a occupancy grid has been received and the instance is ready to do work, false otherwise.
 		 */
 		bool hasReceivedOccupancyGrid() const { return has_received_occupancy_grid_; }
 	private:
+		
+		/**
+		 * Publish the generated viewcones to RViz.
+		 * @param poses The found poses.
+		 * @param view_distance The maximum viewing distance (straight in front).
+		 * @param fov Field of view.
+		 */
+		void visualiseViewCones(const std::vector<geometry_msgs::Pose>& poses, float view_distance, float fov) const;
 		
 		/**
 		 * Check if two waypoints can be connected without colliding with any known scenery. The line is assumed
@@ -65,6 +76,7 @@ namespace KCL_rosplan {
 		*/
 		bool isBlocked(const geometry_msgs::Point& point, float min_distance) const;
 		
+		ros::Publisher rivz_pub_;
 		ros::Subscriber navigation_grid_sub_;
 		nav_msgs::OccupancyGrid last_received_occupancy_grid_msgs_;
 		bool has_received_occupancy_grid_;

@@ -105,8 +105,8 @@ function tryDraw() {
 			var initialScale = 2.75;
 			zoom
 //			  .translate([(svg.attr("width") - g.graph().width * initialScale) / 2, 20])
-			  .translate([(document.body.offsetWidth - g.graph().width * initialScale) / 2, document.body.offsetHeight / 20])
-			  .scale(initialScale)
+			  //.translate([(document.body.offsetWidth - g.graph().width * initialScale) / 2, document.body.offsetHeight / 20])
+			  //.scale(initialScale)
 			  .event(svg);
 			svg.attr('height', g.graph().height * initialScale + 40);
 		}

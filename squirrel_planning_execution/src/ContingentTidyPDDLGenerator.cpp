@@ -211,16 +211,16 @@ void ContingentTidyPDDLGenerator::generateDomainFile(const std::string& file_nam
 	myfile << ")" << std::endl;
 	myfile << std::endl;
 	myfile << "(:predicates" << std::endl;
-	myfile << "\t(robot_at ?r - robot ?wp - waypoint ?s - state)" << std::endl;
-	myfile << "\t(Rrobot_at ?r - robot ?wp - waypoint ?s - state)" << std::endl;
+	myfile << "\t(robot_at ?v - robot ?wp - waypoint ?s - state)" << std::endl;
+	myfile << "\t(Rrobot_at ?v - robot ?wp - waypoint ?s - state)" << std::endl;
 	myfile << "\t(object_at ?o - object ?wp - waypoint ?s - state)" << std::endl;
 	myfile << "\t(Robject_at ?o - object ?wp - waypoint ?s - state)" << std::endl;
 	myfile << "\t(box_at ?b - box ?wp - waypoint)" << std::endl;
 	myfile << "\t(Rbox_at ?b - box ?wp - waypoint)" << std::endl;
-	myfile << "\t(gripper_empty ?r - robot ?s - state)" << std::endl;
-	myfile << "\t(Rgripper_empty ?r - robot ?s - state)" << std::endl;
-	myfile << "\t(holding ?r - robot ?o - object ?s - state)" << std::endl;
-	myfile << "\t(Rholding ?r - robot ?o - object ?s - state)" << std::endl;
+	myfile << "\t(gripper_empty ?v - robot ?s - state)" << std::endl;
+	myfile << "\t(Rgripper_empty ?v - robot ?s - state)" << std::endl;
+	myfile << "\t(holding ?v - robot ?o - object ?s - state)" << std::endl;
+	myfile << "\t(Rholding ?v - robot ?o - object ?s - state)" << std::endl;
 	myfile << "\t(is_not_occupied ?wp - waypoint ?s - state)" << std::endl;
 	myfile << "\t(Ris_not_occupied ?wp - waypoint ?s - state)" << std::endl;
 	myfile << "\t(tidy ?o - object ?s - state)" << std::endl;
@@ -229,10 +229,10 @@ void ContingentTidyPDDLGenerator::generateDomainFile(const std::string& file_nam
 	myfile << "\t(Rtidy_location ?t - type ?wp - waypoint ?s - state)" << std::endl;
 	//myfile << "\t(push_location ?o - object ?wp - waypoint ?s - state)" << std::endl;
 	//myfile << "\t(Rpush_location ?o - object ?wp - waypoint ?s - state)" << std::endl;
-	myfile << "\t(can_pickup ?r - robot ?t - type ?s - state)" << std::endl;
-	myfile << "\t(Rcan_pickup ?r - robot ?t - type ?s - state)" << std::endl;
-	myfile << "\t(can_push ?r - robot ?t - type ?s - state)" << std::endl;
-	myfile << "\t(Rcan_push ?r - robot ?t - type ?s - state)" << std::endl;
+	myfile << "\t(can_pickup ?v - robot ?t - type ?s - state)" << std::endl;
+	myfile << "\t(Rcan_pickup ?v - robot ?t - type ?s - state)" << std::endl;
+	myfile << "\t(can_push ?v - robot ?t - type ?s - state)" << std::endl;
+	myfile << "\t(Rcan_push ?v - robot ?t - type ?s - state)" << std::endl;
 	myfile << "\t(can_fit_inside ?t - type ?b - box ?s - state)" << std::endl;
 	myfile << "\t(Rcan_fit_inside ?t - type ?b - box ?s - state)" << std::endl;
 	myfile << "\t(can_stack_on ?o1 ?o2 - object ?s - state)" << std::endl;
@@ -314,7 +314,7 @@ void ContingentTidyPDDLGenerator::generateDomainFile(const std::string& file_nam
 	 * Put object in a box.
 	 */
 	myfile << "(:action put_object_in_box" << std::endl;
-	myfile << "\t:parameters (?r - robot ?wp ?wp2 - waypoint ?o1 - object ?b - box ?t - type)" << std::endl;
+	myfile << "\t:parameters (?v - robot ?wp ?wp2 - waypoint ?o1 - object ?b - box ?t - type)" << std::endl;
 	myfile << "\t:precondition (and" << std::endl;
 	myfile << "\t\t(not (resolve-axioms))" << std::endl;
 	myfile << "\t\t(box_at ?b ?wp)" << std::endl;
@@ -324,8 +324,8 @@ void ContingentTidyPDDLGenerator::generateDomainFile(const std::string& file_nam
 		const KnowledgeBase* knowledge_base = *ci;
 		for (std::vector<const State*>::const_iterator ci = knowledge_base->states_.begin(); ci != knowledge_base->states_.end(); ++ci)
 		{
-			myfile << "\t\t(Rrobot_at ?r ?wp2 " << (*ci)->state_name_ << ")" << std::endl;
-			myfile << "\t\t(Rholding ?r ?o1 " << (*ci)->state_name_ << ")" << std::endl;
+			myfile << "\t\t(Rrobot_at ?v ?wp2 " << (*ci)->state_name_ << ")" << std::endl;
+			myfile << "\t\t(Rholding ?v ?o1 " << (*ci)->state_name_ << ")" << std::endl;
 			myfile << "\t\t(Rcan_fit_inside ?t ?b " << (*ci)->state_name_ << ")" << std::endl;
 			myfile << "\t\t(Ris_of_type ?o1 ?t " << (*ci)->state_name_ << ")" << std::endl;
 		}
@@ -339,10 +339,10 @@ void ContingentTidyPDDLGenerator::generateDomainFile(const std::string& file_nam
 	{
 		myfile << "\t\t(when (m " << (*ci)->state_name_ << ")" << std::endl;
 		myfile << "\t\t\t(and" << std::endl;
-		myfile << "\t\t\t\t(not (holding ?r ?o1 " << (*ci)->state_name_ << "))" << std::endl;
-		myfile << "\t\t\t\t(not (Rholding ?r ?o1 " << (*ci)->state_name_ << "))" << std::endl;
-		myfile << "\t\t\t\t(gripper_empty ?r " << (*ci)->state_name_ << ")" << std::endl;
-		myfile << "\t\t\t\t(Rgripper_empty ?r " << (*ci)->state_name_ << ")" << std::endl;
+		myfile << "\t\t\t\t(not (holding ?v ?o1 " << (*ci)->state_name_ << "))" << std::endl;
+		myfile << "\t\t\t\t(not (Rholding ?v ?o1 " << (*ci)->state_name_ << "))" << std::endl;
+		myfile << "\t\t\t\t(gripper_empty ?v " << (*ci)->state_name_ << ")" << std::endl;
+		myfile << "\t\t\t\t(Rgripper_empty ?v " << (*ci)->state_name_ << ")" << std::endl;
 		myfile << "\t\t\t\t(inside ?o1 ?b " << (*ci)->state_name_ << ")" << std::endl;
 		myfile << "\t\t\t\t(Rinside ?o1 ?b " << (*ci)->state_name_ << ")" << std::endl;
 		myfile << "\t\t\t)" << std::endl;
@@ -357,7 +357,7 @@ void ContingentTidyPDDLGenerator::generateDomainFile(const std::string& file_nam
 	 * PICK-UP OBJECT.
 	 */
 	myfile << "(:action pickup_object" << std::endl;
-	myfile << "\t:parameters (?r - robot ?wp ?wp2 - waypoint ?o - object ?t - type)" << std::endl;
+	myfile << "\t:parameters (?v - robot ?wp ?wp2 - waypoint ?o - object ?t - type)" << std::endl;
 	myfile << "\t:precondition (and" << std::endl;
 	myfile << "\t\t(connected ?wp ?wp2)" << std::endl;
 	myfile << "\t\t(not (resolve-axioms))" << std::endl;
@@ -366,11 +366,11 @@ void ContingentTidyPDDLGenerator::generateDomainFile(const std::string& file_nam
 		const KnowledgeBase* knowledge_base = *ci;
 		for (std::vector<const State*>::const_iterator ci = knowledge_base->states_.begin(); ci != knowledge_base->states_.end(); ++ci)
 		{
-			myfile << "\t\t(Rrobot_at ?r ?wp2 " << (*ci)->state_name_ << ")" << std::endl;
+			myfile << "\t\t(Rrobot_at ?v ?wp2 " << (*ci)->state_name_ << ")" << std::endl;
 			myfile << "\t\t(Robject_at ?o ?wp " << (*ci)->state_name_ << ")" << std::endl;
 			//myfile << "\t\t(Rclear ?o " << (*ci)->state_name_ << ")" << std::endl;
-			myfile << "\t\t(Rgripper_empty ?r " << (*ci)->state_name_ << ")" << std::endl;
-			myfile << "\t\t(Rcan_pickup ?r ?t " << (*ci)->state_name_ << ")" << std::endl;
+			myfile << "\t\t(Rgripper_empty ?v " << (*ci)->state_name_ << ")" << std::endl;
+			myfile << "\t\t(Rcan_pickup ?v ?t " << (*ci)->state_name_ << ")" << std::endl;
 			myfile << "\t\t(Ris_of_type ?o ?t " << (*ci)->state_name_ << ")" << std::endl;
 		}
 	}
@@ -383,14 +383,14 @@ void ContingentTidyPDDLGenerator::generateDomainFile(const std::string& file_nam
 	{
 		myfile << "\t\t(when (m " << (*ci)->state_name_ << ")" << std::endl;
 		myfile << "\t\t\t(and" << std::endl;
-		myfile << "\t\t\t\t(not (gripper_empty ?r " << (*ci)->state_name_ << "))" << std::endl;
-		myfile << "\t\t\t\t(not (Rgripper_empty ?r " << (*ci)->state_name_ << "))" << std::endl;
+		myfile << "\t\t\t\t(not (gripper_empty ?v " << (*ci)->state_name_ << "))" << std::endl;
+		myfile << "\t\t\t\t(not (Rgripper_empty ?v " << (*ci)->state_name_ << "))" << std::endl;
 		myfile << "\t\t\t\t(not (object_at ?o ?wp " << (*ci)->state_name_ << "))" << std::endl;
 		myfile << "\t\t\t\t(not (Robject_at ?o ?wp " << (*ci)->state_name_ << "))" << std::endl;
 		myfile << "\t\t\t\t(is_not_occupied ?wp " << (*ci)->state_name_ << ")" << std::endl;
 		myfile << "\t\t\t\t(Ris_not_occupied ?wp " << (*ci)->state_name_ << ")" << std::endl;
-		myfile << "\t\t\t\t(holding ?r ?o " << (*ci)->state_name_ << ")" << std::endl;
-		myfile << "\t\t\t\t(Rholding ?r ?o " << (*ci)->state_name_ << ")" << std::endl;
+		myfile << "\t\t\t\t(holding ?v ?o " << (*ci)->state_name_ << ")" << std::endl;
+		myfile << "\t\t\t\t(Rholding ?v ?o " << (*ci)->state_name_ << ")" << std::endl;
 		myfile << "\t\t\t)" << std::endl;
 		myfile << "\t\t)" << std::endl;
 	}
@@ -403,7 +403,7 @@ void ContingentTidyPDDLGenerator::generateDomainFile(const std::string& file_nam
 	 * PUT-DOWN OBJECT.
 	 */
 	myfile << "(:action putdown_object" << std::endl;
-	myfile << "\t:parameters (?r - robot ?wp ?wp2 - waypoint ?o - object)" << std::endl;
+	myfile << "\t:parameters (?v - robot ?wp ?wp2 - waypoint ?o - object)" << std::endl;
 	myfile << "\t:precondition (and" << std::endl;
 	myfile << "\t\t(not (resolve-axioms))" << std::endl;
 	myfile << "\t\t(connected ?wp ?wp2)" << std::endl;
@@ -412,8 +412,8 @@ void ContingentTidyPDDLGenerator::generateDomainFile(const std::string& file_nam
 		const KnowledgeBase* knowledge_base = *ci;
 		for (std::vector<const State*>::const_iterator ci = knowledge_base->states_.begin(); ci != knowledge_base->states_.end(); ++ci)
 		{
-			myfile << "\t\t(Rrobot_at ?r ?wp " << (*ci)->state_name_ << ")" << std::endl;
-			myfile << "\t\t(Rholding ?r ?o " << (*ci)->state_name_ << ")" << std::endl;
+			myfile << "\t\t(Rrobot_at ?v ?wp " << (*ci)->state_name_ << ")" << std::endl;
+			myfile << "\t\t(Rholding ?v ?o " << (*ci)->state_name_ << ")" << std::endl;
 			myfile << "\t\t(Ris_not_occupied ?wp2 " << (*ci)->state_name_ << ")" << std::endl;
 		}
 	}
@@ -426,12 +426,12 @@ void ContingentTidyPDDLGenerator::generateDomainFile(const std::string& file_nam
 	{
 		myfile << "\t\t(when (m " << (*ci)->state_name_ << ")" << std::endl;
 		myfile << "\t\t\t(and" << std::endl;
-		myfile << "\t\t\t\t(not (holding ?r ?o " << (*ci)->state_name_ << "))" << std::endl;
-		myfile << "\t\t\t\t(not (Rholding ?r ?o " << (*ci)->state_name_ << "))" << std::endl;
+		myfile << "\t\t\t\t(not (holding ?v ?o " << (*ci)->state_name_ << "))" << std::endl;
+		myfile << "\t\t\t\t(not (Rholding ?v ?o " << (*ci)->state_name_ << "))" << std::endl;
 		myfile << "\t\t\t\t(not (is_not_occupied ?wp2 " << (*ci)->state_name_ << "))" << std::endl;
 		myfile << "\t\t\t\t(not (Ris_not_occupied ?wp2 " << (*ci)->state_name_ << "))" << std::endl;
-		myfile << "\t\t\t\t(gripper_empty ?r " << (*ci)->state_name_ << ")" << std::endl;
-		myfile << "\t\t\t\t(Rgripper_empty ?r " << (*ci)->state_name_ << ")" << std::endl;
+		myfile << "\t\t\t\t(gripper_empty ?v " << (*ci)->state_name_ << ")" << std::endl;
+		myfile << "\t\t\t\t(Rgripper_empty ?v " << (*ci)->state_name_ << ")" << std::endl;
 		myfile << "\t\t\t\t(object_at ?o ?wp2 " << (*ci)->state_name_ << ")" << std::endl;
 		myfile << "\t\t\t\t(Robject_at ?o ?wp2 " << (*ci)->state_name_ << ")" << std::endl;
 		myfile << "\t\t\t)" << std::endl;
@@ -446,7 +446,7 @@ void ContingentTidyPDDLGenerator::generateDomainFile(const std::string& file_nam
 	 * GOTO WAYPOINT.
 	 */
 	myfile << "(:action goto_waypoint" << std::endl;
-	myfile << "\t:parameters (?r - robot ?from ?to - waypoint)" << std::endl;
+	myfile << "\t:parameters (?v - robot ?from ?to - waypoint)" << std::endl;
 	myfile << "\t:precondition (and" << std::endl;
 	myfile << "\t\t(not (resolve-axioms))" << std::endl;
 	myfile << "\t\t(connected ?from ?to)" << std::endl;
@@ -455,7 +455,7 @@ void ContingentTidyPDDLGenerator::generateDomainFile(const std::string& file_nam
 		const KnowledgeBase* knowledge_base = *ci;
 		for (std::vector<const State*>::const_iterator ci = knowledge_base->states_.begin(); ci != knowledge_base->states_.end(); ++ci)
 		{
-			myfile << "\t\t(Rrobot_at ?r ?from " << (*ci)->state_name_ << ")" << std::endl;
+			myfile << "\t\t(Rrobot_at ?v ?from " << (*ci)->state_name_ << ")" << std::endl;
 			myfile << "\t\t(Ris_not_occupied ?to " << (*ci)->state_name_ << ")" << std::endl;
 		}
 	}
@@ -468,12 +468,12 @@ void ContingentTidyPDDLGenerator::generateDomainFile(const std::string& file_nam
 	{
 		myfile << "\t\t(when (m " << (*ci)->state_name_ << ")" << std::endl;
 		myfile << "\t\t\t(and" << std::endl;
-		myfile << "\t\t\t\t(not (robot_at ?r ?from " << (*ci)->state_name_ << "))" << std::endl;
-		myfile << "\t\t\t\t(not (Rrobot_at ?r ?from " << (*ci)->state_name_ << "))" << std::endl;
+		myfile << "\t\t\t\t(not (robot_at ?v ?from " << (*ci)->state_name_ << "))" << std::endl;
+		myfile << "\t\t\t\t(not (Rrobot_at ?v ?from " << (*ci)->state_name_ << "))" << std::endl;
 		myfile << "\t\t\t\t(not (is_not_occupied ?to " << (*ci)->state_name_ << "))" << std::endl;
 		myfile << "\t\t\t\t(not (Ris_not_occupied ?to " << (*ci)->state_name_ << "))" << std::endl;
-		myfile << "\t\t\t\t(robot_at ?r ?to " << (*ci)->state_name_ << ")" << std::endl;
-		myfile << "\t\t\t\t(Rrobot_at ?r ?to " << (*ci)->state_name_ << ")" << std::endl;
+		myfile << "\t\t\t\t(robot_at ?v ?to " << (*ci)->state_name_ << ")" << std::endl;
+		myfile << "\t\t\t\t(Rrobot_at ?v ?to " << (*ci)->state_name_ << ")" << std::endl;
 		myfile << "\t\t\t\t(is_not_occupied ?from " << (*ci)->state_name_ << ")" << std::endl;
 		myfile << "\t\t\t\t(Ris_not_occupied ?from " << (*ci)->state_name_ << ")" << std::endl;
 		myfile << "\t\t\t)" << std::endl;
@@ -488,7 +488,7 @@ void ContingentTidyPDDLGenerator::generateDomainFile(const std::string& file_nam
 	 * PUSH OBJECT.
 	 *
 	myfile << "(:action push_object" << std::endl;
-	myfile << "\t:parameters (?r - robot ?ob - object ?t - type ?from ?to ?obw - waypoint)" << std::endl;
+	myfile << "\t:parameters (?v - robot ?ob - object ?t - type ?from ?to ?obw - waypoint)" << std::endl;
 	myfile << "\t:precondition (and" << std::endl;
 	myfile << "\t\t(not (resolve-axioms))" << std::endl;
 	for (std::vector<const KnowledgeBase*>::const_iterator ci = knowledge_bases.begin(); ci != knowledge_bases.end(); ++ci)
@@ -496,10 +496,10 @@ void ContingentTidyPDDLGenerator::generateDomainFile(const std::string& file_nam
 		const KnowledgeBase* knowledge_base = *ci;
 		for (std::vector<const State*>::const_iterator ci = knowledge_base->states_.begin(); ci != knowledge_base->states_.end(); ++ci)
 		{
-			myfile << "\t\t(Rrobot_at ?r ?from " << (*ci)->state_name_ << ")" << std::endl;
+			myfile << "\t\t(Rrobot_at ?v ?from " << (*ci)->state_name_ << ")" << std::endl;
 			myfile << "\t\t(Robject_at ?ob ?obw " << (*ci)->state_name_ << ")" << std::endl;
 			myfile << "\t\t(Rpush_location ?ob ?from " << (*ci)->state_name_ << ")" << std::endl;
-			myfile << "\t\t(Rcan_push ?r ?t " << (*ci)->state_name_ << ")" << std::endl;
+			myfile << "\t\t(Rcan_push ?v ?t " << (*ci)->state_name_ << ")" << std::endl;
 			myfile << "\t\t(Ris_of_type ?ob ?t " << (*ci)->state_name_ << ")" << std::endl;
 		}
 	}
@@ -512,12 +512,12 @@ void ContingentTidyPDDLGenerator::generateDomainFile(const std::string& file_nam
 	{
 		myfile << "\t\t(when (m " << (*ci)->state_name_ << ")" << std::endl;
 		myfile << "\t\t\t(and" << std::endl;
-		myfile << "\t\t\t\t(not (robot_at ?r ?from " << (*ci)->state_name_ << "))" << std::endl;
-		myfile << "\t\t\t\t(not (Rrobot_at ?r ?from " << (*ci)->state_name_ << "))" << std::endl;
+		myfile << "\t\t\t\t(not (robot_at ?v ?from " << (*ci)->state_name_ << "))" << std::endl;
+		myfile << "\t\t\t\t(not (Rrobot_at ?v ?from " << (*ci)->state_name_ << "))" << std::endl;
 		myfile << "\t\t\t\t(not (object_at ?ob ?from " << (*ci)->state_name_ << "))" << std::endl;
 		myfile << "\t\t\t\t(not (Robject_at ?ob ?from " << (*ci)->state_name_ << "))" << std::endl;
-		myfile << "\t\t\t\t(robot_at ?r ?to " << (*ci)->state_name_ << ")" << std::endl;
-		myfile << "\t\t\t\t(Rrobot_at ?r ?to " << (*ci)->state_name_ << ")" << std::endl;
+		myfile << "\t\t\t\t(robot_at ?v ?to " << (*ci)->state_name_ << ")" << std::endl;
+		myfile << "\t\t\t\t(Rrobot_at ?v ?to " << (*ci)->state_name_ << ")" << std::endl;
 		myfile << "\t\t\t\t(object_at ?ob ?to " << (*ci)->state_name_ << ")" << std::endl;
 		myfile << "\t\t\t\t(Robject_at ?ob ?to " << (*ci)->state_name_ << ")" << std::endl;
 		myfile << "\t\t\t)" << std::endl;
@@ -533,7 +533,7 @@ void ContingentTidyPDDLGenerator::generateDomainFile(const std::string& file_nam
 	 * TIDY OBJECT.
 	 */
 	myfile << "(:action tidy_object" << std::endl;
-	myfile << "\t:parameters (?r - robot ?o - object ?b - box ?t - type)" << std::endl;
+	myfile << "\t:parameters (?v - robot ?o - object ?b - box ?t - type)" << std::endl;
 	myfile << "\t:precondition (and" << std::endl;
 	myfile << "\t\t(not (resolve-axioms))" << std::endl;
 	for (std::vector<const KnowledgeBase*>::const_iterator ci = knowledge_bases.begin(); ci != knowledge_bases.end(); ++ci)
@@ -576,7 +576,7 @@ void ContingentTidyPDDLGenerator::generateDomainFile(const std::string& file_nam
 	myfile << ";; Sense the type of object." << std::endl;
 	myfile << "(:action observe-is_of_type" << std::endl;
 
-	myfile << "\t:parameters (?o - object ?t - type ?r - robot ?wp ?wp2 - waypoint ?l ?l2 - level ?kb - knowledgebase)" << std::endl;
+	myfile << "\t:parameters (?o - object ?t - type ?v - robot ?wp ?wp2 - waypoint ?l ?l2 - level ?kb - knowledgebase)" << std::endl;
 	myfile << "\t:precondition (and" << std::endl;
 	myfile << "\t\t(not (resolve-axioms))" << std::endl;
 	myfile << "\t\t(next ?l ?l2)" << std::endl;
@@ -593,7 +593,7 @@ void ContingentTidyPDDLGenerator::generateDomainFile(const std::string& file_nam
 		const KnowledgeBase* knowledge_base = *ci;
 		for (std::vector<const State*>::const_iterator ci = knowledge_base->states_.begin(); ci != knowledge_base->states_.end(); ++ci)
 		{
-			myfile << "\t\t(Rrobot_at ?r ?wp " << (*ci)->state_name_ << ")" << std::endl;
+			myfile << "\t\t(Rrobot_at ?v ?wp " << (*ci)->state_name_ << ")" << std::endl;
 			myfile << "\t\t(Robject_at ?o ?wp2 " << (*ci)->state_name_ << ")" << std::endl;
 		}
 	}
@@ -663,7 +663,7 @@ void ContingentTidyPDDLGenerator::generateDomainFile(const std::string& file_nam
 	myfile << ";; Sense the type of object." << std::endl;
 	myfile << "(:action test-push-affordability" << std::endl;
 
-	myfile << "\t:parameters (?t - type ?o - object ?r - robot ?wp - waypoint ?l ?l2 - level ?kb - knowledgebase)" << std::endl;
+	myfile << "\t:parameters (?t - type ?o - object ?v - robot ?wp - waypoint ?l ?l2 - level ?kb - knowledgebase)" << std::endl;
 	myfile << "\t:precondition (and" << std::endl;
 	myfile << "\t\t(not (resolve-axioms))" << std::endl;
 	myfile << "\t\t(next ?l ?l2)" << std::endl;
@@ -678,15 +678,15 @@ void ContingentTidyPDDLGenerator::generateDomainFile(const std::string& file_nam
 		const KnowledgeBase* knowledge_base = *ci;
 		for (std::vector<const State*>::const_iterator ci = knowledge_base->states_.begin(); ci != knowledge_base->states_.end(); ++ci)
 		{
-			myfile << "\t\t(Rrobot_at ?r ?wp " << (*ci)->state_name_ << ")" << std::endl;
+			myfile << "\t\t(Rrobot_at ?v ?wp " << (*ci)->state_name_ << ")" << std::endl;
 			myfile << "\t\t(Robject_at ?o ?wp " << (*ci)->state_name_ << ")" << std::endl;
 		}
 	}
 
 	myfile << "\t\t;; This action is only applicable if there are world states where the outcome can be different." << std::endl;
 	
-	myfile << "\t\t(exists (?s - state) (and (m ?s) (can_push ?r ?t ?s) (part-of ?s ?kb)))" << std::endl;
-	myfile << "\t\t(exists (?s - state) (and (m ?s) (not (can_push ?r ?t ?s)) (part-of ?s ?kb)))" << std::endl;;
+	myfile << "\t\t(exists (?s - state) (and (m ?s) (can_push ?v ?t ?s) (part-of ?s ?kb)))" << std::endl;
+	myfile << "\t\t(exists (?s - state) (and (m ?s) (not (can_push ?v ?t ?s)) (part-of ?s ?kb)))" << std::endl;;
 	
 	myfile << "\t)" << std::endl;
 	myfile << "\t:effect (and" << std::endl;
@@ -696,7 +696,7 @@ void ContingentTidyPDDLGenerator::generateDomainFile(const std::string& file_nam
 	myfile << "\t\t;; For every state ?s" << std::endl;
 	for (std::vector<const State*>::const_iterator ci = states.begin(); ci != states.end(); ++ci)
 	{
-		myfile << "\t\t(when (and (m " << (*ci)->state_name_ << ") (not (can_push ?r ?t " << (*ci)->state_name_ << ")))" << std::endl;
+		myfile << "\t\t(when (and (m " << (*ci)->state_name_ << ") (not (can_push ?v ?t " << (*ci)->state_name_ << ")))" << std::endl;
 		myfile << "\t\t\t(and (stack " << (*ci)->state_name_ << " ?l) (not (m " << (*ci)->state_name_ << ")))" << std::endl;
 		myfile << "\t\t)" << std::endl;
 	}
@@ -711,7 +711,7 @@ void ContingentTidyPDDLGenerator::generateDomainFile(const std::string& file_nam
 	myfile << ";; Sense the type of object." << std::endl;
 	myfile << "(:action test-pickup-affordability" << std::endl;
 
-	myfile << "\t:parameters (?t - type ?o - object ?r - robot ?wp - waypoint ?l ?l2 - level ?kb - knowledgebase)" << std::endl;
+	myfile << "\t:parameters (?t - type ?o - object ?v - robot ?wp - waypoint ?l ?l2 - level ?kb - knowledgebase)" << std::endl;
 
 	myfile << "\t:precondition (and" << std::endl;
 	myfile << "\t\t(not (resolve-axioms))" << std::endl;
@@ -727,15 +727,15 @@ void ContingentTidyPDDLGenerator::generateDomainFile(const std::string& file_nam
 		const KnowledgeBase* knowledge_base = *ci;
 		for (std::vector<const State*>::const_iterator ci = knowledge_base->states_.begin(); ci != knowledge_base->states_.end(); ++ci)
 		{
-			myfile << "\t\t(Rrobot_at ?r ?wp " << (*ci)->state_name_ << ")" << std::endl;
+			myfile << "\t\t(Rrobot_at ?v ?wp " << (*ci)->state_name_ << ")" << std::endl;
 			myfile << "\t\t(Robject_at ?o ?wp " << (*ci)->state_name_ << ")" << std::endl;
 		}
 	}
 
 	myfile << "\t\t;; This action is only applicable if there are world states where the outcome can be different." << std::endl;
 	
-	myfile << "\t\t(exists (?s - state) (and (m ?s) (can_pickup ?r ?t ?s) (part-of ?s ?kb)))" << std::endl;
-	myfile << "\t\t(exists (?s - state) (and (m ?s) (not (can_pickup ?r ?t ?s)) (part-of ?s ?kb)))" << std::endl;;
+	myfile << "\t\t(exists (?s - state) (and (m ?s) (can_pickup ?v ?t ?s) (part-of ?s ?kb)))" << std::endl;
+	myfile << "\t\t(exists (?s - state) (and (m ?s) (not (can_pickup ?v ?t ?s)) (part-of ?s ?kb)))" << std::endl;;
 	myfile << "\t)" << std::endl;
 	myfile << "\t:effect (and" << std::endl;
 	myfile << "\t\t(not (lev ?l))" << std::endl;
@@ -744,7 +744,7 @@ void ContingentTidyPDDLGenerator::generateDomainFile(const std::string& file_nam
 	myfile << "\t\t;; For every state ?s" << std::endl;
 	for (std::vector<const State*>::const_iterator ci = states.begin(); ci != states.end(); ++ci)
 	{
-		myfile << "\t\t(when (and (m " << (*ci)->state_name_ << ") (not (can_pickup ?r ?t " << (*ci)->state_name_ << ")))" << std::endl;
+		myfile << "\t\t(when (and (m " << (*ci)->state_name_ << ") (not (can_pickup ?v ?t " << (*ci)->state_name_ << ")))" << std::endl;
 		myfile << "\t\t\t(and (stack " << (*ci)->state_name_ << " ?l) (not (m " << (*ci)->state_name_ << ")))" << std::endl;
 		myfile << "\t\t)" << std::endl;
 	}
@@ -759,7 +759,7 @@ void ContingentTidyPDDLGenerator::generateDomainFile(const std::string& file_nam
 	myfile << ";; Sense the type of object." << std::endl;
 	myfile << "(:action observe-stackable-affordability" << std::endl;
 
-	myfile << "\t:parameters (?o1 ?o2 - object ?r - robot ?wp - waypoint ?l ?l2 - level ?kb - knowledgebase)" << std::endl;
+	myfile << "\t:parameters (?o1 ?o2 - object ?v - robot ?wp - waypoint ?l ?l2 - level ?kb - knowledgebase)" << std::endl;
 	myfile << "\t:precondition (and" << std::endl;
 	myfile << "\t\t(not (resolve-axioms))" << std::endl;
 	myfile << "\t\t(next ?l ?l2)" << std::endl;
@@ -774,7 +774,7 @@ void ContingentTidyPDDLGenerator::generateDomainFile(const std::string& file_nam
 		const KnowledgeBase* knowledge_base = *ci;
 		for (std::vector<const State*>::const_iterator ci = knowledge_base->states_.begin(); ci != knowledge_base->states_.end(); ++ci)
 		{
-			myfile << "\t\t(Rrobot_at ?r ?wp " << (*ci)->state_name_ << ")" << std::endl;
+			myfile << "\t\t(Rrobot_at ?v ?wp " << (*ci)->state_name_ << ")" << std::endl;
 			myfile << "\t\t(Robject_at ?o1 ?wp " << (*ci)->state_name_ << ")" << std::endl;
 			myfile << "\t\t(Robject_at ?o2 ?wp " << (*ci)->state_name_ << ")" << std::endl;
 		}
@@ -807,7 +807,7 @@ void ContingentTidyPDDLGenerator::generateDomainFile(const std::string& file_nam
 	myfile << ";; Sense the location of an object." << std::endl;
 	myfile << "(:action observe-object-location" << std::endl;
 
-	myfile << "\t:parameters (?o - object ?r - robot ?wp - waypoint ?l ?l2 - level ?kb - knowledgebase)" << std::endl;
+	myfile << "\t:parameters (?o - object ?v - robot ?wp - waypoint ?l ?l2 - level ?kb - knowledgebase)" << std::endl;
 	myfile << "\t:precondition (and" << std::endl;
 	myfile << "\t\t(not (resolve-axioms))" << std::endl;
 	myfile << "\t\t(next ?l ?l2)" << std::endl;
@@ -821,7 +821,7 @@ void ContingentTidyPDDLGenerator::generateDomainFile(const std::string& file_nam
 		const KnowledgeBase* knowledge_base = *ci;
 		for (std::vector<const State*>::const_iterator ci = knowledge_base->states_.begin(); ci != knowledge_base->states_.end(); ++ci)
 		{
-			myfile << "\t\t(Rrobot_at ?r ?wp " << (*ci)->state_name_ << ")" << std::endl;
+			myfile << "\t\t(Rrobot_at ?v ?wp " << (*ci)->state_name_ << ")" << std::endl;
 		}
 	}
 

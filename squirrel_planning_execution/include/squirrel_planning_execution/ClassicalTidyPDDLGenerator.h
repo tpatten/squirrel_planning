@@ -26,26 +26,28 @@ namespace KCL_rosplan {
 		 * @param file_name The path and file name of where the problem file should be written to.
 		 * @param robot_location_predicate The initial location of the robot.
 		 * @param object_to_location_mapping Mappings of the objects to the locations of where they are.
-		 * @param near_location_mapping Mappings of locations to locations that are near them.
+		 * @param grasping_location_mapping Mappings of locations to locations that are close to objects for grasping.
+		 * @param pushing_location_mapping Mappings of locations to locations from where we can push objects.
 		 * @param object_to_type_mapping Mappings of the objects to their types.
 		 * @param box_to_location_mapping Mappings of the boxes to their locations.
 		 * @param box_to_type_mapping Mappings of the boxes to their types
 		 * @param box_to_location_mapping A mapping for each box to its location predicate.
 		 */
-		static void generateProblemFile(const std::string& file_name, const std::string& robot_location_predicate, const std::map<std::string, std::string>& object_to_location_mapping, const std::map<std::string, std::vector<std::string > >& near_location_mapping, const std::map<std::string, std::string>& object_to_type_mapping, const std::map<std::string, std::string>& box_to_location_mapping, const std::map<std::string, std::string>& box_to_type_mapping, const std::map<std::string, std::vector<std::string> >& near_box_location_mapping);
+		static void generateProblemFile(const std::string& file_name, const std::string& robot_location_predicate, const std::map<std::string, std::string>& object_to_location_mapping, const std::map<std::string, std::vector<std::string > >& grasping_location_mapping, const std::map<std::string, std::vector<std::string > >& pushing_location_mapping, const std::map<std::string, std::string>& object_to_type_mapping, const std::map<std::string, std::string>& box_to_location_mapping, const std::map<std::string, std::string>& box_to_type_mapping, const std::map<std::string, std::vector<std::string> >& near_box_location_mapping);
 		
 		/**
 		 * Generate the domain file given the set of objects, locations, etc.
 		 * @param file_name The path and file name of where the domain file should be written to.
 		 * @param robot_location_predicate The initial location of the robot.
 		 * @param object_to_location_mapping Mappings of the objects to the locations of where they are.
-		 * @param near_location_mapping Mappings of locations to locations that are near them.
+		 * @param grasping_location_mapping Mappings of locations to locations that are close to objects for grasping.
+		 * @param pushing_location_mapping Mappings of locations to locations from where we can push objects.
 		 * @param object_to_type_mapping Mappings of the objects to their types.
 		 * @param box_to_location_mapping Mappings of the boxes to their locations.
 		 * @param box_to_type_mapping Mappings of the boxes to their types.
 		 * @param box_to_location_mapping A mapping for each box to its location predicate.
 		 */
-		static void generateDomainFile(const std::string& file_name, const std::string& robot_location_predicate, const std::map<std::string, std::string>& object_to_location_mapping, const std::map<std::string, std::vector<std::string > >& near_location_mapping, const std::map<std::string, std::string>& object_to_type_mapping, const std::map<std::string, std::string>& box_to_location_mapping, const std::map<std::string, std::string>& box_to_type_mapping, const std::map<std::string, std::vector<std::string> >& near_box_location_mapping);
+		static void generateDomainFile(const std::string& file_name, const std::string& robot_location_predicate, const std::map<std::string, std::string>& object_to_location_mapping, const std::map<std::string, std::vector<std::string > >& grasping_location_mapping, const std::map<std::string, std::vector<std::string > >& pushing_location_mapping, const std::map<std::string, std::string>& object_to_type_mapping, const std::map<std::string, std::string>& box_to_location_mapping, const std::map<std::string, std::string>& box_to_type_mapping, const std::map<std::string, std::vector<std::string> >& near_box_location_mapping);
 
 	public:
 		
@@ -61,7 +63,7 @@ namespace KCL_rosplan {
 		 * @param box_to_type_mapping A mapping for each box to the type predicate of each object type it can contain.
 		 * @param box_to_location_mapping A mapping for each box to its location predicate.
 		 */
-		static void createPDDL(const std::string& path, const std::string& domain_file, const std::string& problem_file, const std::string& robot_location_predicate, const std::map<std::string, std::string>& object_to_location_mapping, const std::map<std::string, std::vector<std::string > >& near_location_mapping, const std::map<std::string, std::string>& object_to_type_mapping, const std::map<std::string, std::string>& box_to_location_mapping, const std::map<std::string, std::string>& box_to_type_mapping, const std::map<std::string, std::vector<std::string> >& near_box_location_mapping);
+		static void createPDDL(const std::string& path, const std::string& domain_file, const std::string& problem_file, const std::string& robot_location_predicate, const std::map<std::string, std::string>& object_to_location_mapping, const std::map<std::string, std::vector<std::string > >& grasping_location_mapping, const std::map<std::string, std::vector<std::string > >& pushing_location_mapping, const std::map<std::string, std::string>& object_to_type_mapping, const std::map<std::string, std::string>& box_to_location_mapping, const std::map<std::string, std::string>& box_to_type_mapping, const std::map<std::string, std::vector<std::string> >& near_box_location_mapping);
 	};
 }
 #endif

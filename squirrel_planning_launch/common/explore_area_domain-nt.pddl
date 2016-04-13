@@ -9,14 +9,14 @@
 
 (:predicates
 	(explored ?wp - waypoint)
-	(robot_at ?r - robot ?wp - waypoint)
+	(robot_at ?v - robot ?wp - waypoint)
 )
 
 ;; Use perception actions to search for objects at the current waypoint
 (:action explore_waypoint
-	:parameters (?r - robot ?wp - waypoint)
+	:parameters (?v - robot ?wp - waypoint)
 	:precondition (and
-		(robot_at ?r ?wp)
+		(robot_at ?v ?wp)
 	)
 	:effect (and
 		(explored ?wp)
@@ -25,12 +25,12 @@
 
 ;; Move between any two waypoints, avoiding terrain
 (:action goto_waypoint
-	:parameters (?r - robot ?from ?to - waypoint)
+	:parameters (?v - robot ?from ?to - waypoint)
 	:precondition (and
-		(robot_at ?r ?from))
+		(robot_at ?v ?from))
 	:effect (and
-		(not (robot_at ?r ?from))
-		(robot_at ?r ?to)
+		(not (robot_at ?v ?from))
+		(robot_at ?v ?to)
 	)
 )
 )
