@@ -40,6 +40,11 @@
 		<param name="action_server" value="/squirrel_look_for_objects" />
 	</node>
 
+	<node name="squirrel_planning_interface_pushing" pkg="squirrel_interface_manipulation" type="rppushServer" output="screen">
+		<param name="smash_action_server" value="/smash" />
+		<param name="push_action_server" value="/push" />
+	</node>
+
 	<node name="rosplan_interface_movebase" pkg="rosplan_interface_movebase" type="rpmovebase" output="screen">
 		<param name="action_server" value="/move_base" />
 	</node>
