@@ -1045,7 +1045,7 @@ namespace KCL_rosplan {
 			
 			
 			rosplan_knowledge_msgs::GetAttributeService get_attribute;
-			/*
+			
 			// Get the location of the boxes.
 			// (box_at ?b - box ?wp - waypoint)
 			get_attribute.request.predicate_name = "box_at";
@@ -1186,7 +1186,7 @@ namespace KCL_rosplan {
 				box_to_type_mapping[box_predicate] = type_predicate;
 				type_to_box_pose_mapping[type_predicate] = box_to_pose_mapping[box_predicate];
 			}
-			*/
+			
 			// Get the location of kenny.
 			// (robot_at ?v - robot ?wp - waypoint)
 			get_attribute.request.predicate_name = "robot_at";
