@@ -12,7 +12,7 @@ You need the ROSPlan repository
 (follow the installation instructions here: https://github.com/KCL-Planning/ROSPlan/wiki/a.-Installation )
 ```
 git clone https://github.com/clearpathrobotics/occupancy_grid_utils
-git clone https://github.com/kcl-planning/ROSPlan.git
+git clone -b squirrel https://github.com/kcl-planning/ROSPlan.git
 ```
 Additionally you will require Flex and MongoDB.
 ```

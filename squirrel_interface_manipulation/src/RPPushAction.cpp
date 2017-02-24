@@ -4,23 +4,21 @@
 namespace KCL_rosplan {
 
 	/* constructor */
-	RPPushAction::RPPushAction(ros::NodeHandle &nh, std::string &pushactionserver, std::string &smashactionserver, bool simulate)
-	 : message_store(nh), push_action_client(pushactionserver, true), smash_action_client(smashactionserver, true), 
-	   simulate_client("/move_base", true), simulate_(simulate) {
+	RPPushAction::RPPushAction(ros::NodeHandle &nh, std::string &pushactionserver, std::string &smashactionserver)
+	 : message_store(nh), push_action_client(pushactionserver, true), smash_action_client(smashactionserver, true) {
 
 		// create the push action client
-		if(!simulate) {
-			ROS_INFO("KCL: (PushAction) waiting for action server to start on %s", pushactionserver.c_str());
-			push_action_client.waitForServer();
-			ROS_INFO("KCL: (PushAction) waiting for action server to start on %s", smashactionserver.c_str());
-			smash_action_client.waitForServer();
-		} else {
-			ROS_INFO("KCL: (PushAction) waiting for action server to start on /move_base");
-			simulate_client.waitForServer();
-		}
+		ROS_INFO("KCL: (PushAction) waiting for action server to start on %s", pushactionserver.c_str());
+		push_action_client.waitForServer();
+		ROS_INFO("KCL: (PushAction) waiting for action server to start on %s", smashactionserver.c_str());
+		smash_action_client.waitForServer();
 
 		// create the action feedback publisher
 		action_feedback_pub = nh.advertise<rosplan_dispatch_msgs::ActionFeedback>("/kcl_rosplan/action_feedback", 10, true);
+
+		// create knowledge base link
+		update_knowledge_client = nh.serviceClient<rosplan_knowledge_msgs::KnowledgeUpdateService>("/kcl_rosplan/update_knowledge_base");
+
 	}
 
 	/* action dispatch callback */
@@ -31,7 +29,9 @@ namespace KCL_rosplan {
 		if(0==msg->name.compare("smash_clutter")) dispatchSmashAction(msg);
 	}
 
-	/* push action dispatch */
+	/*
+	 * smash action dispatch
+	 */
 	void RPPushAction::dispatchSmashAction(const rosplan_dispatch_msgs::ActionDispatch::ConstPtr& msg) {
 
 		ROS_INFO("KCL: (PushAction) smash action recieved");
@@ -60,85 +60,57 @@ namespace KCL_rosplan {
 			if(results.size()>1)
 				ROS_INFO("KCL: (PushAction) multiple waypoints share the same wpID");
 
-
-			if(!simulate_) {
-
-				// dispatch Push action
-				squirrel_manipulation_msgs::SmashGoal goal;
-				goal.pose.position.x = results[0]->pose.position.x;
-				goal.pose.position.y = results[0]->pose.position.y;
-				goal.pose.position.z = 0.0;
-				tf::Quaternion quat(tf::Vector3(0., 0., 1.), M_PI);
-				goal.pose.orientation.w = quat.w();
-				goal.pose.orientation.x = quat.x();
-				goal.pose.orientation.y = quat.y();
-				goal.pose.orientation.z = quat.z();
-				goal.radius.data = 0.3f;
-				smash_action_client.sendGoal(goal);
-
-			} else {
-				// dispatch MoveBase action
-				move_base_msgs::MoveBaseGoal goal;
-				geometry_msgs::PoseStamped &pose = *results[0];
-				goal.target_pose = pose;
-				simulate_client.sendGoal(goal);
-			}
+			// dispatch Push action
+			squirrel_manipulation_msgs::SmashGoal goal;
+			goal.pose = results[0]->pose;
+			smash_action_client.sendGoal(goal);
 
 			// publish feedback (enabled)
-			rosplan_dispatch_msgs::ActionFeedback fb;
-			fb.action_id = msg->action_id;
-			fb.status = "action enabled";
-			action_feedback_pub.publish(fb);
-
+			publishFeedback(msg->action_id, "action enabled");
 			
-			bool finished_before_timeout = false;
-			if(!simulate_) {
-				finished_before_timeout = smash_action_client.waitForResult(ros::Duration(msg->duration));
-			} else {
-				finished_before_timeout = simulate_client.waitForResult(ros::Duration(msg->duration));
-			}
+			smash_action_client.waitForResult();
 
-			if (finished_before_timeout) {
+			actionlib::SimpleClientGoalState state = smash_action_client.getState();
+			ROS_INFO("KCL: (PushAction) action finished: %s", state.toString().c_str());
+							
+			if (state == actionlib::SimpleClientGoalState::SUCCEEDED) {
 
-				if(!simulate_) {
-					actionlib::SimpleClientGoalState state = smash_action_client.getState();
-					ROS_INFO("KCL: (PushAction) action finished: %s", state.toString().c_str());
-				} else {
-					actionlib::SimpleClientGoalState state = simulate_client.getState();
-					ROS_INFO("KCL: (PushAction) action finished: %s", state.toString().c_str());
-				}
-				
 				// publish feedback (achieved)
-				rosplan_dispatch_msgs::ActionFeedback fb;
-				fb.action_id = msg->action_id;
-				fb.status = "action achieved";
-				action_feedback_pub.publish(fb);
+				publishFeedback(msg->action_id, "action achieved");
 
 			} else {
 
 				// publish feedback (failed)
-				rosplan_dispatch_msgs::ActionFeedback fb;
-				fb.action_id = msg->action_id;
-				fb.status = "action failed";
-				action_feedback_pub.publish(fb);
-
-				ROS_INFO("KCL: (PushAction) action timed out");
-
+				publishFeedback(msg->action_id, "action failed");
 			}
 
-		} else ROS_INFO("KCL: (PushAction) aborting action dispatch; query to sceneDB failed");
+		} else {
+			ROS_INFO("KCL: (PushAction) aborting action dispatch; query to sceneDB failed");
+			publishFeedback(msg->action_id, "action failed");
+		}
 	}
 
-	/* push action dispatch */
+	/* push action dispatch
+		:parameters (?v - robot ?ob - object ?from ?to - waypoint)
+		:effect (and
+				(not (robot_at ?v ?from basic))
+				(not (object_at ?ob ?from basic))
+				(robot_at ?v ?to basic)
+				(object_at ?ob ?to basic)
+	 */
 	void RPPushAction::dispatchPushAction(const rosplan_dispatch_msgs::ActionDispatch::ConstPtr& msg) {
 
 		ROS_INFO("KCL: (PushAction) push action recieved");
 
 		// get waypoint ID from action dispatch
-		std::string wpID, objectID;
+		std::string wpID, objectID, robotID;
 		bool foundWP = false;
 		bool foundObject = false;
 		for(size_t i=0; i<msg->parameters.size(); i++) {
+
+			if(0==msg->parameters[i].key.compare("v"))
+				robotID = msg->parameters[i].value;
+
 			if(0==msg->parameters[i].key.compare("to")) {
 				wpID = msg->parameters[i].value;
 				foundWP = true;
@@ -163,71 +135,72 @@ namespace KCL_rosplan {
 			if(results.size()>1)
 				ROS_INFO("KCL: (PushAction) multiple waypoints share the same wpID");
 
-
-			if(!simulate_) {
-				// dispatch Push action
-				squirrel_manipulation_msgs::PushGoal goal;
-				goal.pose.position.x = results[0]->pose.position.x;
-				goal.pose.position.y = results[0]->pose.position.y;
-				goal.pose.position.z = 0.0;
-				goal.pose.orientation.x = 0.0;
-				goal.pose.orientation.y = 0.0;
-				goal.pose.orientation.z = 0.0;
-				goal.pose.orientation.w = 1;
-				goal.object_id ="lump"; // objectID;
-				push_action_client.sendGoal(goal);
-			} else {
-				// dispatch MoveBase action
-				move_base_msgs::MoveBaseGoal goal;
-				geometry_msgs::PoseStamped &pose = *results[0];
-				goal.target_pose = pose;
-				goal.target_pose.pose.orientation.w = 1;
-				simulate_client.sendGoal(goal);
-			}
+			// dispatch Push action
+			squirrel_manipulation_msgs::PushGoal goal;
+			goal.pose = results[0]->pose;
+			goal.object_id = objectID;
+			push_action_client.sendGoal(goal);
 
 			// publish feedback (enabled)
-			rosplan_dispatch_msgs::ActionFeedback fb;
-			fb.action_id = msg->action_id;
-			fb.status = "action enabled";
-			action_feedback_pub.publish(fb);
+			publishFeedback(msg->action_id, "action enabled");
 
-			
-			bool finished_before_timeout = false;
-			if(!simulate_) {
-				finished_before_timeout = push_action_client.waitForResult(ros::Duration(msg->duration));
-			} else {
-				finished_before_timeout = simulate_client.waitForResult(ros::Duration(msg->duration));
-			}
+			push_action_client.waitForResult();
 
-			if (finished_before_timeout) {
+			actionlib::SimpleClientGoalState state = push_action_client.getState();
+			ROS_INFO("KCL: (PushAction) action finished: %s", state.toString().c_str());
+							
+			if (state == actionlib::SimpleClientGoalState::SUCCEEDED) {
 
-				if(!simulate_) {
-					actionlib::SimpleClientGoalState state = push_action_client.getState();
-					ROS_INFO("KCL: (PushAction) action finished: %s", state.toString().c_str());
-				} else {
-					actionlib::SimpleClientGoalState state = simulate_client.getState();
-					ROS_INFO("KCL: (PushAction) action finished: %s", state.toString().c_str());
-				}
-				
+				diagnostic_msgs::KeyValue pairWP;
+				pairWP.key = "to";
+				pairWP.value = wpID;
+
+				diagnostic_msgs::KeyValue pair;
+				pair.key = "v";
+				pair.value = robotID;
+
+				// remove old robot_at
+				rosplan_knowledge_msgs::KnowledgeUpdateService updatePredSrv;
+				updatePredSrv.request.knowledge.knowledge_type = rosplan_knowledge_msgs::KnowledgeItem::FACT;
+				updatePredSrv.request.update_type = rosplan_knowledge_msgs::KnowledgeUpdateService::Request::REMOVE_KNOWLEDGE;
+				updatePredSrv.request.knowledge.attribute_name = "robot_at";
+				updatePredSrv.request.knowledge.values.push_back(pair);
+				update_knowledge_client.call(updatePredSrv);
+
+				// predicate robot_at
+				updatePredSrv.request.update_type = rosplan_knowledge_msgs::KnowledgeUpdateService::Request::ADD_KNOWLEDGE;
+				updatePredSrv.request.knowledge.attribute_name = "robot_at";
+				updatePredSrv.request.knowledge.values.push_back(pairWP);
+				update_knowledge_client.call(updatePredSrv);
+
+				// remove old object_at
+				updatePredSrv.request.update_type = rosplan_knowledge_msgs::KnowledgeUpdateService::Request::REMOVE_KNOWLEDGE;
+				updatePredSrv.request.knowledge.attribute_name = "object_at";
+				updatePredSrv.request.knowledge.values.clear();
+				pair.key = "o";
+				pair.value = objectID;
+				updatePredSrv.request.knowledge.values.push_back(pair);
+				update_knowledge_client.call(updatePredSrv);
+
+				// predicate object_at
+				updatePredSrv.request.update_type = rosplan_knowledge_msgs::KnowledgeUpdateService::Request::ADD_KNOWLEDGE;
+				updatePredSrv.request.knowledge.attribute_name = "object_at";
+				updatePredSrv.request.knowledge.values.push_back(pairWP);
+				update_knowledge_client.call(updatePredSrv);
+
 				// publish feedback (achieved)
-				rosplan_dispatch_msgs::ActionFeedback fb;
-				fb.action_id = msg->action_id;
-				fb.status = "action achieved";
-				action_feedback_pub.publish(fb);
+				publishFeedback(msg->action_id, "action achieved");
 
 			} else {
 
 				// publish feedback (failed)
-				rosplan_dispatch_msgs::ActionFeedback fb;
-				fb.action_id = msg->action_id;
-				fb.status = "action failed";
-				action_feedback_pub.publish(fb);
-
-				ROS_INFO("KCL: (PushAction) action timed out");
-
+				publishFeedback(msg->action_id, "action failed");
 			}
 
-		} else ROS_INFO("KCL: (PushAction) aborting action dispatch; query to sceneDB failed");
+		} else {
+			ROS_INFO("KCL: (PushAction) aborting action dispatch; query to sceneDB failed");
+			publishFeedback(msg->action_id, "action failed");
+		}
 	}
 } // close namespace
 
@@ -240,15 +213,12 @@ namespace KCL_rosplan {
 		ros::init(argc, argv, "rosplan_interface_pushaction");
 		ros::NodeHandle nh;
 
-		bool simulate = false;
-		nh.getParam("simulate_pushing", simulate);
-
 		std::string pushactionserver, smashactionserver;
 		nh.param("push_action_server", pushactionserver, std::string("/push"));
 		nh.param("smash_action_server", smashactionserver, std::string("/smash"));
 
 		// create PDDL action subscriber
-		KCL_rosplan::RPPushAction rppa(nh, pushactionserver, smashactionserver, simulate);
+		KCL_rosplan::RPPushAction rppa(nh, pushactionserver, smashactionserver);
 	
 		// listen for action dispatch
 		ros::Subscriber ds = nh.subscribe("/kcl_rosplan/action_dispatch", 1000, &KCL_rosplan::RPPushAction::dispatchCallback, &rppa);

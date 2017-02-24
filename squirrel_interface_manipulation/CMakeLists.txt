@@ -9,11 +9,13 @@ find_package(catkin REQUIRED COMPONENTS
   rosplan_knowledge_msgs
   rosplan_dispatch_msgs
   nav_msgs
+  move_base_msgs
   mongodb_store
   geometry_msgs
   diagnostic_msgs
   visualization_msgs
   squirrel_manipulation_msgs
+  kclhand_control
   tf
 )
 
@@ -28,7 +30,7 @@ find_package(Boost REQUIRED COMPONENTS
 ## Declare things to be passed to dependent projects
 catkin_package(
   LIBRARIES squirrel_knowledge_base
-  CATKIN_DEPENDS roscpp rospy std_msgs rosplan_knowledge_msgs rosplan_dispatch_msgs squirrel_manipulation_msgs nav_msgs mongodb_store geometry_msgs diagnostic_msgs visualization_msgs tf
+  CATKIN_DEPENDS roscpp rospy std_msgs rosplan_knowledge_msgs rosplan_dispatch_msgs squirrel_manipulation_msgs nav_msgs mongodb_store geometry_msgs diagnostic_msgs move_base_msgs visualization_msgs kclhand_control tf
   DEPENDS
 )
 
@@ -42,16 +44,15 @@ include_directories(
   include
 )
 
-## Pointing service
-set(SIM_SOURCES
-	src/RPPushAction.cpp)
-
 ## Declare cpp executables
-add_executable(rppushServer ${SIM_SOURCES})
+add_executable(rppushServer src/RPPushAction.cpp)
+add_executable(rpgraspServer src/RPGraspAction.cpp)
 add_dependencies(rppushServer ${catkin_EXPORTED_TARGETS})
+add_dependencies(rpgraspServer ${catkin_EXPORTED_TARGETS} kclhand_control_gencpp)
 
 ## Specify libraries against which to link a library or executable target
 target_link_libraries(rppushServer ${catkin_LIBRARIES})
+target_link_libraries(rpgraspServer ${catkin_LIBRARIES})
 
 ##########
 ## Test ##

@@ -13,7 +13,6 @@
 	<run_depend>squirrel_interface_perception</run_depend>
 	<run_depend>squirrel_planning_execution</run_depend>
 	<run_depend>squirrel_planning_launch</run_depend>
-	<run_depend>squirrel_recommender</run_depend>
 
 	<export>
 		<metapackage/>
