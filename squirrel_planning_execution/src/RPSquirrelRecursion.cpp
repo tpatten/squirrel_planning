@@ -491,6 +491,15 @@ namespace KCL_rosplan {
 		{
 			return;
 		}
+		
+		if ("examine_area" == action_name)
+		{
+			GotoWaypointWrapper::enableCheck(false);
+		}
+		else
+		{
+			GotoWaypointWrapper::enableCheck(true);
+		}
 
 		bool actionAchieved = false;
 		last_received_msg.push_back(normalised_action_dispatch);
@@ -1261,7 +1270,7 @@ namespace KCL_rosplan {
 			
 			// Get the actual location of this robot.
 			std::vector<boost::shared_ptr<geometry_msgs::PoseStamped> > robot_locations;
-			if (message_store.queryNamed<geometry_msgs::PoseStamped>(robot_location, robot_locations) && robot_locations.size() > 1)
+			if (message_store.queryNamed<geometry_msgs::PoseStamped>(robot_location, robot_locations) && robot_locations.size() == 1)
 			{
 				ROS_INFO("KCL: (RPSquirrelRecursion) Found the location of the robot.");
 			}
