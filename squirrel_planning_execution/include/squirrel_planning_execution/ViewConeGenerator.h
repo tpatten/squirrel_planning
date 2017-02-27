@@ -47,6 +47,23 @@ namespace KCL_rosplan {
 		 * @return True if a occupancy grid has been received and the instance is ready to do work, false otherwise.
 		 */
 		bool hasReceivedOccupancyGrid() const { return has_received_occupancy_grid_; }
+		
+		/**
+		 * Check if the area around @ref{point} is free, the radiance of the circle is @ref{min_distance}.
+		 * @param Point The centre of the circle to check.
+		 * @param min_distance The radiance of the circle.
+		 * @return True if this point is within @ref{min_distance} of an obstacle, false otherwise.
+		 */
+		bool isBlocked(const geometry_msgs::Point& point, float min_distance) const;
+		
+		/**
+		 * Get the minimal distance to a blocked part of the scene. @ref{max_distance} is the maximum 
+		 * distance that is checked from @ref{point}.
+		 * @param Point The location to check.
+		 * @param max_distance The maximum distance from @ref{point} that is checked.
+		 * @return The closest distance to a blocked cell, std::numeric_limits<float>::max if none is found.
+		 */
+		float minDistanceToBlocked(const geometry_msgs::Point& point, float max_distance) const;
 	private:
 		
 		/**
@@ -68,13 +85,7 @@ namespace KCL_rosplan {
 		 */
 		bool canConnect(const geometry_msgs::Point& w1, const geometry_msgs::Point& w2, int occupancy_threshold);
 		
-		/**
-		* Check if the area around @ref{point} is free, the radiance of the circle is @ref{min_distance}.
-		* @param Point The centre of the circle to check.
-		* @param min_distance The radiance of the circle.
-		* @return True if this point is within @ref{min_distance} of an obstacle, false otherwise.
-		*/
-		bool isBlocked(const geometry_msgs::Point& point, float min_distance) const;
+	
 		
 		ros::Publisher rivz_pub_;
 		ros::Subscriber navigation_grid_sub_;

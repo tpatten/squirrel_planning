@@ -29,21 +29,26 @@ namespace KCL_rosplan {
 		ros::ServiceClient find_dynamic_objects_client;
 		ros::ServiceClient add_object_client;
 		ros::ServiceClient update_knowledge_client;
+		ros::ServiceClient get_instance_client;
 
 		ros::Publisher action_feedback_pub;
 
 		std::map<std::string,std::string> db_name_map;
+		
+		bool use_dynamic_object_finding;
 
 		void publishFeedback(int action_id, std::string feedback);
 
 		/* actions */
-		void exploreAction(const rosplan_dispatch_msgs::ActionDispatch::ConstPtr& msg);
+		void exploreActionDynamic(const rosplan_dispatch_msgs::ActionDispatch::ConstPtr& msg);
+		void exploreActionStatic(const rosplan_dispatch_msgs::ActionDispatch::ConstPtr& msg);
 		void examineAction(const rosplan_dispatch_msgs::ActionDispatch::ConstPtr& msg);
 
 		/* objects to database */
 		void addObject(squirrel_object_perception_msgs::SceneObject &object);
 		void updateObject(squirrel_object_perception_msgs::SceneObject &object, std::string newWaypoint);
 		void removeObject(squirrel_object_perception_msgs::SceneObject &object);
+		void updateType(squirrel_object_perception_msgs::SceneObject &object);
 
 	public:
 
