@@ -11,6 +11,7 @@ namespace KCL_rosplan {
 		drop_client = nh.serviceClient<kclhand_control::graspPreparation>("/hand_controller/openFinger");
 		ROS_INFO("KCL: (GraspAction) waiting for action server to start on %s", blindGraspActionServer.c_str());
 		blind_grasp_action_client.waitForServer();
+        ROS_INFO("KCL: (GraspAction) ready to receive ...");
 
 		// create the action feedback publisher
 		action_feedback_pub = nh.advertise<rosplan_dispatch_msgs::ActionFeedback>("/kcl_rosplan/action_feedback", 10, true);
@@ -21,6 +22,9 @@ namespace KCL_rosplan {
 
 	/* action dispatch callback */
 	void RPGraspAction::dispatchCallback(const rosplan_dispatch_msgs::ActionDispatch::ConstPtr& msg) {
+
+        std::cout << " (RPGraspAction::dispatchCallback) Action received in RPGraspAction.cpp" << std::endl;
+        std::cout << "(RPGraspAction::dispatchCallback) Action name is " << msg->name << std::endl;
 
 		rosplan_dispatch_msgs::ActionFeedback fb;
 
@@ -47,6 +51,10 @@ namespace KCL_rosplan {
 			}
 			publishFeedback(msg->action_id, "action failed");
 		}
+        else
+        {
+            std::cout << "(RPGraspAction::dispatchCallback) could not recognize action " << msg->name << std::endl;
+        }
 	}
 
 	/* blind grasp action dispatch
@@ -266,7 +274,10 @@ namespace KCL_rosplan {
 
 
 		std::string GraspActionserver, blindGraspActionServer;
-		nh.param("blind_grasp_action_server", blindGraspActionServer, std::string("/blindGrasp"));
+        nh.param("blind_grasp_action_server", blindGraspActionServer, std::string("/blindGrasp"));
+        //nh.param("blind_grasp_action_server", blindGraspActionServer, std::string("/metahand_grasp_server"));
+
+        std::cout << "--- GRASP --- blindGraspActionServer = " << blindGraspActionServer << std::endl;
 
 		// create PDDL action subscriber
 		KCL_rosplan::RPGraspAction rpga(nh, blindGraspActionServer);

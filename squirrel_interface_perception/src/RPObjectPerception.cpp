@@ -1,3 +1,4 @@
+// Object perception; rpObjectPerception
 #include "ros/ros.h"
 #include "std_msgs/String.h"
 #include "squirrel_interface_perception/RPObjectPerception.h"

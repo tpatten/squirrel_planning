@@ -106,6 +106,9 @@ set(viewConeTester_SOURCES
 #  src/test_suite/TidyRooms.cpp
 #  src/ViewConeGenerator.cpp)
 
+set(lookGrasp_SOURCES
+	src/LookForObjectsGraspTest.cpp)
+
 ## Declare cpp executables
 add_executable(tidyroom ${tidyroom_SOURCES})
 add_executable(simpledemo src/TidyRoomGrasping.cpp)
@@ -116,6 +119,7 @@ add_executable(sortingGame ${sortingGame_SOURCES})
 add_executable(speechSimulator ${speechSimulator_SOURCES})
 add_executable(viewConeTester ${viewConeTester_SOURCES})
 #add_executable(planSim ${planSim_SOURCES})
+add_executable(lookGrasp ${lookGrasp_SOURCES})
 
 add_dependencies(tidyroom ${catkin_EXPORTED_TARGETS})
 add_dependencies(simpledemo ${catkin_EXPORTED_TARGETS})
@@ -126,6 +130,7 @@ add_dependencies(sortingGame ${catkin_EXPORTED_TARGETS})
 add_dependencies(speechSimulator ${catkin_EXPORTED_TARGETS})
 add_dependencies(viewConeTester ${catkin_EXPORTED_TARGETS})
 #add_dependencies(planSim ${catkin_EXPORTED_TARGETS})
+add_dependencies(lookGrasp ${catkin_EXPORTED_TARGETS})
 
 target_link_libraries(tidyroom ${catkin_LIBRARIES})
 target_link_libraries(simpledemo ${catkin_LIBRARIES})
@@ -136,6 +141,7 @@ target_link_libraries(sortingGame ${catkin_LIBRARIES})
 target_link_libraries(speechSimulator ${catkin_LIBRARIES})
 target_link_libraries(viewConeTester ${catkin_LIBRARIES})
 #target_link_libraries(planSim ${catkin_LIBRARIES})
+target_link_libraries(lookGrasp ${catkin_LIBRARIES})
 
 ##########
 ## Test ##
