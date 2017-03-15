@@ -18,7 +18,13 @@
 #include "geometry_msgs/PoseStamped.h"
 #include "squirrel_object_perception_msgs/SceneObject.h"
 #include "squirrel_manipulation_msgs/BlindGraspAction.h"
+#include "squirrel_manipulation_msgs/PutDownAction.h"
+#include "squirrel_manipulation_msgs/PtpAction.h"
 #include "kclhand_control/graspPreparation.h"
+#include "kclhand_control/ActuateHandAction.h"
+//#include <kclhand_control/ActuateHandAction.h>
+//#include <kclhand_control/ActuateHandActionGoal.h>
+
 
 #ifndef KCL_graspaction
 #define KCL_graspaction
@@ -40,11 +46,13 @@ namespace KCL_rosplan {
 		actionlib::SimpleActionClient<squirrel_manipulation_msgs::BlindGraspAction> blind_grasp_action_client;
 		ros::Publisher action_feedback_pub;
 		ros::ServiceClient drop_client;
+		//actionlib::SimpleActionClient<kclhand_control::ActuateHandAction> drop_action_client;
 		ros::ServiceClient update_knowledge_client;
 
 		/* execute pushing actions */
 		bool dispatchBlindGraspAction(const rosplan_dispatch_msgs::ActionDispatch::ConstPtr& msg);
 		bool dispatchDropAction(const rosplan_dispatch_msgs::ActionDispatch::ConstPtr& msg);
+		bool dispatchDropActionCorrect(const rosplan_dispatch_msgs::ActionDispatch::ConstPtr& msg);
 
 		/* PDDL action feedback */
 		void publishFeedback(int action_id, std::string feedback) {

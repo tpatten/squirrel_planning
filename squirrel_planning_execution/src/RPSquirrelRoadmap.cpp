@@ -1,4 +1,3 @@
-// squirrel_interface_mapping; rpsquirrelRoadmap
 #include "squirrel_planning_execution/RPSquirrelRoadmap.h"
 
 /* implementation of squirrel_planning_execution::RPSquirrelRoadmap.h */

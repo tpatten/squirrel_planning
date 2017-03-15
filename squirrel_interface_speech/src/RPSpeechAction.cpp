@@ -16,17 +16,11 @@ namespace KCL_rosplan {
 		get_instance_client_ = nh.serviceClient<rosplan_knowledge_msgs::GetInstanceService>("/kcl_rosplan/get_current_instances");
 		get_attribute_client_ = nh.serviceClient<rosplan_knowledge_msgs::GetAttributeService>("/kcl_rosplan/get_current_knowledge");
 		
-        //command_stream_ = nh.subscribe<squirrel_speech_msgs::RecognizedCommand>("/squirrel_speech_rec/squirrel_speech_recognized_commands", 1, &RPSpeechAction::processSpeechCommand, this);
-        command_stream_ = nh.subscribe<squirrel_speech_msgs::RecognizedCommand>("/squirrel_speech_recognized_commands", 1, &RPSpeechAction::processSpeechCommand, this);
+		command_stream_ = nh.subscribe<squirrel_speech_msgs::RecognizedCommand>("/squirrel_speech_rec/squirrel_speech_recognized_commands", 1, &RPSpeechAction::processSpeechCommand, this);
 	}
 	
 	void RPSpeechAction::updateKnowledgeBase(const squirrel_speech_msgs::RecognizedCommand& command, bool add)
 	{
-
-        if (add)
-            ROS_INFO("TIM: add is TRUE");
-        else
-            ROS_INFO("TIM: add is FALSE");
 		// Remove the old knowledge.
 		rosplan_knowledge_msgs::KnowledgeUpdateService knowledge_update_service;
 		knowledge_update_service.request.update_type = rosplan_knowledge_msgs::KnowledgeUpdateService::Request::REMOVE_KNOWLEDGE;
@@ -74,9 +68,6 @@ namespace KCL_rosplan {
 	/* action dispatch callback */
 	void RPSpeechAction::processSpeechCommand(const squirrel_speech_msgs::RecognizedCommand::ConstPtr& msg)
 	{
-        ROS_INFO("TIM: (processSpeechCommand) received command with values");
-        ROS_INFO("recognized_speech = %s, parsed_speech = %s, int_command = %s",
-                 msg->recognized_speech.c_str(), msg->parsed_speech.c_str(), msg->int_command.c_str());
 		ros::Time current_time = ros::Time::now();
 		ros::Duration delta = current_time - msg->header.stamp;
 		
@@ -109,7 +100,7 @@ namespace KCL_rosplan {
 	
 	void RPSpeechAction::purgeOldCommands()
 	{
-		// Remove all commands that have been issued more than 5 seconds ago.
+		// Remove all commands that have been issued more than 30 seconds ago.
 		ros::Time current_time = ros::Time::now();
 		
 

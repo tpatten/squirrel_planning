@@ -30,22 +30,23 @@
 	</node>
 
 	<!-- RPSquirrelRecursion actions -->
-	<!--node name="squirrel_planning_execution" pkg="squirrel_planning_execution" type="rpsquirrelRecursion" output="screen">
+	<node name="squirrel_planning_execution" pkg="squirrel_planning_execution" type="rpsquirrelRecursion" output="screen">
 		<param name="simulated" value="false" />
-	</node-->
+	</node>
 
 	<!-- Interface nodes -->
-	<!--node name="squirrel_planning_interface_perception" pkg="squirrel_interface_perception" type="rpperceptionServer" output="screen">
+	<node name="squirrel_planning_interface_perception" pkg="squirrel_interface_perception" type="rpperceptionServer" output="screen">
 		<param name="action_server" value="/squirrel_look_for_objects" />
-	</node-->
+	</node>
 
-	<!--node name="squirrel_planning_interface_pushing" pkg="squirrel_interface_manipulation" type="rppushServer" output="screen">
+	<node name="squirrel_planning_interface_pushing" pkg="squirrel_interface_manipulation" type="rppushServer" output="screen">
 		<param name="smash_action_server" value="/smash" />
 		<param name="push_action_server" value="/push" />
-	</node-->
+	</node>
 
 	<node name="rosplan_interface_movebase" pkg="rosplan_interface_movebase" type="rpmovebase" output="screen">
 		<param name="action_server" value="/move_base" />
+		<param name="pddl_action_name" vlaue="goto_waypoint" />
 	</node>
 
     <node name="squirrel_interface_manipulation" pkg="squirrel_interface_manipulation" type="rpgraspServer" respawn="false" output="screen">

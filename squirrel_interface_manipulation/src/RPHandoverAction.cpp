@@ -80,7 +80,7 @@ namespace KCL_rosplan {
 		// dispatch handover
 		squirrel_manipulation_msgs::HandoverGoal goal;
 		goal.action_type = "give";
-		goal.hadover_type = 0;
+		goal.handover_type = 0;
 		handover_action_client.sendGoal(goal);
 
 		// publish feedback (enabled)
@@ -190,7 +190,7 @@ namespace KCL_rosplan {
 		// dispatch handover
 		squirrel_manipulation_msgs::HandoverGoal goal;
 		goal.action_type = "take";
-		goal.hadover_type = 0;
+		goal.handover_type = 0;
 		handover_action_client.sendGoal(goal);
 
 		// publish feedback (enabled)
@@ -271,4 +271,4 @@ namespace KCL_rosplan {
 
 		ros::spin();
 		return 0;
-}
+	}
