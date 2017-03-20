@@ -274,6 +274,22 @@ namespace KCL_rosplan {
 	
 	std::ostream& operator<<(std::ostream& os, const UtilityFact& utility_fact);
 	
+	/**
+	 * Capture the order in which facts should be checked.
+	 */
+	struct FactObserveTree
+	{
+		FactObserveTree(const Fact& fact_to_observe)
+			: fact_to_observe_(&fact_to_observe), true_branch_(NULL), false_branch_(NULL)
+		{
+			
+		}
+		
+		const Fact* fact_to_observe_;
+		const FactObserveTree* true_branch_;
+		const FactObserveTree* false_branch_;
+	};
+	
 	class RecommenderSystem
 	{
 
@@ -356,7 +372,13 @@ namespace KCL_rosplan {
 		 * @param new_observed_fact The newly observed fact.
 		 * @param true_branch If true then we explore the true branch, otherwise we explore the false branch.
 		 */
-		void updateKnowledgeBase(const Fact& last_observed_fact, const Fact& new_observed_fact, bool true_branch);
+		//void updateKnowledgeBase(const Fact& last_observed_fact, const Fact& new_observed_fact, bool true_branch);
+		
+		/**
+		 * Update @ref{weighted_facts_copy} by infering mutual exclusive pairs of actions and update their weights
+		 * accordingly.
+		 */
+		void processMutualExclusive(const Fact& last_sensed_fact, std::map<const Fact*, float>& weighted_facts_copy, const std::vector<const Fact*>& interesting_facts);
 		
 	public:
 
@@ -379,6 +401,7 @@ namespace KCL_rosplan {
 		
 		/**
 		 * Get the best sensing actions to perform given a data set and a weighted list of facts we care about and the last observed fact.
+		 * @param node The current node, branches will be added to this node.
 		 * @param last_sensed_fact The fact that was last changed.
 		 * @param current_depth The current depth.
 		 * @param max_depth The max depth before the algorithm terminates.
@@ -387,9 +410,8 @@ namespace KCL_rosplan {
 		 * @param weighted_facts The list of facts and their probabilities.
 		 * @param interesting_facts The list of facts that we care to learn more about.
 		 * @param max_depth The maximum depth of the tree of facts to observe.
-		 * @return A list of facts that give good information gain.
 		 */
-		void callRecogniser(const Fact& last_sensed_fact, unsigned int current_depth, unsigned int max_depth, const std::vector<const Object*>& objects, const std::vector<const Predicate*>& predicates, const std::map<const Fact*, float>& weighted_facts, const std::vector<const Fact*>& interesting_facts);
+		void callRecogniser(FactObserveTree& node, const Fact& last_sensed_fact, unsigned int current_depth, unsigned int max_depth, const std::vector<const Object*>& objects, const std::vector<const Predicate*>& predicates, const std::map<const Fact*, float>& weighted_facts, const std::vector<const Fact*>& interesting_facts);
 		
 	};
 }

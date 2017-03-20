@@ -177,8 +177,8 @@ namespace KCL_rosplan {
 	}
 	
 	/**
-		* Get a predicate, if a predicate with the given name does not exist, a new one is not generated!
-		*/
+	 * Get a predicate, if a predicate with the given name does not exist, a new one is not generated!
+	 */
 	const Predicate* Predicate::getPredicate(const std::string& name)
 	{
 		Predicate* p = NULL;
@@ -745,7 +745,7 @@ namespace KCL_rosplan {
 		
 		return best_facts_to_sense;
 	}
-	
+	/*
 	void RecommenderSystem::updateKnowledgeBase(const Fact& last_observed_fact, const Fact& new_observed_fact, bool true_branch)
 	{
 		rosplan_knowledge_msgs::KnowledgeUpdateService knowledge_update_service;
@@ -786,15 +786,113 @@ namespace KCL_rosplan {
 		ROS_INFO("KCL: (RPSquirrelRecursion) Added the fact (dependency %s %s %s %s %s) to the knowledge base.", last_observed_fact.getObjects()[0]->getName().c_str(), last_observed_fact.getObjects()[1]->getName().c_str(), new_observed_fact.getObjects()[0]->getName().c_str(), new_observed_fact.getObjects()[1]->getName().c_str(), true_branch ? "TRUE" : "FALSE");
 		knowledge_item.values.clear();
 	}
+	*/
 	
-	void RecommenderSystem::callRecogniser(const Fact& last_sensed_fact, unsigned int current_depth, unsigned int max_depth, const std::vector<const Object*>& objects, const std::vector<const Predicate*>& predicates, const std::map<const Fact*, float>& weighted_facts, const std::vector<const Fact*>& interesting_facts)
+	void RecommenderSystem::processMutualExclusive(const Fact& last_sensed_fact, std::map<const Fact*, float>& weighted_facts_copy, const std::vector<const Fact*>& interesting_facts)
+	{
+		std::cout << "callRecogniser:" << std::endl;
+		for (std::vector<const Fact*>::const_iterator ci = interesting_facts.begin(); ci != interesting_facts.end(); ++ci)
+		{
+			std::cout << "\t-" << **ci << " -> " << weighted_facts_copy[*ci] << std::endl;
+		}
+		
+		std::map<const Object*, std::vector<const Fact*>* > variable_domains;
+		
+		std::cout << "Build variable domains. Fact: " << last_sensed_fact << std::endl;
+		for (std::vector<const Fact*>::const_iterator ci = interesting_facts.begin(); ci != interesting_facts.end(); ++ci)
+		{
+			std::cout << "Interesting fact: " << **ci << " = " << weighted_facts_copy[*ci] << std::endl;
+			
+			if ((*ci)->getPredicate().getName() == last_sensed_fact.getPredicate().getName() &&
+			    weighted_facts_copy[*ci] == 0)
+			{
+				std::vector<const Fact*>* domain = NULL;
+				
+				if (variable_domains.find((*ci)->getObjects()[0]) == variable_domains.end())
+				{
+					domain = new std::vector<const Fact*>();
+					variable_domains[(*ci)->getObjects()[0]] = domain;
+				}
+				else
+				{
+					domain = variable_domains[(*ci)->getObjects()[0]];
+				}
+				domain->push_back(*ci);
+			}
+		}
+		
+		// Check if the domain of a variable has only a single entry. If so make that fact true.
+		std::cout << "Variable domains: " << std::endl;
+		for (std::map<const Object*, std::vector<const Fact*>* >::const_iterator ci = variable_domains.begin(); ci != variable_domains.end(); ++ci)
+		{
+			const Object* object = ci->first;
+			std::vector<const Fact*>* facts = ci->second;
+			
+			std::cout << "- " << object->getName() << " = {";
+			for (std::vector<const Fact*>::const_iterator ci = facts->begin(); ci != facts->end(); ++ci)
+			{
+				std::cout << **ci << ", ";
+			}
+			std::cout << "}" << std::endl;
+			
+			if (facts->size() == 1)
+			{
+				weighted_facts_copy[(*facts)[0]] = 2.0f;
+			}
+		}
+		
+		// If a single entry is alraedy true, make the rest false.
+		for (std::map<const Object*, std::vector<const Fact*>* >::const_iterator ci = variable_domains.begin(); ci != variable_domains.end(); ++ci)
+		{
+			const Object* object = ci->first;
+			std::vector<const Fact*>* facts = ci->second;
+			bool value_found = false;
+			
+			for (std::vector<const Fact*>::const_iterator ci = facts->begin(); ci != facts->end(); ++ci)
+			{
+				if (weighted_facts_copy[*ci] == 2.0f)
+				{
+					value_found = true;
+					break;
+				}
+			}
+			
+			if (value_found)
+			{
+				for (std::vector<const Fact*>::const_iterator ci = facts->begin(); ci != facts->end(); ++ci)
+				{
+					if (weighted_facts_copy[*ci] != 2.0f)
+					{
+						weighted_facts_copy[*ci] = 1.0f;
+					}
+				}
+			}
+		}
+		
+		std::cout << "Final facts: " << std::endl;
+		for (std::vector<const Fact*>::const_iterator ci = interesting_facts.begin(); ci != interesting_facts.end(); ++ci)
+		{
+			std::cout << "\t-" << **ci << " -> " << weighted_facts_copy[*ci] << std::endl;
+		}
+	}
+
+	
+	void RecommenderSystem::callRecogniser(FactObserveTree& node, const Fact& last_sensed_fact, unsigned int current_depth, unsigned int max_depth, const std::vector<const Object*>& objects, const std::vector<const Predicate*>& predicates, const std::map<const Fact*, float>& weighted_facts, const std::vector<const Fact*>& interesting_facts)
 	{
 		if (current_depth == max_depth) return;
 		
 		std::map<const Fact*, float> weighted_facts_copy(weighted_facts);
+		processMutualExclusive(last_sensed_fact, weighted_facts_copy, interesting_facts);
 		
 		// Make the best sensing action true and run the system again.
 		weighted_facts_copy[&last_sensed_fact] = 2.0;
+		
+		std::cout << "Get sensing actions for TRUE branch: " << std::endl;
+		for (std::vector<const Fact*>::const_iterator ci = interesting_facts.begin(); ci != interesting_facts.end(); ++ci)
+		{
+			std::cout << "\t-" << **ci << " -> " << weighted_facts_copy[*ci] << std::endl;
+		}
+		
 		std::vector<const KCL_rosplan::Fact*> facts_to_sense = getBestSensingActions(objects, predicates, weighted_facts_copy, interesting_facts, 3);
 		
 		ROS_INFO("KCL: (RecommanderSystem) [%u] TRUE BRANCH Find %zd possible facts to sense.\n", current_depth, facts_to_sense.size());
@@ -806,12 +904,23 @@ namespace KCL_rosplan {
 		
 		if (facts_to_sense.size() > 0)
 		{
-			updateKnowledgeBase(last_sensed_fact, *facts_to_sense[0], true);
-			callRecogniser(*facts_to_sense[0], current_depth + 1, max_depth, objects, predicates, weighted_facts_copy, interesting_facts);
+			FactObserveTree* true_branch = new FactObserveTree(*facts_to_sense[0]);
+			node.true_branch_ = true_branch;
+			//updateKnowledgeBase(last_sensed_fact, *facts_to_sense[0], true);
+			callRecogniser(*true_branch, *facts_to_sense[0], current_depth + 1, max_depth, objects, predicates, weighted_facts_copy, interesting_facts);
 		}
 		
 		// Make the best sensing action false and run the system again.
+		weighted_facts_copy = weighted_facts;
+		processMutualExclusive(last_sensed_fact, weighted_facts_copy, interesting_facts);
 		weighted_facts_copy[&last_sensed_fact] = 1.0;
+		
+		std::cout << "Get sensing actions for FALSE branch: " << std::endl;
+		for (std::vector<const Fact*>::const_iterator ci = interesting_facts.begin(); ci != interesting_facts.end(); ++ci)
+		{
+			std::cout << "\t-" << **ci << " -> " << weighted_facts_copy[*ci] << std::endl;
+		}
+		
 		facts_to_sense = getBestSensingActions(objects, predicates, weighted_facts_copy, interesting_facts, 3);
 		
 		ROS_INFO("KCL: (RecommanderSystem) [%u] FALSE BRANCH Find %zd possible facts to sense.\n", current_depth, facts_to_sense.size());
@@ -822,8 +931,10 @@ namespace KCL_rosplan {
 		}
 		if (facts_to_sense.size() > 0)
 		{
-			updateKnowledgeBase(last_sensed_fact, *facts_to_sense[0], false);
-			callRecogniser(*facts_to_sense[0], current_depth + 1, max_depth, objects, predicates, weighted_facts_copy, interesting_facts);
+			FactObserveTree* false_branch = new FactObserveTree(*facts_to_sense[0]);
+			node.false_branch_ = false_branch;
+			//updateKnowledgeBase(last_sensed_fact, *facts_to_sense[0], false);
+			callRecogniser(*false_branch, *facts_to_sense[0], current_depth + 1, max_depth, objects, predicates, weighted_facts_copy, interesting_facts);
 		}
 	}
 	
@@ -854,9 +965,10 @@ int main(int argc, char** argv)
 	objects.push_back(&KCL_rosplan::Object::createObject("box2", box));
 	objects.push_back(&KCL_rosplan::Object::createObject("wp1", location));
 	objects.push_back(&KCL_rosplan::Object::createObject("wp2", location));
-	objects.push_back(&KCL_rosplan::Object::createObject("wp3", location));
-	objects.push_back(&KCL_rosplan::Object::createObject("wp4", location));
-	objects.push_back(&KCL_rosplan::Object::createObject("wp5", location));
+	objects.push_back(&KCL_rosplan::Object::createObject("box1_wp", location));
+	objects.push_back(&KCL_rosplan::Object::createObject("box2_wp", location));
+	objects.push_back(&KCL_rosplan::Object::createObject("toy1_wp", location));
+	objects.push_back(&KCL_rosplan::Object::createObject("toy2_wp", location));
 	ROS_INFO("KCL: (RecommenderSystem) Objects created %zd.\n", objects.size());
 	
 	/* Predicates */
@@ -927,9 +1039,13 @@ int main(int argc, char** argv)
 	
 	ros::init(argc, argv, "rosplan_RecommanderSystem");
 	ros::NodeHandle nh;
-	/*
+	
 	std::string domain_path;
 	nh.getParam("/rosplan/domain", domain_path);
+	
+	std::string data_path;
+	nh.getParam("/rosplan/data_path", data_path);
+	std::cout << "Data path: " << data_path << std::endl;
 	
 	// Start the recommender system and initialise all the facts.
 	KCL_rosplan::RecommenderSystem rs(nh);
@@ -938,7 +1054,7 @@ int main(int argc, char** argv)
 	// Fetch all objects, predicates, etc. and start the recommender.
 	std::vector<const KCL_rosplan::Fact*> facts_to_sense = rs.getBestSensingActions(objects, predicates, weighted_facts, interesting_facts, 3);
 	
-	ROS_INFO("KCL: (RecommanderSystem) Find %zd possible facts to sense.\n", facts_to_sense.size());
+	ROS_INFO("KCL: (RecommenderSystem) Find %zd possible facts to sense.\n", facts_to_sense.size());
 	
 	const KCL_rosplan::Fact* previous_fact = facts_to_sense[0];
 	for (unsigned int i = 0; i < std::min((int)facts_to_sense.size(), 5); ++i)
@@ -946,8 +1062,11 @@ int main(int argc, char** argv)
 		std::cout << *facts_to_sense[i] << std::endl;
 	}
 	
-	rs.callRecogniser(*previous_fact, 0, 3, objects, predicates, weighted_facts, interesting_facts);
-	*/
+	KCL_rosplan::FactObserveTree root(*previous_fact);
+	rs.callRecogniser(root, *previous_fact, 0, 3, objects, predicates, weighted_facts, interesting_facts);
+	
+	ROS_INFO("KCL: (RecommenderSystem) Recogniser is finished, create the planning problem.");
+	
 	// TEST.
 	std::map<std::string, std::string> object_to_location_mapping;
 	object_to_location_mapping["toy1"] = "toy1_wp";
@@ -958,7 +1077,7 @@ int main(int argc, char** argv)
 	box_to_location_mapping["box2"] = "box2_wp";
 	
 	KCL_rosplan::PlanToSensePDDLGenerator pts;
-	pts.createPDDL("/home/bram/tmp/", "domain.pddl", "problem.pddl", "kenny_wp", object_to_location_mapping, box_to_location_mapping);
+	pts.createPDDL(root, data_path, "domain.pddl", "problem.pddl", "kenny_wp", object_to_location_mapping, box_to_location_mapping);
 	
 	/*
 	while (ros::ok())

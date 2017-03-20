@@ -13,7 +13,7 @@
 
 namespace KCL_rosplan {
 
-void PlanToSensePDDLGenerator::generateProblemFile(const std::string& file_name, const KnowledgeBase& current_knowledge_base, const std::vector<const KnowledgeBase*>& knowledge_bases, const Location& robot_location, const std::vector<Location*>& locations, const std::vector<Object*>& objects, const std::vector<const Box*>& boxes, const TreeNode& root)
+void PlanToSensePDDLGenerator::generateProblemFile(const std::string& file_name, const KnowledgeBase& current_knowledge_base, const std::vector<const KnowledgeBase*>& knowledge_bases, const Location& robot_location, const std::vector<Location*>& locations, const std::vector<Toy*>& objects, const std::vector<const Box*>& boxes, const TreeNode& root)
 {
 	std::vector<const State*> states;
 	for (std::vector<const KnowledgeBase*>::const_iterator ci = knowledge_bases.begin(); ci != knowledge_bases.end(); ++ci)
@@ -55,9 +55,9 @@ void PlanToSensePDDLGenerator::generateProblemFile(const std::string& file_name,
 		//myfile << "\t(gripper_empty robot " << " " << state->state_name_ << ")" << std::endl;
 		
 		// All the objects are clear inially.
-		for (std::vector<Object*>::const_iterator ci = objects.begin(); ci != objects.end(); ++ci)
+		for (std::vector<Toy*>::const_iterator ci = objects.begin(); ci != objects.end(); ++ci)
 		{
-			const Object* object = *ci;
+			const Toy* object = *ci;
 			//myfile << "\t(cleared " << object->name_ << " " << state->state_name_ << ")" << std::endl;
 			myfile << "\t(object_at " << object->name_ << " " << object->location_->name_ << " " << state->state_name_ << ")" << std::endl;
 			/*
@@ -106,7 +106,7 @@ void PlanToSensePDDLGenerator::generateProblemFile(const std::string& file_name,
 				myfile << "\t(order " << node->object_->name_ << " " << node->box_->name_ << " " << next_node->object_->name_ << " " << next_node->box_->name_ << " " << state->state_name_ << ")" << std::endl;
 			}
 			
-			for (std::map<const Object*, const Box*>::const_iterator ci = state->believe_state_.begin(); ci != state->believe_state_.end(); ++ci)
+			for (std::map<const Toy*, const Box*>::const_iterator ci = state->believe_state_.begin(); ci != state->believe_state_.end(); ++ci)
 			{
 				myfile << "\t(belongs_in " << ci->first->name_ << " " << ci->second->name_ << " " << state->state_name_ << ")" << std::endl;
 			}
@@ -132,7 +132,7 @@ void PlanToSensePDDLGenerator::generateProblemFile(const std::string& file_name,
 	myfile.close();
 }
 
-void PlanToSensePDDLGenerator::generateDomainFile(const std::string& file_name, const KnowledgeBase& current_knowledge_base, const std::vector<const KnowledgeBase*>& knowledge_bases, const Location& robot_location, const std::vector<Location*>& locations, const std::vector<Object*>& objects, const std::vector<const Box*>& boxes, const TreeNode& root)
+void PlanToSensePDDLGenerator::generateDomainFile(const std::string& file_name, const KnowledgeBase& current_knowledge_base, const std::vector<const KnowledgeBase*>& knowledge_bases, const Location& robot_location, const std::vector<Location*>& locations, const std::vector<Toy*>& objects, const std::vector<const Box*>& boxes, const TreeNode& root)
 {
 	std::vector<const State*> states;
 	for (std::vector<const KnowledgeBase*>::const_iterator ci = knowledge_bases.begin(); ci != knowledge_bases.end(); ++ci)
@@ -212,7 +212,7 @@ void PlanToSensePDDLGenerator::generateDomainFile(const std::string& file_name, 
 	}
 
 	myfile << "\t; The objects." << std::endl;
-	for (std::vector<Object*>::const_iterator ci = objects.begin(); ci != objects.end(); ++ci)
+	for (std::vector<Toy*>::const_iterator ci = objects.begin(); ci != objects.end(); ++ci)
 	{
 		myfile << "\t" << (*ci)->name_ << " - object" << std::endl;
 	}
@@ -520,9 +520,9 @@ void PlanToSensePDDLGenerator::generateDomainFile(const std::string& file_name, 
 			myfile << "\t\t)" << std::endl;
 		}
 		
-		for (std::vector<Object*>::const_iterator ci = objects.begin(); ci != objects.end(); ++ci)
+		for (std::vector<Toy*>::const_iterator ci = objects.begin(); ci != objects.end(); ++ci)
 		{
-			const Object* object = *ci;
+			const Toy* object = *ci;
 			
 			for (std::vector<Location*>::const_iterator ci = locations.begin(); ci != locations.end(); ++ci)
 			{
@@ -574,9 +574,9 @@ void PlanToSensePDDLGenerator::generateDomainFile(const std::string& file_name, 
 				myfile << "\t\t)" << std::endl;
 				
 				
-				for (std::vector<Object*>::const_iterator ci = objects.begin(); ci != objects.end(); ++ci)
+				for (std::vector<Toy*>::const_iterator ci = objects.begin(); ci != objects.end(); ++ci)
 				{
-					const Object* object2 = *ci;
+					const Toy* object2 = *ci;
 					for (std::vector<const Box*>::const_iterator ci = boxes.begin(); ci != boxes.end(); ++ci)
 					{
 						const Box* box2 = *ci;
@@ -654,9 +654,9 @@ void PlanToSensePDDLGenerator::generateDomainFile(const std::string& file_name, 
 				myfile << "\t\t\t)" << std::endl;
 				myfile << "\t\t)" << std::endl;
 				
-				for (std::vector<Object*>::const_iterator ci = objects.begin(); ci != objects.end(); ++ci)
+				for (std::vector<Toy*>::const_iterator ci = objects.begin(); ci != objects.end(); ++ci)
 				{
-					const Object* object = *ci;
+					const Toy* object = *ci;
 					myfile << "\t\t(when (and (part-of " << state->state_name_ << " ?old_kb) (object_at " << object->name_ << " " << location->name_ << " " << state->state_name_ << ") (part-of " << state2->state_name_ << " ?new_kb))" << std::endl;
 					myfile << "\t\t\t(and " << std::endl;
 					myfile << "\t\t\t\t(not (Robject_at " << object->name_ << " " << location->name_ << " " << state->state_name_ << "))" << std::endl;
@@ -668,9 +668,9 @@ void PlanToSensePDDLGenerator::generateDomainFile(const std::string& file_name, 
 				}
 			}
 			
-			for (std::vector<Object*>::const_iterator ci = objects.begin(); ci != objects.end(); ++ci)
+			for (std::vector<Toy*>::const_iterator ci = objects.begin(); ci != objects.end(); ++ci)
 			{
-				const Object* object = *ci;
+				const Toy* object = *ci;
 				
 				for (std::vector<const Box*>::const_iterator ci = boxes.begin(); ci != boxes.end(); ++ci)
 				{
@@ -704,9 +704,9 @@ void PlanToSensePDDLGenerator::generateDomainFile(const std::string& file_name, 
 					myfile << "\t\t)" << std::endl;
 					
 					
-					for (std::vector<Object*>::const_iterator ci = objects.begin(); ci != objects.end(); ++ci)
+					for (std::vector<Toy*>::const_iterator ci = objects.begin(); ci != objects.end(); ++ci)
 					{
-						const Object* object2 = *ci;
+						const Toy* object2 = *ci;
 						
 						for (std::vector<const Box*>::const_iterator ci = boxes.begin(); ci != boxes.end(); ++ci)
 						{
@@ -830,9 +830,9 @@ void PlanToSensePDDLGenerator::generateDomainFile(const std::string& file_name, 
 		myfile << "\t\t)" << std::endl;
 	}
 	
-	for (std::vector<Object*>::const_iterator ci = objects.begin(); ci != objects.end(); ++ci)
+	for (std::vector<Toy*>::const_iterator ci = objects.begin(); ci != objects.end(); ++ci)
 	{
-		const Object* object = *ci;
+		const Toy* object = *ci;
 		for (std::vector<const Box*>::const_iterator ci = boxes.begin(); ci != boxes.end(); ++ci)
 		{
 			const Box* box = *ci;
@@ -921,9 +921,9 @@ void PlanToSensePDDLGenerator::generateDomainFile(const std::string& file_name, 
 				myfile << "\t\t)" << std::endl;
 			}
 			
-			for (std::vector<Object*>::const_iterator ci = objects.begin(); ci != objects.end(); ++ci)
+			for (std::vector<Toy*>::const_iterator ci = objects.begin(); ci != objects.end(); ++ci)
 			{
-				const Object* object2 = *ci;
+				const Toy* object2 = *ci;
 				for (std::vector<const Box*>::const_iterator ci = boxes.begin(); ci != boxes.end(); ++ci)
 				{
 					const Box* box2 = *ci;
@@ -1002,9 +1002,9 @@ void PlanToSensePDDLGenerator::generateDomainFile(const std::string& file_name, 
 			myfile << "\t\t)" << std::endl;
 			
 			/*** object_at ***
-			for (std::vector<Object*>::const_iterator ci = objects.begin(); ci != objects.end(); ++ci)
+			for (std::vector<Toy*>::const_iterator ci = objects.begin(); ci != objects.end(); ++ci)
 			{
-				const Object* object = *ci;
+				const Toy* object = *ci;
 				
 				// Deal with the location of the robot.
 				myfile << "\t\t(when (and " << std::endl;
@@ -1046,12 +1046,17 @@ void PlanToSensePDDLGenerator::generateDomainFile(const std::string& file_name, 
 	myfile.close();
 }
 
-void PlanToSensePDDLGenerator::createPDDL(const std::string& path, const std::string& domain_file, const std::string& problem_file, const std::string& robot_location_predicate, const std::map<std::string, std::string>& object_to_location_mapping, const std::map<std::string, std::string>& box_to_location_mapping)
+void PlanToSensePDDLGenerator::createPDDL(FactObserveTree& root, const std::string& path, const std::string& domain_file, const std::string& problem_file, const std::string& robot_location_predicate, const std::map<std::string, std::string>& object_to_location_mapping, const std::map<std::string, std::string>& box_to_location_mapping)
 {
+	ROS_INFO("KCL: (PlanToSensePDDLGenerator) Create the PDDL domain.");
 	// Now generate the waypoints / boxes / toys / etc.
 	std::vector<Location*> locations;
-	std::vector<Object*> objects;
+	std::vector<Toy*> objects;
 	std::vector<const Box*> boxes;
+	
+	// Predicate to object mapping for ease of use :).
+	std::map<std::string, const Toy*> toy_mapping;
+	std::map<std::string, const Box*> box_mapping;
 	
 	// Initialise the robot's location.
 	Location* robot_location = new Location(robot_location_predicate, false);
@@ -1062,8 +1067,10 @@ void PlanToSensePDDLGenerator::createPDDL(const std::string& path, const std::st
 	{
 		Location* location = new Location(ci->second, false);
 		locations.push_back(location);
-		Object* object = new Object(ci->first, *location);
+		Toy* object = new Toy(ci->first, *location);
 		objects.push_back(object);
+		
+		toy_mapping[object->name_] = object;
 	}
 	
 	// Initialise the box's locations.
@@ -1071,9 +1078,11 @@ void PlanToSensePDDLGenerator::createPDDL(const std::string& path, const std::st
 	{
 		Location* location = new Location(ci->second, false);
 		locations.push_back(location);
-		std::vector<const Object*> objects_inside;
+		std::vector<const Toy*> objects_inside;
 		Box* box = new Box(ci->first, *location, objects_inside);
 		boxes.push_back(box);
+		
+		box_mapping[box->name_] = box;
 		
 		// Create a near location for every box.
 		std::stringstream ss;
@@ -1095,16 +1104,29 @@ void PlanToSensePDDLGenerator::createPDDL(const std::string& path, const std::st
 		}
 	}
 	
+	ROS_INFO("KCL: (PlanToSensePDDLGenerator) Create the believe states.");
+	
 	std::vector<const KnowledgeBase*> knowledge_bases;
 	//std::vector<const TreeNode*> empty_stacked_objects_mapping;
 	//State basic_state("basic", empty_stacked_objects_mapping);
 	
 	KnowledgeBase basis_kb("basis_kb");
-	//basis_kb.addState(basic_state);
 	knowledge_bases.push_back(&basis_kb);
 	
 	unsigned int state_id = 0;
 	
+	// Create the tree from the data stored in the knowledge base.
+	std::vector<State*> generated_states;
+	TreeNode tree_root(NULL, true, root, toy_mapping, box_mapping, generated_states);
+	
+	// Generate all sequences through that tree that form the states.
+	for (std::vector<State*>::const_iterator ci = generated_states.begin(); ci != generated_states.end(); ++ci)
+	{
+		basis_kb.addState(**ci);
+	}
+	
+	/*
+	// Test case to test the model and planner.
 	// Root of the tree.
 	TreeNode root(*boxes[0], *objects[0], NULL);
 	TreeNode tn11(*boxes[0], *objects[1], &root);
@@ -1121,16 +1143,16 @@ void PlanToSensePDDLGenerator::createPDDL(const std::string& path, const std::st
 	sense_sequence2.push_back(&root);
 	sense_sequence2.push_back(&tn12);
 	
-	std::map<const Object*, const Box*> believe_state1;
+	std::map<const Toy*, const Box*> believe_state1;
 	believe_state1[objects[0]] = boxes[0];
 	believe_state1[objects[1]] = boxes[0];
-	std::map<const Object*, const Box*> believe_state2;
+	std::map<const Toy*, const Box*> believe_state2;
 	believe_state2[objects[0]] = boxes[0];
 	believe_state2[objects[1]] = boxes[1];
-	std::map<const Object*, const Box*> believe_state3;
+	std::map<const Toy*, const Box*> believe_state3;
 	believe_state3[objects[0]] = boxes[1];
 	believe_state3[objects[1]] = boxes[0];
-	std::map<const Object*, const Box*> believe_state4;
+	std::map<const Toy*, const Box*> believe_state4;
 	believe_state4[objects[0]] = boxes[1];
 	believe_state4[objects[1]] = boxes[1];
 	
@@ -1142,52 +1164,16 @@ void PlanToSensePDDLGenerator::createPDDL(const std::string& path, const std::st
 	basis_kb.addState(*state2);
 	basis_kb.addState(*state3);
 	basis_kb.addState(*state4);
-	
+	*/
 	
 	std::stringstream ss;
-	/*
-	// TODO: Should be a single knowledge base?
-	// Create a new knowledge base for each object.
-	
-	for (std::vector<Object*>::const_iterator ci = objects.begin(); ci != objects.end(); ++ci)
-	{
-		const Object* object = *ci;
-		ss.str(std::string());
-		ss << "kb_" << object->name_;
-		
-		KnowledgeBase* kb_location = new KnowledgeBase(ss.str());
-		basis_kb.addChild(*kb_location);
-		knowledge_bases.push_back(kb_location);
-		
-
-		
-		for (std::vector<Object*>::const_iterator ci = objects.begin(); ci != objects.end(); ++ci)
-		{
-			const Object* object = *ci;
-			ss.str(std::string());
-			ss << "kb_" << object->name_;
-			
-			KnowledgeBase* kb_location = new KnowledgeBase(ss.str());
-			basis_kb.addChild(*kb_location);
-			knowledge_bases.push_back(kb_location);
-			
-			std::vector<const TreeNode*> sense_sequence;
-			ss.str(std::string());
-			ss << "s" << state_id;
-			State* state_pickupable = new State(ss.str(), sense_sequence);
-			kb_location->addState(*state_pickupable);
-			++state_id;
-		}
-	}
-	*/
-	ss.str(std::string());
 	ss << path << domain_file;
 	ROS_INFO("KCL: (PlanToSensePDDLGenerator) Generate domain... %s", ss.str().c_str());
-	generateDomainFile(ss.str(), basis_kb, knowledge_bases, *robot_location, locations, objects, boxes, root);
+	generateDomainFile(ss.str(), basis_kb, knowledge_bases, *robot_location, locations, objects, boxes, tree_root);
 	ss.str(std::string());
 	ss << path  << problem_file;
 	ROS_INFO("KCL: (PlanToSensePDDLGenerator) Generate problem... %s", ss.str().c_str());
-	generateProblemFile(ss.str(), basis_kb, knowledge_bases, *robot_location, locations, objects, boxes, root);
+	generateProblemFile(ss.str(), basis_kb, knowledge_bases, *robot_location, locations, objects, boxes, tree_root);
 }
 
 };
