@@ -1,6 +1,6 @@
 <launch>
 	<arg name="number_of_toys" default="1"/>
-	<arg name="model_file_name" default="/home/edith/.gazebo/models/beer/model.sdf"/>
+	<arg name="model_file_name" default="/home/bram/.gazebo/models/beer/model.sdf"/>
 
 	<node name="squirrel_interface_recursion" pkg="squirrel_planning_execution" type="rpsquirrelRecursion" respawn="false" output="screen">
 	    <param name="occupancy_topic" value="/squirrel_nav/occupancy_map" />
@@ -8,7 +8,7 @@
 	    <param name="number_of_toys" value="$(arg number_of_toys)" />
             <param name="stop_when_enough_lumps_found" value="true" type="bool" />
 	    <!-- spawn objects in gazebo -->
-            <param name="spawn_objects" value="true" type="bool" />
+            <param name="spawn_objects" value="false" type="bool" />
             <param name="model_file_name" value="$(arg model_file_name)" />
             <!-- locations of toys to be placed -->
 	    <param name="toy_p0" value="-0.16,-2.82,0.0" />

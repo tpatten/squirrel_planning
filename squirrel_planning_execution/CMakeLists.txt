@@ -122,11 +122,9 @@ set(viewConeTester_SOURCES
   src/ViewConeGenerator.cpp
   src/view_cone_test_suite/ViewConeCaller.cpp)
   
-set(knowRuleTester_SOURCES
-  src/pddl_generators/RobotKnowsSortingGamePDDLGenerator.cpp)
-  
 set(recommenderTester_SOURCES
-  src/RecommenderSystem.cpp)
+  src/RecommenderSystem.cpp
+  src/PlanToSensePDDLGenerator.cpp)
   
 ## planning simulation
 #set(planSim_SOURCES
@@ -149,10 +147,8 @@ add_executable(simulatedPDDLActionsNode ${simulatedPDDLActionsNode_SOURCES})
 add_executable(sortingGame ${sortingGame_SOURCES})
 add_executable(speechSimulator ${speechSimulator_SOURCES})
 add_executable(viewConeTester ${viewConeTester_SOURCES})
-add_executable(knowRuleTester ${knowRuleTester_SOURCES})
 add_executable(recommenderTester ${recommenderTester_SOURCES})
 add_executable(robotKnowsGame ${robotKnows_SOURCES})
-#add_executable(planSim ${planSim_SOURCES})
 
 add_dependencies(tidyroom ${catkin_EXPORTED_TARGETS})
 add_dependencies(simpledemo ${catkin_EXPORTED_TARGETS})
@@ -162,10 +158,8 @@ add_dependencies(simulatedPDDLActionsNode ${catkin_EXPORTED_TARGETS})
 add_dependencies(sortingGame ${catkin_EXPORTED_TARGETS})
 add_dependencies(speechSimulator ${catkin_EXPORTED_TARGETS})
 add_dependencies(viewConeTester ${catkin_EXPORTED_TARGETS})
-add_dependencies(knowRuleTester ${catkin_EXPORTED_TARGETS})
 add_dependencies(recommenderTester ${catkin_EXPORTED_TARGETS})
 add_dependencies(robotKnowsGame ${catkin_EXPORTED_TARGETS})
-#add_dependencies(planSim ${catkin_EXPORTED_TARGETS})
 
 target_link_libraries(tidyroom ${catkin_LIBRARIES})
 target_link_libraries(simpledemo ${catkin_LIBRARIES})
@@ -175,10 +169,8 @@ target_link_libraries(simulatedPDDLActionsNode ${catkin_LIBRARIES})
 target_link_libraries(sortingGame ${catkin_LIBRARIES})
 target_link_libraries(speechSimulator ${catkin_LIBRARIES})
 target_link_libraries(viewConeTester ${catkin_LIBRARIES})
-target_link_libraries(knowRuleTester ${catkin_LIBRARIES})
 target_link_libraries(recommenderTester ${catkin_LIBRARIES})
 target_link_libraries(robotKnowsGame ${catkin_LIBRARIES})
-#target_link_libraries(planSim ${catkin_LIBRARIES})
 
 ##########
 ## Test ##
