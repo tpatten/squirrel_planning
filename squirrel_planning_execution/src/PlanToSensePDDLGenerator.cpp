@@ -189,6 +189,8 @@ void PlanToSensePDDLGenerator::generateDomainFile(const std::string& file_name, 
 	myfile << "\t(gripper_empty ?v - robot ?s - state)" << std::endl;
 	myfile << "\t(Rgripper_empty ?v - robot ?s - state)" << std::endl;
 	
+	myfile << "\t(received_feedback ?o - object ?b - box ?s - state)" << std::endl;
+	myfile << "\t(Rreceived_feedback ?o - object ?b - box ?s - state)" << std::endl;
 	
 	// Encode closness of a waypoint to a box / child.
 	myfile << "\t(near ?from ?to - waypoint)" << std::endl;
@@ -434,6 +436,45 @@ void PlanToSensePDDLGenerator::generateDomainFile(const std::string& file_name, 
 	myfile << std::endl;
 	
 	/**
+	 * Listen to children's feedback.
+	 */
+	myfile << "(:action listen_to_feedback" << std::endl;
+	myfile << "\t:parameters (?v - robot ?o - object ?b - box ?object_wp ?robot_wp - waypoint)" << std::endl;
+	myfile << "\t:precondition (and" << std::endl;
+	myfile << "\t\t(box_at ?b ?object_wp)" << std::endl;
+	myfile << "\t\t(not (resolve-axioms))" << std::endl;
+	for (std::vector<const KnowledgeBase*>::const_iterator ci = knowledge_bases.begin(); ci != knowledge_bases.end(); ++ci)
+	{
+		const KnowledgeBase* knowledge_base = *ci;
+		for (std::vector<const State*>::const_iterator ci = knowledge_base->states_.begin(); ci != knowledge_base->states_.end(); ++ci)
+		{
+			
+			myfile << "\t\t(Robject_at ?o ?object_wp " << (*ci)->state_name_ << ")" << std::endl;
+			myfile << "\t\t(Rrobot_at ?v ?robot_wp " << (*ci)->state_name_ << ")" << std::endl;
+		}
+	}
+	
+	myfile << "\t)" << std::endl;
+	myfile << "\t:effect (and" << std::endl;
+	myfile << "\t\t;; For every state ?s" << std::endl;
+	
+	for (std::vector<const State*>::const_iterator ci = states.begin(); ci != states.end(); ++ci)
+	{
+		myfile << "\t\t(when (m " << (*ci)->state_name_ << ")" << std::endl;
+		myfile << "\t\t\t(and" << std::endl;
+
+		myfile << "\t\t\t\t(received_feedback ?o ?b " << (*ci)->state_name_ << ")" << std::endl;
+		myfile << "\t\t\t\t(Rreceived_feedback ?o ?b " << (*ci)->state_name_ << ")" << std::endl;
+
+		myfile << "\t\t\t)" << std::endl;
+		myfile << "\t\t)" << std::endl;
+	}
+	
+	myfile << "\t)" << std::endl;
+	myfile << ")" << std::endl;
+	myfile << std::endl;
+	
+	/**
 	 * Check which observation to make next.
 	 */
 	myfile << "(:action next_observation" << std::endl;
@@ -539,6 +580,7 @@ void PlanToSensePDDLGenerator::generateDomainFile(const std::string& file_name, 
 		{
 			myfile << "\t\t(Robject_at ?o ?wp " << (*ci)->state_name_ << ")" << std::endl;
 			myfile << "\t\t(Rto_observe ?o ?b " << (*ci)->state_name_ << ")" << std::endl;
+			myfile << "\t\t(Rreceived_feedback ?o ?b " << (*ci)->state_name_ << ")" << std::endl;
 		}
 	}
 	
@@ -707,6 +749,13 @@ void PlanToSensePDDLGenerator::generateDomainFile(const std::string& file_name, 
 				myfile << "\t\t\t(not (Rlast_observation " << object->name_ << " " << box->name_ << " " << state->state_name_ << "))" << std::endl;
 				myfile << "\t\t)" << std::endl;
 				
+				myfile << "\t\t(when (or (received_feedback " << object->name_ << " " << box->name_ << " " << state->state_name_ << ") (not (m " << state->state_name_ << ")))" << std::endl;
+				myfile << "\t\t\t(Rreceived_feedback " << object->name_ << " " << box->name_ << " " << state->state_name_ << ")" << std::endl;
+				myfile << "\t\t)" << std::endl;
+				
+				myfile << "\t\t(when (and (not (received_feedback " << object->name_ << " " << box->name_ << " " << state->state_name_ << ")) (m " << state->state_name_ << "))" << std::endl;
+				myfile << "\t\t\t(not (Rreceived_feedback " << object->name_ << " " << box->name_ << " " << state->state_name_ << "))" << std::endl;
+				myfile << "\t\t)" << std::endl;
 				
 				for (std::vector<Toy*>::const_iterator ci = objects.begin(); ci != objects.end(); ++ci)
 				{

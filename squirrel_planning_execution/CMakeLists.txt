@@ -124,7 +124,8 @@ set(viewConeTester_SOURCES
   
 set(recommenderTester_SOURCES
   src/RecommenderSystem.cpp
-  src/PlanToSensePDDLGenerator.cpp)
+  src/PlanToSensePDDLGenerator.cpp
+  src/pddl_actions/ListenToFeedbackPDDLAction.cpp)
   
 ## planning simulation
 #set(planSim_SOURCES

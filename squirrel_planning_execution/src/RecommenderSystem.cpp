@@ -2,6 +2,7 @@
 #include <fstream>
 #include <queue>
 
+#include <actionlib/client/simple_action_client.h>
 #include <rosplan_planning_system/PlanningEnvironment.h>
 
 #include <rosplan_knowledge_msgs/DomainFormula.h>
@@ -13,7 +14,11 @@
 #include <rosplan_knowledge_msgs/KnowledgeQueryService.h>
 #include <rosplan_knowledge_msgs/GetDomainTypeService.h>
 #include <rosplan_knowledge_msgs/GetDomainAttributeService.h>
+#include <rosplan_dispatch_msgs/PlanAction.h>
 
+#include <rosplan_knowledge_msgs/GenerateProblemService.h>
+
+#include "pddl_actions/ListenToFeedbackPDDLAction.h"
 #include "squirrel_planning_execution/RecommenderSystem.h"
 #include "squirrel_prediction_msgs/RecommendRelations.h"
 #include "squirrel_planning_execution/PlanToSensePDDLGenerator.h"
@@ -940,6 +945,13 @@ namespace KCL_rosplan {
 	
 }; // close namespace
 
+/**
+ * Dummy PDDL problem generator.
+ */
+bool generatePDDLProblemFile(rosplan_knowledge_msgs::GenerateProblemService::Request &req, rosplan_knowledge_msgs::GenerateProblemService::Response &res) {
+	return true;
+}
+
 int main(int argc, char** argv)
 {
 	ROS_INFO("KCL: (RecommenderSystem) Started!\n");
@@ -1040,12 +1052,17 @@ int main(int argc, char** argv)
 	ros::init(argc, argv, "rosplan_RecommanderSystem");
 	ros::NodeHandle nh;
 	
+	// Start the listen to feedback action.
+	KCL_rosplan::ListenToFeedbackPDDLAction listener(nh);
+	
 	std::string domain_path;
 	nh.getParam("/rosplan/domain", domain_path);
 	
 	std::string data_path;
 	nh.getParam("/rosplan/data_path", data_path);
 	std::cout << "Data path: " << data_path << std::endl;
+	
+	ros::ServiceServer pddl_generation_service = nh.advertiseService("/kcl_rosplan/generate_planning_problem", &generatePDDLProblemFile);
 	
 	// Start the recommender system and initialise all the facts.
 	KCL_rosplan::RecommenderSystem rs(nh);
@@ -1079,11 +1096,43 @@ int main(int argc, char** argv)
 	KCL_rosplan::PlanToSensePDDLGenerator pts;
 	pts.createPDDL(root, data_path, "domain.pddl", "problem.pddl", "kenny_wp", object_to_location_mapping, box_to_location_mapping);
 	
-	/*
+	// Start the planner using the generated domain / problem files.
+	
+	std::string planner_path;
+	nh.getParam("/planner_path", planner_path);
+	
+	std::stringstream ss;
+	ss << data_path << "domain.pddl";
+	std::string domain_path2 = ss.str();
+	
+	ss.str(std::string());
+	ss << data_path << "problem.pddl";
+	std::string problem_path = ss.str();
+	std::cout << problem_path << std::endl;
+	
+	std::string planner_command;
+	nh.getParam("/squirrel_planning_execution/planner_command", planner_command);
+	
+	rosplan_dispatch_msgs::PlanGoal psrv;
+	psrv.domain_path = domain_path2;
+	psrv.problem_path = problem_path;
+	psrv.data_path = data_path;
+	psrv.planner_command = planner_command;
+	psrv.start_action_id = 0;
+
+	ROS_INFO("KCL: (RobotKnowsGame) Start plan action");
+	actionlib::SimpleActionClient<rosplan_dispatch_msgs::PlanAction> plan_action_client("/kcl_rosplan/start_planning", true);
+
+	plan_action_client.waitForServer();
+	ROS_INFO("KCL: (RobotKnowsGame) Start planning server found");
+	
+	// send goal
+	plan_action_client.sendGoal(psrv);
+	ROS_INFO("KCL: (RobotKnowsGame) Goal sent");
+
 	while (ros::ok())
 	{
 		ros::spinOnce();
 	}
-	*/
 	return 0;
 }
