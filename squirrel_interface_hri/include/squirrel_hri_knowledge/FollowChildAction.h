@@ -41,12 +41,12 @@ namespace KCL_rosplan {
 		ros::Publisher head_nod_pub;
 		
 		// locations where we expect a child to go.
-		std::vector<geometry_msgs::Pose2D> child_destinations;
+		std::vector<geometry_msgs::Point> child_destinations;
 
 	public:
 
 		/* constructor */
-		FollowChildAction(ros::NodeHandle &nh, const std::string& follow_child_action_name, const std::vector<geometry_msgs::Pose2D>& child_destinations);
+		FollowChildAction(ros::NodeHandle &nh, const std::string& follow_child_action_name, const std::vector<geometry_msgs::Point>& child_destinations);
 
 		void dispatchCallback(const rosplan_dispatch_msgs::ActionDispatch::ConstPtr& msg);
 		
@@ -54,3 +54,4 @@ namespace KCL_rosplan {
 	};
 }
 #endif
+
