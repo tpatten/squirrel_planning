@@ -271,7 +271,7 @@ void setupSimulation(const std::string& config_file, ros::ServiceClient& update_
 					ROS_ERROR("KCL: (RobotKnowsGame) Could not add the fact (belongs_in %s %s) to the knowledge base.", object_id.c_str(), box_name.c_str());
 					exit(-1);
 				}
-				ROS_ERROR("KCL: (RobotKnowsGame) Added the fact (belongs_in %s %s) to the knowledge base.", object_id.c_str(), box_name.c_str());
+				ROS_INFO("KCL: (RobotKnowsGame) Added the fact (belongs_in %s %s) to the knowledge base.", object_id.c_str(), box_name.c_str());
 			}
 		}
 	}
