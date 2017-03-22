@@ -1070,7 +1070,7 @@ namespace KCL_rosplan {
 		// write to file
 		std::ofstream file;
 		std::stringstream ss;
-		ss << path << "/d3_viz/recogniser.dot";
+		ss << path << "/d3_viz/recommender.dot";
 		file.open(ss.str().c_str());
 		file << dest.str();
 		file.close();
