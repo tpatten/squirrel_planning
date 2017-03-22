@@ -76,7 +76,7 @@ void ListenToFeedbackPDDLAction::dispatchCallback(const rosplan_dispatch_msgs::A
 		knowledge_item.values.push_back(kv);
 		
 		kv.key = "c";
-		kv.value = "yes";
+		kv.value = "no";
 		knowledge_item.values.push_back(kv);
 		knowledge_item.is_negative = false;
 		

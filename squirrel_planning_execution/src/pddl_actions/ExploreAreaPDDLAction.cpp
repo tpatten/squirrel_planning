@@ -2,6 +2,9 @@
 #include <vector>
 #include <iostream>
 #include <sstream>
+//#include <boost/concept_check.hpp>
+#include <tf/tf.h>
+#include <tf/transform_listener.h>
 
 #include <std_msgs/Int8.h>
 #include <std_msgs/ColorRGBA.h>
@@ -44,6 +47,7 @@ namespace KCL_rosplan {
 		view_cone_generator_ = new ViewConeGenerator(node_handle, occupancyTopic);
 		
 		node_handle.getParam("/squirrel_planning_execution/simulated", is_simulated_);
+		is_simulated_ = true;
 	}
 	
 	ExploreAreaPDDLAction::~ExploreAreaPDDLAction()
@@ -94,7 +98,9 @@ namespace KCL_rosplan {
 		std::string planner_command = ss.str();
 		
 		// Before calling the planner we create the domain so it can be parsed.
-		if (!createDomain())
+		const std::string& robot = msg->parameters[0].value;
+		const std::string& area = msg->parameters[1].value;
+		if (!createDomain(area))
 		{
 			ROS_ERROR("KCL: (ExploreAreaPDDLAction) failed to produce a domain at %s for action name %s.", domain_name.c_str(), action_name.c_str());
 			return;
@@ -167,7 +173,7 @@ namespace KCL_rosplan {
 	/* problem generation */
 	/*--------------------*/
 	
-	bool ExploreAreaPDDLAction::createDomain()
+	bool ExploreAreaPDDLAction::createDomain(const std::string& area)
 	{
 		ROS_INFO("KCL: (ExploreAreaPDDLAction) Create domain for action %s.", g_action_name.c_str());
 		// Lets start the planning process.
@@ -199,7 +205,46 @@ namespace KCL_rosplan {
 		std::vector<std_msgs::ColorRGBA> triangle_colours;
 
 		std::vector<geometry_msgs::Pose> view_poses;
-		if (!is_simulated_ && false)
+		
+		// If the name is 'current_area', then we create a bounding box around the robot to put 
+		// view cones in.
+		if (area == "current_area")
+		{
+			std::vector<tf::Vector3> bounding_box;
+			if (!is_simulated_)
+			{
+				// Locate the location of the robot.
+				tf::StampedTransform transform;
+				tf::TransformListener tfl;
+				try {
+					tfl.waitForTransform("/map","/base_link", ros::Time::now(), ros::Duration(1.0));
+					tfl.lookupTransform("/map", "/base_link", ros::Time(0), transform);
+				} catch ( tf::TransformException& ex ) {
+					std::cout << "Is supposed to be simulated! " << is_simulated_ << std::endl;
+					ROS_ERROR("KCL: (ExploreAreaPDDLAction) Error find the transform between /map and /base_link.");
+					return false;
+				}
+				
+				tf::Vector3 p1(transform.getOrigin().getX() - 1.0f, transform.getOrigin().getY() - 1.0f, 0.00);
+				tf::Vector3 p2(transform.getOrigin().getX() + 1.0f, transform.getOrigin().getY() - 1.0f, 0.00);
+				tf::Vector3 p3(transform.getOrigin().getX() + 1.0f, transform.getOrigin().getY() + 1.0f, 0.00);
+				tf::Vector3 p4(transform.getOrigin().getX() + 1.0f, transform.getOrigin().getY() - 1.0f, 0.00);
+				bounding_box.push_back(p1);
+				bounding_box.push_back(p3);
+				bounding_box.push_back(p4);
+				bounding_box.push_back(p2);
+				view_cone_generator_->createViewCones(view_poses, bounding_box, 3, 5, 30.0f, 2.0f, 100, 0.35f);
+			}
+			else
+			{
+				view_poses.push_back(geometry_msgs::Pose());
+				view_poses.push_back(geometry_msgs::Pose());
+				view_poses.push_back(geometry_msgs::Pose());
+				view_poses.push_back(geometry_msgs::Pose());
+			}
+			
+		}
+		else if (!is_simulated_ && false)
 		{
 			std::vector<tf::Vector3> bounding_box;
 			tf::Vector3 p1(3.22, 4.36, 0.00);
@@ -312,3 +357,4 @@ namespace KCL_rosplan {
 		return true;
 	}
 };
+

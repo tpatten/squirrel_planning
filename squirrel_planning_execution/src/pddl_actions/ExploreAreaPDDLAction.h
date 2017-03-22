@@ -41,8 +41,9 @@ private:
 	
 	/**
 	 * Create a PDDL domain.
+	 * @param area The name of the area we want to explore.
 	 */
-	bool createDomain();
+	bool createDomain(const std::string& area);
 	
 	static std::string g_action_name;            // The action name as specified in PDDL files.
 	
