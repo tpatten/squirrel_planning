@@ -22,6 +22,7 @@
 #include "squirrel_planning_execution/RecommenderSystem.h"
 #include "squirrel_prediction_msgs/RecommendRelations.h"
 #include "squirrel_planning_execution/PlanToSensePDDLGenerator.h"
+#include "squirrel_planning_execution/PlanToAskPDDLGenerator.h"
 
 
 //#define RECOMMENDER_SYSTEM_DEBUG
@@ -981,6 +982,7 @@ int main(int argc, char** argv)
 	objects.push_back(&KCL_rosplan::Object::createObject("box2_wp", location));
 	objects.push_back(&KCL_rosplan::Object::createObject("toy1_wp", location));
 	objects.push_back(&KCL_rosplan::Object::createObject("toy2_wp", location));
+	objects.push_back(&KCL_rosplan::Object::createObject("end_follow_wp", location));
 	ROS_INFO("KCL: (RecommenderSystem) Objects created %zd.\n", objects.size());
 	
 	/* Predicates */
@@ -1093,7 +1095,8 @@ int main(int argc, char** argv)
 	box_to_location_mapping["box1"] = "box1_wp";
 	box_to_location_mapping["box2"] = "box2_wp";
 	
-	KCL_rosplan::PlanToSensePDDLGenerator pts;
+	//KCL_rosplan::PlanToSensePDDLGenerator pts;
+	KCL_rosplan::PlanToAskPDDLGenerator pts;
 	pts.createPDDL(root, data_path, "domain.pddl", "problem.pddl", "kenny_wp", object_to_location_mapping, box_to_location_mapping);
 	
 	// Start the planner using the generated domain / problem files.
