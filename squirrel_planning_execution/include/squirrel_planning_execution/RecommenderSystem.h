@@ -222,6 +222,9 @@ namespace KCL_rosplan {
 		/** @return Whether this fact is negative. */
 		inline bool isNegative() const { return is_negative_; }
 		
+		/** @return The fact as a string as it would be represented in an PDDL domain. **/
+		std::string getFullForm() const;
+		
 		/**
 		 * Delete all objects ever created.
 		 */
@@ -413,6 +416,14 @@ namespace KCL_rosplan {
 		 */
 		void callRecogniser(FactObserveTree& node, const Fact& last_sensed_fact, unsigned int current_depth, unsigned int max_depth, const std::vector<const Object*>& objects, const std::vector<const Predicate*>& predicates, const std::map<const Fact*, float>& weighted_facts, const std::vector<const Fact*>& interesting_facts);
 		
+		/**
+		 * Visualise the knowledge we have right now.
+		 * @param path The path where the output file will be saved.
+		 * @param objects The list of objects
+		 * @param predicates The list of predicates and their arity.
+		 * @param all_facts All the grounded facts.
+		 */
+		void visualise(const std::string& path, const std::vector<const Object*>& objects, const std::vector<const Predicate*>& predicates, const std::vector<const KCL_rosplan::Fact*>& all_facts);
 	};
 }
 #endif

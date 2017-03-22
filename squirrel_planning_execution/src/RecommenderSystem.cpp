@@ -280,6 +280,20 @@ namespace KCL_rosplan {
 		}
 	}
 	
+	std::string Fact::getFullForm() const
+	{
+		std::stringstream ss;
+		if (is_negative_)
+			ss << "not ";
+		ss << predicate_->getName();
+		for (std::vector<const Object*>::const_iterator ci = objects_.begin(); ci != objects_.end(); ++ci)
+		{
+			const Object* o = *ci;
+			ss << " " << o->getName();
+		}
+		return ss.str();
+	}
+	
 	/**
 	 * Delete all objects ever created.
 	 */
@@ -944,6 +958,124 @@ namespace KCL_rosplan {
 		}
 	}
 	
+	void RecommenderSystem::visualise(const std::string& path, const std::vector<const Object*>& objects, const std::vector<const Predicate*>& predicates, const std::vector<const KCL_rosplan::Fact*>& all_facts)
+	{
+		// Get all the facts from the knowledge base and run the recommender. 
+		// We can then visualise the results.
+		
+		/* Mark all facts that are valid with 0 (uncertain). */
+		std::map<const KCL_rosplan::Fact*, float> weighted_facts;
+		std::vector<const KCL_rosplan::Fact*> interesting_facts;
+		for (std::vector<const KCL_rosplan::Fact*>::const_iterator ci = all_facts.begin(); ci != all_facts.end(); ++ci)
+		{
+			const KCL_rosplan::Fact* fact = *ci;
+			// All facts that are certain are set true.
+			if (fact->getPredicate().getName() != "belongs_in")
+			{
+				weighted_facts[*ci] = 2.0;
+			}
+			// Others are recovered from the knowledge base.
+			else
+			{
+				interesting_facts.push_back(fact);
+				
+				rosplan_knowledge_msgs::KnowledgeQueryService knowledge_query;
+				rosplan_knowledge_msgs::KnowledgeItem knowledge_item;
+				knowledge_item.knowledge_type = rosplan_knowledge_msgs::KnowledgeItem::FACT;
+				knowledge_item.attribute_name = "belongs_in";
+				knowledge_item.is_negative = false;
+				
+				diagnostic_msgs::KeyValue kv;
+				kv.key = "o";
+				kv.value = fact->getObjects()[0]->getName();
+				knowledge_item.values.push_back(kv);
+				
+				kv.key = "b";
+				kv.value = fact->getObjects()[1]->getName();
+				knowledge_item.values.push_back(kv);
+				
+				knowledge_query.request.knowledge.push_back(knowledge_item);
+				ROS_INFO("KCL: (RecommenderSystem) Check if (belongs_in %s %s) is true.", fact->getObjects()[0]->getName().c_str(), fact->getObjects()[1]->getName().c_str());
+				
+				// Check if any of these facts are true.
+				if (!query_knowledge_client.call(knowledge_query))
+				{
+					ROS_ERROR("KCL: (RecommenderSystem) Could not call the query knowledge server.");
+					exit(1);
+				}
+				
+				if (knowledge_query.response.results[0] == 1)
+				{
+					weighted_facts[*ci] = 2.0;
+				}
+				else
+				{
+					knowledge_query.response.results.clear();
+					
+					// Check if the fact is negative.
+					knowledge_item.is_negative = false;
+					
+					ROS_INFO("KCL: (RecommenderSystem) Check if (not (belongs_in %s %s)) is true.", fact->getObjects()[0]->getName().c_str(), fact->getObjects()[1]->getName().c_str());
+				
+					// Check if any of these facts are true.
+					if (!query_knowledge_client.call(knowledge_query))
+					{
+						ROS_ERROR("KCL: (RecommenderSystem) Could not call the query knowledge server.");
+						exit(1);
+					}
+					if (knowledge_query.response.results[0] == 1)
+					{
+						weighted_facts[*ci] = 1.0;
+					}
+					else
+					{
+						weighted_facts[*ci] = 0.0;
+					}
+				}
+				
+			}
+		}
+		
+		std::map<const Fact*, float> results = runRecommender(objects, predicates, weighted_facts);
+		
+		// Visualise the mapping.
+		// output file
+		std::stringstream dest;
+
+		dest << "digraph recogniser {" << std::endl;
+
+		// nodes
+		for (std::vector<const Object*>::const_iterator ci = objects.begin(); ci != objects.end(); ++ci)
+		{
+			const Object* o = *ci;
+			if (o->getType().getName() == "box" || o->getType().getName() == "object")
+			{
+				dest << o->getName() << "[ label=\"" << o->getName() << "\" style=\"fill: #fff; \"];" << std::endl;
+			}
+		}
+
+		// edges
+		for (std::vector<const KCL_rosplan::Fact*>::const_iterator ci = interesting_facts.begin(); ci != interesting_facts.end(); ++ci)
+		{
+			const KCL_rosplan::Fact* fact = *ci;
+			if (fact->getPredicate().getName() != "belongs_in") continue;
+			
+			float value = results[fact];
+			if (value > 0.3)
+				dest << "\"" << fact->getObjects()[0]->getName() << "\"" << " -> \"" << fact->getObjects()[1]->getName() << "\";" << std::endl;
+		}
+
+		dest << "}" << std::endl;
+		
+		// write to file
+		std::ofstream file;
+		std::stringstream ss;
+		ss << path << "/d3_viz/recogniser.dot";
+		file.open(ss.str().c_str());
+		file << dest.str();
+		file.close();
+	}
+	
 }; // close namespace
 
 /**
@@ -1095,8 +1227,8 @@ int main(int argc, char** argv)
 	box_to_location_mapping["box1"] = "box1_wp";
 	box_to_location_mapping["box2"] = "box2_wp";
 	
-	//KCL_rosplan::PlanToSensePDDLGenerator pts;
-	KCL_rosplan::PlanToAskPDDLGenerator pts;
+	KCL_rosplan::PlanToSensePDDLGenerator pts;
+	//KCL_rosplan::PlanToAskPDDLGenerator pts;
 	pts.createPDDL(root, data_path, "domain.pddl", "problem.pddl", "kenny_wp", object_to_location_mapping, box_to_location_mapping);
 	
 	// Start the planner using the generated domain / problem files.
@@ -1135,6 +1267,7 @@ int main(int argc, char** argv)
 
 	while (ros::ok())
 	{
+		rs.visualise(data_path, objects, predicates, all_facts);
 		ros::spinOnce();
 	}
 	return 0;
