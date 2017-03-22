@@ -1227,9 +1227,8 @@ int main(int argc, char** argv)
 	box_to_location_mapping["box1"] = "box1_wp";
 	box_to_location_mapping["box2"] = "box2_wp";
 	
-	KCL_rosplan::PlanToSensePDDLGenerator pts;
-	//KCL_rosplan::PlanToAskPDDLGenerator pts;
-	pts.createPDDL(root, data_path, "domain.pddl", "problem.pddl", "kenny_wp", object_to_location_mapping, box_to_location_mapping);
+	KCL_rosplan::PlanToAskPDDLGenerator pta;
+	pta.createPDDL(root, data_path, "domain.pddl", "problem.pddl", "kenny_wp", object_to_location_mapping, box_to_location_mapping);
 	
 	// Start the planner using the generated domain / problem files.
 	
@@ -1265,10 +1264,35 @@ int main(int argc, char** argv)
 	plan_action_client.sendGoal(psrv);
 	ROS_INFO("KCL: (RobotKnowsGame) Goal sent");
 
+	// Update the visualisation every 10 seconds.
+	double last_update = ros::Time::now().toSec();
 	while (ros::ok())
 	{
-		rs.visualise(data_path, objects, predicates, all_facts);
+		double now = ros::Time::now().toSec();
+		if (now - last_update > 10)
+		{
+			rs.visualise(data_path, objects, predicates, all_facts);
+		}
 		ros::spinOnce();
+		
+		// Check if the planner has finished yet.
+		actionlib::SimpleClientGoalState state = plan_action_client.getState();
+		if (state == actionlib::SimpleClientGoalState::SUCCEEDED)
+		{
+			KCL_rosplan::PlanToSensePDDLGenerator pts;
+			pts.createPDDL(root, data_path, "domain.pddl", "problem.pddl", "kenny_wp", object_to_location_mapping, box_to_location_mapping);
+			
+			// Start the planner using the generated domain / problem files.
+			psrv.domain_path = domain_path2;
+			psrv.problem_path = problem_path;
+			psrv.data_path = data_path;
+			psrv.planner_command = planner_command;
+			psrv.start_action_id = 0;
+
+			// send goal
+			plan_action_client.sendGoal(psrv);
+			ROS_INFO("KCL: (RobotKnowsGame) Goal sent");
+		}
 	}
 	return 0;
 }
