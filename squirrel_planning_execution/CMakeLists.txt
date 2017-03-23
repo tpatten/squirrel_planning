@@ -85,6 +85,7 @@ set(robotKnows_SOURCES
   src/pddl_actions/ExploreAreaPDDLAction.cpp
   src/pddl_actions/TidyAreaPDDLAction.cpp
   src/pddl_actions/ObserveClassifiableOnAttemptPDDLAction.cpp
+  src/pddl_actions/GotoViewWaypointPDDLAction.cpp
   src/ViewConeGenerator.cpp)
   
 set(simulatedPDDLActionsNode_SOURCES

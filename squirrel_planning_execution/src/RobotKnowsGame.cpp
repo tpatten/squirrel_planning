@@ -20,6 +20,7 @@
 #include "pddl_actions/ObserveClassifiableOnAttemptPDDLAction.h"
 #include "pddl_actions/TidyAreaPDDLAction.h"
 #include "pddl_actions/PlannerInstance.h"
+#include "pddl_actions/GotoViewWaypointPDDLAction.h"
 
 ros::NodeHandle* nh;
 ros::Publisher action_feedback_pub;
@@ -175,7 +176,6 @@ void setupSimulation(const std::string& config_file, ros::ServiceClient& update_
 				std::string near_waypoint_mongodb_id3(message_store.insertNamed(ss.str(), pose));
 				ROS_INFO("KCL: (RobotKnowsGame) Added %s to the knowledge base.", ss.str().c_str());
 				}
-				
 			}
 			else if (line[0] == 'w')
 			{
@@ -670,7 +670,8 @@ void dispatchCallback(const rosplan_dispatch_msgs::ActionDispatch::ConstPtr& msg
 	normalised_action_dispatch.name = action_name;
 	
 	// Ignore actions that do not correspond to g_action_name.
-	if ("start_phase3" != action_name)
+	if ("start_phase3" != action_name &&
+	    "start_phase2" != action_name)
 	{
 		return;
 	}
@@ -704,7 +705,14 @@ void dispatchCallback(const rosplan_dispatch_msgs::ActionDispatch::ConstPtr& msg
 	std::string problem_path = ss.str();
 	
 	std::string planner_command;
-	nh->getParam("/squirrel_planning_execution/planner_command_phase3", planner_command);
+	if ("start_phase3" != action_name)
+	{
+		nh->getParam("/squirrel_planning_execution/planner_command_phase3", planner_command);
+	}
+	else if ("start_phase2" != action_name)
+	{
+		nh->getParam("/squirrel_planning_execution/planner_command_phase2", planner_command);
+	}
 	
 	planner_instance.startPlanner(domain_path, problem_path, data_path, planner_command);
 	
@@ -765,6 +773,9 @@ int main(int argc, char **argv) {
 	KCL_rosplan::ExploreAreaPDDLAction explore_area_action(*nh);
 	KCL_rosplan::ObserveClassifiableOnAttemptPDDLAction observe_classifiable_on_attempt_action(*nh);
 	KCL_rosplan::TidyAreaPDDLAction tidy_are_action(*nh);
+	
+	// Setup the actions exclusive to this domain.
+	KCL_rosplan::GotoViewWaypointPDDLAction goto_view_waypoint_action(*nh, "/move_base");
 
 	// We listen to the dispatcher, but we are only interested in the action 'start_phase3' which starts a 
 	// new planning process where the robot follows the children.
