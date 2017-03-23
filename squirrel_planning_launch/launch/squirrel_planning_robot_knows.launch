@@ -57,7 +57,7 @@
 		<!--param name="box1_location" value="-0.16,-2.82,0.0" />
 		<param name="box2_location" value="4.9,0.34,0.0" /-->
 		<param name="box1_location" value="2.97,-4.05,0.0" />
-                <param name="box2_location" value="2.98,-1.88,0.0" />
+    <param name="box2_location" value="2.98,-1.88,0.0" />
 		<param name="box3_location" value="3.07,-3.48,0.0" />
 	</node>
 
@@ -75,8 +75,9 @@
 	</node>
 
 	<node name="squirrel_interface_manipulation" pkg="squirrel_interface_manipulation" type="rpgraspServer" respawn="false" output="screen">
-                <param name="blind_grasp_action_server" value="/metahand_grasp_server" />
-        </node>
+		<param name="blind_grasp_action_server" type="string" value="/metahand_grasp_server" />
+		<param name="placement" type="bool" value="true"  />
+  </node>
 
 	<node name="rosplan_interface_movebase" pkg="rosplan_interface_movebase" type="rpmovebase" output="screen">
 		<param name="action_server" value="/move_base" />
