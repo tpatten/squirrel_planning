@@ -1,6 +1,7 @@
 #include <ros/ros.h>
 #include <iostream>
 #include <fstream>
+#include <tf/tf.h>
 
 #include <actionlib/client/simple_action_client.h>
 
@@ -169,10 +170,12 @@ void setupSimulation(const std::string& config_file, ros::ServiceClient& update_
 				pose.header.frame_id = "/map";
 				pose.pose = near_box;
 				
-				pose.pose.orientation.x = 0.0f;
-				pose.pose.orientation.y = 0.0f;
-				pose.pose.orientation.z = 0.0f;
-				pose.pose.orientation.w = 1.0f;
+				float angle = atan2(box_location.position.y - near_box.position.y, box_location.position.x - near_box.position.x);
+				pose.pose.orientation = tf::createQuaternionMsgFromYaw(angle);
+//				pose.pose.orientation.x = 0.0f;
+//				pose.pose.orientation.y = 0.0f;
+//				pose.pose.orientation.z = 1.0f;
+//				pose.pose.orientation.w = angle;
 				std::string near_waypoint_mongodb_id3(message_store.insertNamed(ss.str(), pose));
 				ROS_INFO("KCL: (RobotKnowsGame) Added %s to the knowledge base.", ss.str().c_str());
 				}
