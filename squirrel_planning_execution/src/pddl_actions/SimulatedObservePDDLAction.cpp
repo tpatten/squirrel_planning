@@ -63,6 +63,8 @@ void SimulatedObservePDDLAction::dispatchCallback(const rosplan_dispatch_msgs::A
 	
 	if (normalised_action_name == "observe-sorting_done")
 	{
+		static int call_counter = 0;
+		++call_counter;
 		// Add the new knowledge.
 		rosplan_knowledge_msgs::KnowledgeUpdateService knowledge_update_service;
 		knowledge_update_service.request.update_type = rosplan_knowledge_msgs::KnowledgeUpdateService::Request::ADD_KNOWLEDGE;
@@ -70,9 +72,10 @@ void SimulatedObservePDDLAction::dispatchCallback(const rosplan_dispatch_msgs::A
 		knowledge_item.knowledge_type = rosplan_knowledge_msgs::KnowledgeItem::FACT;
 		knowledge_item.attribute_name = "sorting_done";
 		
-		float p = (float)rand() / (float)RAND_MAX;
-		ROS_INFO("KCL: (SimulatedObservePDDLAction) Done sorting? %f >= %f.", p, 0.5f);
-		knowledge_item.is_negative = p >= 0.5f;
+//		float p = (float)rand() / (float)RAND_MAX;
+//		ROS_INFO("KCL: (SimulatedObservePDDLAction) Done sorting? %f >= %f.", p, 0.5f);
+//		knowledge_item.is_negative = p >= 0.5f;
+		knowledge_item.is_negative = call_counter < 1;
 		
 		knowledge_update_service.request.knowledge = knowledge_item;
 		if (!update_knowledge_client_.call(knowledge_update_service)) {
@@ -129,21 +132,31 @@ void SimulatedObservePDDLAction::dispatchCallback(const rosplan_dispatch_msgs::A
 			action_feedback_pub_.publish(fb);
 			return;
 		}
-		ROS_INFO("KCL: (SimulatedObservePDDLAction) Received all the box instances.");
+		ROS_INFO("TEST");
+		ROS_INFO("KCL: (SimulatedObservePDDLAction) Received all the box instances testesttetst %zd.", getInstances.response.instances.size());
 		for (std::vector<std::string>::const_iterator ci = getInstances.response.instances.begin(); ci != getInstances.response.instances.end(); ++ci)
 		{
 			// fetch position of the box from message store
+			std::stringstream ss;
+			ss << *ci << "_location";
 			std::vector< boost::shared_ptr<geometry_msgs::PoseStamped> > results;
+			ROS_ERROR("KCL: (SimulatedObservePDDLAction) query the message store for %s.", ss.str().c_str());
+
 			if(message_store_.queryNamed<geometry_msgs::PoseStamped>(*ci, results)) {
-				if(results.size()<1) {
-					ROS_ERROR("KCL: (SimulatedObservePDDLAction) aborting waypoint request; no matching boxID %s", (*ci).c_str());
+				if(results.empty()) {
+					ROS_ERROR("KCL: (SimulatedObservePDDLAction) aborting waypoint request; no matching boxID %s", ss.str().c_str());
 					fb.action_id = msg->action_id;
 					fb.status = "action failed";
 					action_feedback_pub_.publish(fb);
 					return;
 				}
+				else
+				{
+					ROS_ERROR("KCL: (SimulatedObservePDDLAction) Found the box pose!");
+				}
 			} else {
-				ROS_ERROR("KCL: (SimulatedObservePDDLAction) could not query message store to fetch box pose");
+				std::cout << ss.str() << std::endl;
+				ROS_ERROR("KCL: (SimulatedObservePDDLAction) could not query message store to fetch box pose, why!? %s", ss.str().c_str());
 				fb.action_id = msg->action_id;
 				fb.status = "action failed";
 				action_feedback_pub_.publish(fb);

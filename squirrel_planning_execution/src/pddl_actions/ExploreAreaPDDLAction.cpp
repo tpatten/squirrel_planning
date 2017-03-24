@@ -30,7 +30,7 @@ namespace KCL_rosplan {
 	std::string ExploreAreaPDDLAction::g_action_name = "explore_area";
 	
 	ExploreAreaPDDLAction::ExploreAreaPDDLAction(ros::NodeHandle& node_handle)
-		: node_handle_(&node_handle), message_store_(node_handle), is_simulated_(true)
+		: node_handle_(&node_handle), message_store_(node_handle), is_simulated_(false)
 	{
 		update_knowledge_client_ = node_handle.serviceClient<rosplan_knowledge_msgs::KnowledgeUpdateService>("/kcl_rosplan/update_knowledge_base");
 		
@@ -47,7 +47,6 @@ namespace KCL_rosplan {
 		view_cone_generator_ = new ViewConeGenerator(node_handle, occupancyTopic);
 		
 		node_handle.getParam("/squirrel_planning_execution/simulated", is_simulated_);
-		is_simulated_ = true;
 	}
 	
 	ExploreAreaPDDLAction::~ExploreAreaPDDLAction()

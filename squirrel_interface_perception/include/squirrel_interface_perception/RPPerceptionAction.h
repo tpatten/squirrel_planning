@@ -27,6 +27,7 @@ namespace KCL_rosplan {
 		mongodb_store::MessageStoreProxy message_store;
 
 		actionlib::SimpleActionClient<squirrel_object_perception_msgs::LookForObjectsAction> examine_action_client;
+		actionlib::SimpleActionClient<squirrel_object_perception_msgs::LookForObjectsAction> recognise_action_client;
 		ros::ServiceClient find_dynamic_objects_client;
 		ros::ServiceClient add_object_client;
 		ros::ServiceClient update_knowledge_client;
@@ -41,6 +42,7 @@ namespace KCL_rosplan {
 
 		/* actions */
 		void examineAction(const rosplan_dispatch_msgs::ActionDispatch::ConstPtr& msg);
+		void examineObject(const rosplan_dispatch_msgs::ActionDispatch::ConstPtr& msg);
 		void examineObjectInHandAction(const rosplan_dispatch_msgs::ActionDispatch::ConstPtr& msg);
 		void exploreAction(const rosplan_dispatch_msgs::ActionDispatch::ConstPtr& msg);
 
@@ -56,7 +58,7 @@ namespace KCL_rosplan {
 	public:
 
 		/* constructor */
-		RPPerceptionAction(ros::NodeHandle &nh, std::string &actionserver);
+		RPPerceptionAction(ros::NodeHandle &nh, const std::string &actionserver, const std::string& recogniseserver);
 
 		/* listen to and process action_dispatch topic */
 		void dispatchCallback(const rosplan_dispatch_msgs::ActionDispatch::ConstPtr& msg);

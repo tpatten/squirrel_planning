@@ -708,11 +708,11 @@ void dispatchCallback(const rosplan_dispatch_msgs::ActionDispatch::ConstPtr& msg
 	std::string problem_path = ss.str();
 	
 	std::string planner_command;
-	if ("start_phase3" != action_name)
+	if ("start_phase3" == action_name)
 	{
 		nh->getParam("/squirrel_planning_execution/planner_command_phase3", planner_command);
 	}
-	else if ("start_phase2" != action_name)
+	else if ("start_phase2" == action_name)
 	{
 		nh->getParam("/squirrel_planning_execution/planner_command_phase2", planner_command);
 	}

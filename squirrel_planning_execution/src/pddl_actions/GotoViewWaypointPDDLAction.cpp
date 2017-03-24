@@ -75,6 +75,7 @@ void GotoViewWaypointPDDLAction::dispatchCallback(const rosplan_dispatch_msgs::A
 		action_feedback_pub_.publish(fb);
 		return;
 	}
+	ROS_INFO("KCL: (SimulatedObservePDDLAction) Robot is at (%f,%f,%f).", transform.getOrigin().getX(), transform.getOrigin().getY(), transform.getOrigin().getZ());
 	
 	std::string closest_box;
 	geometry_msgs::PoseStamped closest_box_pose;
@@ -94,17 +95,21 @@ void GotoViewWaypointPDDLAction::dispatchCallback(const rosplan_dispatch_msgs::A
 	for (std::vector<std::string>::const_iterator ci = getInstances.response.instances.begin(); ci != getInstances.response.instances.end(); ++ci)
 	{
 		// fetch position of the box from message store
+		std::stringstream ss;
+		ss << *ci << "_location";
+		std::string box_loc = ss.str();
+
 		std::vector< boost::shared_ptr<geometry_msgs::PoseStamped> > results;
-		if(message_store_.queryNamed<geometry_msgs::PoseStamped>(*ci, results)) {
+		if(message_store_.queryNamed<geometry_msgs::PoseStamped>(box_loc, results)) {
 			if(results.size()<1) {
-				ROS_ERROR("KCL: (SimulatedObservePDDLAction) aborting waypoint request; no matching boxID %s", (*ci).c_str());
+				ROS_ERROR("KCL: (SimulatedObservePDDLAction) aborting waypoint request; no matching boxID %s", box_loc.c_str());
 				fb.action_id = msg->action_id;
 				fb.status = "action failed";
 				action_feedback_pub_.publish(fb);
 				return;
 			}
 		} else {
-			ROS_ERROR("KCL: (SimulatedObservePDDLAction) could not query message store to fetch box pose");
+			ROS_ERROR("KCL: (SimulatedObservePDDLAction) could not query message store to fetch box pose %s", box_loc.c_str());
 			fb.action_id = msg->action_id;
 			fb.status = "action failed";
 			action_feedback_pub_.publish(fb);
@@ -116,6 +121,9 @@ void GotoViewWaypointPDDLAction::dispatchCallback(const rosplan_dispatch_msgs::A
 		float distance = (box_pose.pose.position.x - transform.getOrigin().getX()) * (box_pose.pose.position.x - transform.getOrigin().getX()) +
 								(box_pose.pose.position.x - transform.getOrigin().getX()) * (box_pose.pose.position.x - transform.getOrigin().getX());
 		
+		ROS_INFO("KCL: (SimulatedObservePDDLAction) Box %s is at (%f,%f,%f), distance: %f.", ci->c_str(), box_pose.pose.position.x, box_pose.pose.position.y, box_pose.pose.position.z, distance);
+
+		
 		if (distance < min_distance_from_robot)
 		{
 			min_distance_from_robot = distance;
@@ -126,7 +134,7 @@ void GotoViewWaypointPDDLAction::dispatchCallback(const rosplan_dispatch_msgs::A
 	
 	// Send a movebase goal to get to this box.
 	std::stringstream ss;
-	ss << "near_ " << closest_box;
+	ss << "near_" << closest_box;
 	std::string wpID = ss.str();
 
 	ROS_INFO("KCL: (SimulatedObservePDDLAction) Closest box is %s, move to %s", closest_box.c_str(), wpID.c_str());
@@ -168,7 +176,7 @@ void GotoViewWaypointPDDLAction::dispatchCallback(const rosplan_dispatch_msgs::A
 				fb.action_id = msg->action_id;
 				fb.status = "action achieved";
 				action_feedback_pub_.publish(fb);
-
+				return;
 			} else {
 
 				// clear costmaps

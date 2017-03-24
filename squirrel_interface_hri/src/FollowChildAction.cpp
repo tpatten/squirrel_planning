@@ -94,7 +94,28 @@ int main(int argc, char **argv) {
 
 	// create PDDL action subscriber
 	std::vector<geometry_msgs::Point> child_destinations;
-	KCL_rosplan::FollowChildAction fca(nh, "/follow_child", child_destinations);
+	{
+	geometry_msgs::Point p;
+	p.x = -1.03;
+	p.y = 1.72;
+	p.z = 0;
+	child_destinations.push_back(p);
+	}
+	{
+	geometry_msgs::Point p;
+	p.x = 2.17;
+	p.y = -2.06;
+	p.z = 0;
+	child_destinations.push_back(p);
+	}
+	{
+	geometry_msgs::Point p;
+	p.x = -1.31;
+	p.y = -2.12;
+	p.z = 0;
+	child_destinations.push_back(p);
+	}
+	KCL_rosplan::FollowChildAction fca(nh, "/squirrel_follow_child_node", child_destinations);
 
 	// listen for action dispatch
 	ros::Subscriber ds = nh.subscribe("/kcl_rosplan/action_dispatch", 1000, &KCL_rosplan::FollowChildAction::dispatchCallback, &fca);

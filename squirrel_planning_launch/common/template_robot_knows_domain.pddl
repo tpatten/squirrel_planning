@@ -40,6 +40,16 @@
 	(belongs_in ?o - object ?b - box ?s - state)
 )
 
+(:action goto_view_waypoint
+	:parameters ()
+	:precondition (and
+
+	)
+	:effect (and
+
+	)
+)
+
 (:action explore_area
 	:parameters (?v - robot ?a - area)
 	:precondition (and
@@ -48,6 +58,16 @@
 	)
 	:effect (and
 		(explored ?a)
+	)
+)
+
+(:action examine_object
+	:parameters ()
+	:precondition (and
+
+	)
+	:effect (and
+
 	)
 )
 
@@ -264,6 +284,16 @@
 		(robot_at ?v ?wp)
 		(object_at ?o ?wp2)
 		(examined ?o)
+	)
+	:effect (and
+		
+	)
+)
+
+(:action examine_objects
+	:parameters ()
+	:precondition (and
+
 	)
 	:effect (and
 		

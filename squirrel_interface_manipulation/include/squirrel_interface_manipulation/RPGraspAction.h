@@ -22,8 +22,6 @@
 #include "squirrel_manipulation_msgs/PtpAction.h"
 #include "kclhand_control/graspPreparation.h"
 #include "kclhand_control/ActuateHandAction.h"
-//#include <kclhand_control/ActuateHandAction.h>
-//#include <kclhand_control/ActuateHandActionGoal.h>
 
 
 #ifndef KCL_graspaction
@@ -45,9 +43,10 @@ namespace KCL_rosplan {
 		mongodb_store::MessageStoreProxy message_store;
 		actionlib::SimpleActionClient<squirrel_manipulation_msgs::BlindGraspAction> blind_grasp_action_client;
 		ros::Publisher action_feedback_pub;
-		ros::ServiceClient drop_client;
-		//actionlib::SimpleActionClient<kclhand_control::ActuateHandAction> drop_action_client;
+        //ros::ServiceClient drop_client;
+        //actionlib::SimpleActionClient<kclhand_control::ActuateHandAction> drop_action_client;
 		ros::ServiceClient update_knowledge_client;
+        bool do_placement;
 
 		/* execute pushing actions */
 		bool dispatchBlindGraspAction(const rosplan_dispatch_msgs::ActionDispatch::ConstPtr& msg);
