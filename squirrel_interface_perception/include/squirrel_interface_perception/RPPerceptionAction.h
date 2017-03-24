@@ -27,7 +27,7 @@ namespace KCL_rosplan {
 		mongodb_store::MessageStoreProxy message_store;
 
 		actionlib::SimpleActionClient<squirrel_object_perception_msgs::LookForObjectsAction> examine_action_client;
-		actionlib::SimpleActionClient<squirrel_object_perception_msgs::LookForObjectsAction> recognise_action_client;
+		actionlib::SimpleActionClient<squirrel_object_perception_msgs::RecognizeObjectsAction> recognise_action_client;
 		ros::ServiceClient find_dynamic_objects_client;
 		ros::ServiceClient add_object_client;
 		ros::ServiceClient update_knowledge_client;

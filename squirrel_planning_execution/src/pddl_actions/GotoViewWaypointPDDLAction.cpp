@@ -119,7 +119,7 @@ void GotoViewWaypointPDDLAction::dispatchCallback(const rosplan_dispatch_msgs::A
 		// request manipulation waypoints for object
 		geometry_msgs::PoseStamped &box_pose = *results[0];
 		float distance = (box_pose.pose.position.x - transform.getOrigin().getX()) * (box_pose.pose.position.x - transform.getOrigin().getX()) +
-								(box_pose.pose.position.x - transform.getOrigin().getX()) * (box_pose.pose.position.x - transform.getOrigin().getX());
+								(box_pose.pose.position.y - transform.getOrigin().getY()) * (box_pose.pose.position.y - transform.getOrigin().getY());
 		
 		ROS_INFO("KCL: (SimulatedObservePDDLAction) Box %s is at (%f,%f,%f), distance: %f.", ci->c_str(), box_pose.pose.position.x, box_pose.pose.position.y, box_pose.pose.position.z, distance);
 

@@ -48,6 +48,7 @@ void SimulatedObservePDDLAction::dispatchCallback(const rosplan_dispatch_msgs::A
 	    normalised_action_name != "observe-sorting_done" &&
 	    normalised_action_name != "observe-is_examined" &&
 	    normalised_action_name != "observe-belongs_in" &&
+	    normalised_action_name != "observe-toy_at_right_box" &&
 	    normalised_action_name != "jump")
 	{
 		return;
@@ -132,31 +133,26 @@ void SimulatedObservePDDLAction::dispatchCallback(const rosplan_dispatch_msgs::A
 			action_feedback_pub_.publish(fb);
 			return;
 		}
-		ROS_INFO("TEST");
-		ROS_INFO("KCL: (SimulatedObservePDDLAction) Received all the box instances testesttetst %zd.", getInstances.response.instances.size());
+
+		ROS_INFO("KCL: (SimulatedObservePDDLAction) Received all the box instances %zd.", getInstances.response.instances.size());
 		for (std::vector<std::string>::const_iterator ci = getInstances.response.instances.begin(); ci != getInstances.response.instances.end(); ++ci)
 		{
 			// fetch position of the box from message store
 			std::stringstream ss;
 			ss << *ci << "_location";
-			std::vector< boost::shared_ptr<geometry_msgs::PoseStamped> > results;
-			ROS_ERROR("KCL: (SimulatedObservePDDLAction) query the message store for %s.", ss.str().c_str());
+			std::string box_loc = ss.str();
 
-			if(message_store_.queryNamed<geometry_msgs::PoseStamped>(*ci, results)) {
-				if(results.empty()) {
-					ROS_ERROR("KCL: (SimulatedObservePDDLAction) aborting waypoint request; no matching boxID %s", ss.str().c_str());
+			std::vector< boost::shared_ptr<geometry_msgs::PoseStamped> > results;
+			if(message_store_.queryNamed<geometry_msgs::PoseStamped>(box_loc, results)) {
+				if(results.size()<1) {
+					ROS_ERROR("KCL: (SimulatedObservePDDLAction) aborting waypoint request; no matching boxID %s", box_loc.c_str());
 					fb.action_id = msg->action_id;
 					fb.status = "action failed";
 					action_feedback_pub_.publish(fb);
 					return;
 				}
-				else
-				{
-					ROS_ERROR("KCL: (SimulatedObservePDDLAction) Found the box pose!");
-				}
 			} else {
-				std::cout << ss.str() << std::endl;
-				ROS_ERROR("KCL: (SimulatedObservePDDLAction) could not query message store to fetch box pose, why!? %s", ss.str().c_str());
+				ROS_ERROR("KCL: (SimulatedObservePDDLAction) could not query message store to fetch box pose %s", box_loc.c_str());
 				fb.action_id = msg->action_id;
 				fb.status = "action failed";
 				action_feedback_pub_.publish(fb);

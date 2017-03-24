@@ -3,12 +3,15 @@
 #include <iostream>
 #include <fstream>
 #include <boost/foreach.hpp>
+#include <tf/tf.h>
+#include <tf/transform_listener.h>
 #include <tf/LinearMath/Vector3.h>
 #include <tf/LinearMath/Quaternion.h>
 #include <actionlib/client/simple_action_client.h>
 #include "rosplan_dispatch_msgs/ActionDispatch.h"
 #include "rosplan_dispatch_msgs/ActionFeedback.h"
 #include "squirrel_object_perception_msgs/LookForObjectsAction.h"
+#include "squirrel_object_perception_msgs/RecognizeObjectsAction.h"
 #include "squirrel_object_perception_msgs/FindDynamicObjects.h"
 #include "squirrel_interface_perception/RPPerceptionAction.h"
 #include "squirrel_planning_knowledge_msgs/AddObjectService.h"
@@ -143,8 +146,68 @@ namespace KCL_rosplan {
 		recognise_action_client.waitForServer();
 		ROS_INFO("KCL: (PerceptionAction) action server started!");
 
-		squirrel_object_perception_msgs::LookForObjectsGoal perceptionGoal;
-		perceptionGoal.look_for_object = squirrel_object_perception_msgs::LookForObjectsGoal::EXPLORE;
+		// Locate the location of the robot.
+		tf::StampedTransform transform;
+		tf::TransformListener tfl;
+		try {
+			tfl.waitForTransform("/map","/base_link", ros::Time::now(), ros::Duration(1.0));
+			tfl.lookupTransform("/map", "/base_link", ros::Time(0), transform);
+		} catch ( tf::TransformException& ex ) {
+			ROS_ERROR("KCL: (PerceptionAction) Error find the transform between /map and /base_link.");
+			publishFeedback(msg->action_id, "action failed");
+			return;
+		}
+		
+		std::string closest_box;
+		geometry_msgs::PoseStamped closest_box_pose;
+		float min_distance_from_robot = std::numeric_limits<float>::max();
+		
+		// Get all boxes and their poses, pick the one that is closest.
+		rosplan_knowledge_msgs::GetInstanceService getInstances;
+		getInstances.request.type_name = "box";
+		if (!get_instance_client.call(getInstances)) {
+			ROS_ERROR("KCL: (PerceptionAction) Failed to get all the box instances.");
+			publishFeedback(msg->action_id, "action failed");
+			return;
+		}
+
+		ROS_INFO("KCL: (PerceptionAction) Received all the box instances %zd.", getInstances.response.instances.size());
+		for (std::vector<std::string>::const_iterator ci = getInstances.response.instances.begin(); ci != getInstances.response.instances.end(); ++ci)
+		{
+			// fetch position of the box from message store
+			std::stringstream ss;
+			ss << *ci << "_location";
+			std::string box_loc = ss.str();
+
+			std::vector< boost::shared_ptr<geometry_msgs::PoseStamped> > results;
+			if(message_store.queryNamed<geometry_msgs::PoseStamped>(box_loc, results)) {
+				if(results.size()<1) {
+					ROS_ERROR("KCL: (PerceptionAction) aborting waypoint request; no matching boxID %s", box_loc.c_str());
+					publishFeedback(msg->action_id, "action failed");
+					return;
+				}
+			} else {
+				ROS_ERROR("KCL: (PerceptionAction) could not query message store to fetch box pose %s", box_loc.c_str());
+				publishFeedback(msg->action_id, "action failed");
+				return;
+			}
+
+			// request manipulation waypoints for object
+			geometry_msgs::PoseStamped &box_pose = *results[0];
+			float distance = (box_pose.pose.position.x - transform.getOrigin().getX()) * (box_pose.pose.position.x - transform.getOrigin().getX()) +
+			                 (box_pose.pose.position.x - transform.getOrigin().getX()) * (box_pose.pose.position.x - transform.getOrigin().getX());
+			
+			if (distance < min_distance_from_robot)
+			{
+				min_distance_from_robot = distance;
+				closest_box = *ci;
+				closest_box_pose = box_pose;
+			}
+		}
+
+		squirrel_object_perception_msgs::RecognizeObjectsGoal perceptionGoal;
+		perceptionGoal.look_for_object = squirrel_object_perception_msgs::RecognizeObjectsGoal::EXPLORE;
+		perceptionGoal.look_at_pose = closest_box_pose;
 		recognise_action_client.sendGoal(perceptionGoal);
 
 		ROS_INFO("KCL: (PerceptionAction) goal sent, waiting for result.");
