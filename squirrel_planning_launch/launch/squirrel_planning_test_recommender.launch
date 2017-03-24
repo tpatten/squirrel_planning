@@ -5,6 +5,7 @@
 	<param name="data_path" value="$(find squirrel_planning_launch)/common/" />
 	<param name="/rosplan/data_path" value="$(find squirrel_planning_launch)/common/" />
 	<param name="planner_path" value="$(find rosplan_planning_system)/common/bin/" />
+	<param name="/facts_db" value="$(find squirrel_planning_launch)/common/scenario2_toy.db" />
 
 	<param name="/squirrel_planning_execution/recommender/data_path" value="$(find squirrel_planning_launch)/common/" />
 	<param name="/squirrel_planning_execution/recommender/input_file" value="input.cvs" />
@@ -30,7 +31,7 @@
             <param name="strl_file_path" value="$(find squirrel_planning_launch)/common/plan.strl" />
 
             <!-- to run the planner -->
-            <param name="planner_command" value="timeout 30 $(find rosplan_planning_system)/common/bin/ff -o DOMAIN -f PROBLEM" />
+            <param name="planner_command" value="timeout 300 $(find rosplan_planning_system)/common/bin/ff -o DOMAIN -f PROBLEM" />
 	    <param name="generate_default_problem" value="false" />
 	</node>
 
@@ -54,7 +55,7 @@
 	<!-- RPSquirrelRecursion actions -->
 	<node name="squirrel_planning_execution" pkg="squirrel_planning_execution" type="recommenderTester" output="screen">
 		<param name="simulated" value="false" />
-		<param name="planner_command" value="timeout 30 $(find rosplan_planning_system)/common/bin/ff -o DOMAIN -f PROBLEM" />
+		<param name="planner_command" value="timeout 300 $(find rosplan_planning_system)/common/bin/ff -o DOMAIN -f PROBLEM" />
 		<param name="box1_location" value="-0.16,-2.82,0.0" />
 		<param name="box2_location" value="4.9,0.34,0.0" />
 		<param name="/squirrel_planning_execution/recommender/data_path" value="$(find squirrel_planning_launch)/common/" />
@@ -62,5 +63,7 @@
 		<param name="/squirrel_planning_execution/recommender/output_file" value="output.cvs" />
 	</node>
 
+	<!-- Speech -->
+	<node name="squirrel_interface_speech" pkg="squirrel_interface_speech" type="rpspeechServer" output="screen" />
 </launch>
 
