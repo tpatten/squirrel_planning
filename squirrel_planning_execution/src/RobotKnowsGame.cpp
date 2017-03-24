@@ -7,6 +7,7 @@
 
 #include <geometry_msgs/PoseStamped.h>
 #include <squirrel_object_perception_msgs/SceneObject.h>
+#include <visualization_msgs/Marker.h>
 
 #include <rosplan_dispatch_msgs/PlanAction.h>
 #include <rosplan_dispatch_msgs/PlanGoal.h>
@@ -56,8 +57,30 @@ geometry_msgs::Pose transformToPose(const std::string& s)
 	return p;
 }
 
+void sendMarker(const geometry_msgs::Pose& pose, const std::string& name, ros::Publisher& vis_pub)
+{
+	static int id = 0;
+	visualization_msgs::Marker marker;
+	marker.header.frame_id = "/map";
+	marker.header.stamp = ros::Time();
+	marker.ns = name;
+	marker.id = id++;
+	marker.type = visualization_msgs::Marker::SPHERE;
+	marker.action = visualization_msgs::Marker::ADD;
+	marker.pose = pose;
+	marker.scale.x = 1;
+	marker.scale.y = 1;
+	marker.scale.z = 1;
+	marker.color.a = 1.0; // Don't forget to set the alpha!
+	marker.color.r = 0.0;
+	marker.color.g = 1.0;
+	marker.color.b = 0.0;
+	//only if using a MESH_RESOURCE marker type:
+	vis_pub.publish( marker );
+}
 
-void setupSimulation(const std::string& config_file, ros::ServiceClient& update_knowledge_client, mongodb_store::MessageStoreProxy& message_store)
+
+void setupSimulation(const std::string& config_file, ros::ServiceClient& update_knowledge_client, mongodb_store::MessageStoreProxy& message_store, ros::Publisher& vis_pub)
 {
 	ROS_INFO("KCL: (RobotKnowsGame) Load scenarion from file: %s.\n", config_file.c_str());
 	std::ifstream f(config_file.c_str());
@@ -87,6 +110,13 @@ void setupSimulation(const std::string& config_file, ros::ServiceClient& update_
 				std::string box_predicate = tokens[1];
 				geometry_msgs::Pose box_location = transformToPose(tokens[2]);
 				geometry_msgs::Pose near_box = transformToPose(tokens[3]);
+				sendMarker(box_location, box_predicate, vis_pub);
+				{
+					std::stringstream ss;
+					ss << "near_" << box_predicate;
+					sendMarker(near_box, ss.str(), vis_pub);
+				}
+				
 
 				// Add the box predicate to the knowledge base.
 				rosplan_knowledge_msgs::KnowledgeItem knowledge_item;
@@ -752,6 +782,8 @@ int main(int argc, char **argv) {
 	ros::init(argc, argv, "rosplan_interface_RobotKnowsGame");
 	nh = new ros::NodeHandle();
 
+	// Visualisation.
+	ros::Publisher vis_pub = nh->advertise<visualization_msgs::Marker>( "visualization_marker", 0 );
 
 
 	// Overwrite the normal problem generator of ROSPlan.
@@ -762,7 +794,7 @@ int main(int argc, char **argv) {
 	mongodb_store::MessageStoreProxy message_store(*nh);
 	std::string config_file;
 	nh->getParam("/scenario_setup_file", config_file);
-	setupSimulation(config_file, update_knowledge_client, message_store);
+	setupSimulation(config_file, update_knowledge_client, message_store, vis_pub);
 	
 	//setupSimulation(update_knowledge_client);
 	//initMongoDBData(message_store);

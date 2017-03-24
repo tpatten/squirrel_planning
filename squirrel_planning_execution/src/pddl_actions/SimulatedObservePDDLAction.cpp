@@ -11,7 +11,7 @@
 #include <rosplan_knowledge_msgs/GetAttributeService.h>
 #include <rosplan_dispatch_msgs/ActionFeedback.h>
 #include <rosplan_knowledge_msgs/KnowledgeQueryService.h>
-
+#include <squirrel_object_perception_msgs/SceneObject.h>
 #include "SimulatedObservePDDLAction.h"
 
 namespace KCL_rosplan
@@ -171,6 +171,8 @@ void SimulatedObservePDDLAction::dispatchCallback(const rosplan_dispatch_msgs::A
 				closest_box_pose = box_pose;
 			}
 		}
+
+		ROS_INFO("KCL: (SimulatedObservePDDLAction) Closest box is: %s.", closest_box.c_str());
 		
 		// Get all toys and check if any of these toys are near the box and not tidied.
 		getInstances.request.type_name = "object";
@@ -181,7 +183,7 @@ void SimulatedObservePDDLAction::dispatchCallback(const rosplan_dispatch_msgs::A
 			action_feedback_pub_.publish(fb);
 			return;
 		}
-		ROS_INFO("KCL: (SimulatedObservePDDLAction) Received all the object instances.");
+		ROS_INFO("KCL: (SimulatedObservePDDLAction) Received %zd object instances.", getInstances.response.instances.size());
 		
 		// Fetch all the objects.
 		rosplan_knowledge_msgs::GetAttributeService get_attribute;
@@ -202,6 +204,7 @@ void SimulatedObservePDDLAction::dispatchCallback(const rosplan_dispatch_msgs::A
 				const diagnostic_msgs::KeyValue& key_value = *ci;
 				if ("o" == key_value.key) {
 					tidied_objects.insert(key_value.value);
+					ROS_INFO("KCL: (SimulatedObservePDDLAction) %s is already tidied!", key_value.key.c_str());
 				}
 			}
 		}
@@ -209,7 +212,8 @@ void SimulatedObservePDDLAction::dispatchCallback(const rosplan_dispatch_msgs::A
 		for (std::vector<std::string>::const_iterator ci = getInstances.response.instances.begin(); ci != getInstances.response.instances.end(); ++ci)
 		{
 			const std::string& object_name = *ci;
-			
+			ROS_INFO("KCL: (SimulatedObservePDDLAction) Process object %s.", object_name.c_str());
+
 			if (tidied_objects.find(object_name) != tidied_objects.end())
 			{
 				ROS_INFO("KCL: (SimulatedObservePDDLAction) Object %s has already been tidied, ignore.", object_name.c_str());
@@ -217,8 +221,8 @@ void SimulatedObservePDDLAction::dispatchCallback(const rosplan_dispatch_msgs::A
 			}
 			
 			// fetch position of the box from message store
-			std::vector< boost::shared_ptr<geometry_msgs::PoseStamped> > results;
-			if(message_store_.queryNamed<geometry_msgs::PoseStamped>(*ci, results)) {
+			std::vector< boost::shared_ptr<squirrel_object_perception_msgs::SceneObject> > results;
+			if(message_store_.queryNamed<squirrel_object_perception_msgs::SceneObject>(*ci, results)) {
 				if(results.size()<1) {
 					ROS_ERROR("KCL: (SimulatedObservePDDLAction) aborting waypoint request; no matching object %s", (*ci).c_str());
 					fb.action_id = msg->action_id;
@@ -227,7 +231,7 @@ void SimulatedObservePDDLAction::dispatchCallback(const rosplan_dispatch_msgs::A
 					return;
 				}
 			} else {
-				ROS_ERROR("KCL: (SimulatedObservePDDLAction) could not query message store to fetch object pose");
+				ROS_ERROR("KCL: (SimulatedObservePDDLAction) could not query message store to fetch object pose for %s", ci->c_str());
 				fb.action_id = msg->action_id;
 				fb.status = "action failed";
 				action_feedback_pub_.publish(fb);
@@ -235,9 +239,9 @@ void SimulatedObservePDDLAction::dispatchCallback(const rosplan_dispatch_msgs::A
 			}
 
 			// check whether it is close enough to the box we are interested in to be relevant.
-			geometry_msgs::PoseStamped &object_pose = *results[0];
-			if ((object_pose.pose.position.x - closest_box_pose.pose.position.x) * (object_pose.pose.position.x - closest_box_pose.pose.position.x) -
-			    (object_pose.pose.position.y - closest_box_pose.pose.position.y) * (object_pose.pose.position.y - closest_box_pose.pose.position.y) < 1.5f)
+			geometry_msgs::Pose &object_pose = results[0]->pose;
+			if ((object_pose.position.x - closest_box_pose.pose.position.x) * (object_pose.position.x - closest_box_pose.pose.position.x) -
+			    (object_pose.position.y - closest_box_pose.pose.position.y) * (object_pose.position.y - closest_box_pose.pose.position.y) < 1.5f)
 			{
 				// Check if the untidied toy belong in this box.
 				rosplan_knowledge_msgs::KnowledgeQueryService knowledge_query;
@@ -287,7 +291,7 @@ void SimulatedObservePDDLAction::dispatchCallback(const rosplan_dispatch_msgs::A
 				knowledge_update_service.request.knowledge = knowledge_item;
 				if (!update_knowledge_client_.call(knowledge_update_service)) {
 					ROS_ERROR("KCL: (SimulatedObservePDDLAction) Could not remove the toy_at_right_box predicate to the knowledge base.");
-			// 		exit(-1);
+			 		exit(-1);
 				}
 				ROS_INFO("KCL: (SimulatedObservePDDLAction) Removed %s (toy_at_right_box) to the knowledge base.", knowledge_item.is_negative ? "NOT" : "");
 				

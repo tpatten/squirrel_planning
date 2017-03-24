@@ -36,7 +36,7 @@
 	(has_checked_type ?o - object ?t - type)
 	(resolve-axioms)
 	(sorting_done ?s - state)
-	(toy_at_right_box ?o - object ?b - box ?s - state)
+	(toy_at_right_box ?s - state)
 	(belongs_in ?o - object ?b - box ?s - state)
 )
 
@@ -331,7 +331,7 @@
 )
 
 (:action observe-toy_at_right_box
-	:parameters (?o - object ?b - box ?l ?l2 - level ?kb - knowledgebase)
+	:parameters (?l ?l2 - level ?kb - knowledgebase)
 	:precondition (and
 		
 	)

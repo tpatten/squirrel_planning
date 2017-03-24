@@ -222,15 +222,20 @@ namespace KCL_rosplan {
 			ROS_INFO("KCL: (PerceptionAction) Found %zd objects!", (recognise_action_client.getResult()->objects_added.size() + recognise_action_client.getResult()->objects_updated.size()));
 			for (std::vector<squirrel_object_perception_msgs::SceneObject>::const_iterator ci = recognise_action_client.getResult()->objects_added.begin(); ci != recognise_action_client.getResult()->objects_added.end(); ++ci)
 			{
-				ROS_INFO("KCL: (PerceptionAction) ADD: %s (%s).", ci->id.c_str(), ci->category.c_str());
+				squirrel_object_perception_msgs::SceneObject so = *ci;
+				ROS_INFO("KCL: (PerceptionAction) ADD: %s (%s).", so.id.c_str(), so.category.c_str());
+				so.id = so.category;
+				addObject(so);
 			}
 
+/*
 			// add all new objects
 			std::vector<squirrel_object_perception_msgs::SceneObject>::const_iterator ci = recognise_action_client.getResult()->objects_added.begin();
 			for (; ci != recognise_action_client.getResult()->objects_added.end(); ++ci) {
 				squirrel_object_perception_msgs::SceneObject so = (*ci);
 				addObject(so);
 			}
+*/
 		} else if (state != actionlib::SimpleClientGoalState::SUCCEEDED)  {
 			ROS_INFO("KCL: (PerceptionAction) action failed");
 			publishFeedback(msg->action_id, "action failed");
@@ -575,6 +580,8 @@ namespace KCL_rosplan {
 		if (!update_knowledge_client.call(knowledge_update_service)) {
 			ROS_ERROR("KCL: (PerceptionAction) Could not add the object %s to the knowledge base.", object.id.c_str());
 		}
+		ROS_ERROR("KCL: (PerceptionAction) Added the object %s to the knowledge base.", object.id.c_str());
+		
 
 		// add the new object's waypoint
 		knowledge_update_service.request.knowledge.knowledge_type = rosplan_knowledge_msgs::KnowledgeItem::INSTANCE;
@@ -583,6 +590,7 @@ namespace KCL_rosplan {
 		if (!update_knowledge_client.call(knowledge_update_service)) {
 			ROS_ERROR("KCL: (PerceptionAction) Could not add the object %s to the knowledge base.", newWaypoint.c_str());
 		}
+		ROS_ERROR("KCL: (PerceptionAction) Added the waypoint %s to the knowledge base.", newWaypoint.c_str());
 
 		// object_at fact	
 		knowledge_update_service.request.knowledge.knowledge_type = rosplan_knowledge_msgs::KnowledgeItem::FACT;
@@ -597,10 +605,6 @@ namespace KCL_rosplan {
 		knowledge_update_service.request.knowledge.values.push_back(kv);
 		if (!update_knowledge_client.call(knowledge_update_service)) {
 			ROS_ERROR("KCL: (PerceptionAction) Could not add object_at predicate to the knowledge base.");
-		}
-
-		if (!update_knowledge_client.call(knowledge_update_service)) {
-			ROS_ERROR("KCL: (PerceptionAction) Could not add is_of_type predicate to the knowledge base.");
 		}
 
 		// Add the opposite to the knowledge base.

@@ -62,6 +62,17 @@ void GotoViewWaypointPDDLAction::dispatchCallback(const rosplan_dispatch_msgs::A
 	
 	// Check which box is closest and move to its nearest waypoint.
 
+	// Locat the child.
+	std::vector< boost::shared_ptr<geometry_msgs::PoseStamped> > child_results;
+	if(!message_store_.queryNamed<geometry_msgs::PoseStamped>("child_location", child_results) ||
+           child_results.size() != 1)
+	{
+		ROS_ERROR("KCL: (SimulatedObservePDDLAction) Could not find the location of the child.");
+		exit(1);
+	}
+	geometry_msgs::PoseStamped child_location = *child_results[0];
+
+/*
 	// Locate the location of the robot.
 	tf::StampedTransform transform;
 	tf::TransformListener tfl;
@@ -76,6 +87,7 @@ void GotoViewWaypointPDDLAction::dispatchCallback(const rosplan_dispatch_msgs::A
 		return;
 	}
 	ROS_INFO("KCL: (SimulatedObservePDDLAction) Robot is at (%f,%f,%f).", transform.getOrigin().getX(), transform.getOrigin().getY(), transform.getOrigin().getZ());
+*/
 	
 	std::string closest_box;
 	geometry_msgs::PoseStamped closest_box_pose;
@@ -118,8 +130,10 @@ void GotoViewWaypointPDDLAction::dispatchCallback(const rosplan_dispatch_msgs::A
 
 		// request manipulation waypoints for object
 		geometry_msgs::PoseStamped &box_pose = *results[0];
-		float distance = (box_pose.pose.position.x - transform.getOrigin().getX()) * (box_pose.pose.position.x - transform.getOrigin().getX()) +
-								(box_pose.pose.position.y - transform.getOrigin().getY()) * (box_pose.pose.position.y - transform.getOrigin().getY());
+//		float distance = (box_pose.pose.position.x - transform.getOrigin().getX()) * (box_pose.pose.position.x - transform.getOrigin().getX()) +
+//								(box_pose.pose.position.y - transform.getOrigin().getY()) * (box_pose.pose.position.y - transform.getOrigin().getY());
+		float distance = (box_pose.pose.position.x - child_location.pose.position.x) * (box_pose.pose.position.x - child_location.pose.position.x) +
+								(box_pose.pose.position.y - child_location.pose.position.y) * (box_pose.pose.position.y - child_location.pose.position.y);
 		
 		ROS_INFO("KCL: (SimulatedObservePDDLAction) Box %s is at (%f,%f,%f), distance: %f.", ci->c_str(), box_pose.pose.position.x, box_pose.pose.position.y, box_pose.pose.position.z, distance);
 

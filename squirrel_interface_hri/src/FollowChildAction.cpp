@@ -62,6 +62,13 @@ void FollowChildAction::dispatchCallback(const rosplan_dispatch_msgs::ActionDisp
 				action_feedback_pub.publish(fb);
 				return;
 			}
+			else
+			{
+				// Add the child's location to the knowledge base.
+				squirrel_hri_msgs::FollowChildResultConstPtr result = action_client.getResult();
+				geometry_msgs::PoseStamped child_location = result->final_location;
+				message_store.insertNamed("child_location", child_location);
+			}
 		} else {
 			// timed out (failed)
 			action_client.cancelAllGoals();
@@ -81,7 +88,6 @@ void FollowChildAction::dispatchCallback(const rosplan_dispatch_msgs::ActionDisp
 }
 
 };
-
 
 /*-------------*/
 /* Main method */
@@ -120,6 +126,7 @@ int main(int argc, char **argv) {
 	// listen for action dispatch
 	ros::Subscriber ds = nh.subscribe("/kcl_rosplan/action_dispatch", 1000, &KCL_rosplan::FollowChildAction::dispatchCallback, &fca);
 	ROS_INFO("KCL: (FollowChildAction) Ready to receive");
+
 
 	ros::spin();
 	return 0;
