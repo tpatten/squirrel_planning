@@ -288,6 +288,35 @@ namespace KCL_rosplan {
 			
 		}
 		
+		bool contains(const Fact& fact) const
+		{
+			if (fact_to_observe_ == &fact)
+				return true;
+			
+			if (true_branch_ != NULL && true_branch_->contains(fact))
+				return true;
+			
+			if (false_branch_ != NULL && false_branch_->contains(fact))
+				return true;
+			return false;
+		}
+		
+		bool contains(const Object& object) const
+		{
+			for (std::vector<const Object*>::const_iterator ci = fact_to_observe_->getObjects().begin(); ci != fact_to_observe_->getObjects().end(); ++ci)
+			{
+				if (&object == *ci)
+					return true;
+			}
+			
+			if (true_branch_ != NULL && true_branch_->contains(object))
+				return true;
+			
+			if (false_branch_ != NULL && false_branch_->contains(object))
+				return true;
+			return false;
+		}
+		
 		const Fact* fact_to_observe_;
 		const FactObserveTree* true_branch_;
 		const FactObserveTree* false_branch_;

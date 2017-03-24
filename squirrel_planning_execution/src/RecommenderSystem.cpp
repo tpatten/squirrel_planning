@@ -1,6 +1,8 @@
 #include <sstream>
 #include <fstream>
 #include <queue>
+#include <set>
+#include <vector>
 
 #include <actionlib/client/simple_action_client.h>
 #include <rosplan_planning_system/PlanningEnvironment.h>
@@ -19,11 +21,11 @@
 #include <rosplan_knowledge_msgs/GenerateProblemService.h>
 
 #include "pddl_actions/ListenToFeedbackPDDLAction.h"
-#include "squirrel_planning_execution/RecommenderSystem.h"
 #include "squirrel_prediction_msgs/RecommendRelations.h"
 #include "squirrel_planning_execution/PlanToSensePDDLGenerator.h"
 #include "squirrel_planning_execution/PlanToAskPDDLGenerator.h"
 
+#include "squirrel_planning_execution/RecommenderSystem.h"
 
 //#define RECOMMENDER_SYSTEM_DEBUG
 namespace KCL_rosplan {
@@ -458,6 +460,10 @@ namespace KCL_rosplan {
 		{
 			ofs << ",'" << (*ci)->getName() << "'";
 		}
+		
+		// Recommender specific.
+		ofs<< ",'second_is_box'";
+		
 		ofs << "," << std::endl;
 		
 		for (std::vector<const Object*>::const_iterator ci = objects.begin(); ci != objects.end(); ++ci)
@@ -483,7 +489,7 @@ namespace KCL_rosplan {
 						}
 						else
 						{
-							ofs <<",";
+							ofs <<",1";
 							continue;
 						}
 					}
@@ -495,7 +501,7 @@ namespace KCL_rosplan {
 						}
 						else
 						{
-							ofs <<",";
+							ofs <<",1";
 							continue;
 						}
 					}
@@ -507,12 +513,23 @@ namespace KCL_rosplan {
 					// Check if we know the probability of this fact being true, otherwise leave it empty.
 					if (mi == weighted_facts.end())
 					{
-						ofs << ",0";
+						ofs << ",1";
 					}
 					else
 					{
-						ofs << "," << mi->second;
+						if (mi->second == 0)
+							ofs << ",";
+						else
+							ofs << "," << mi->second;
 					}
+				}
+				if (o2->getType().getName() == "box")
+				{
+					ofs << ",2";
+				}
+				else
+				{
+					ofs << ",1";
 				}
 				ofs << "," << std::endl;
 			}
@@ -611,10 +628,10 @@ namespace KCL_rosplan {
 			std::cout << "Create the facts: " << predicates.size() << ", " << max_arity << ", " << tokens.size() << std::endl;
 #endif
 			// Create the facts and read the values.
-			for (unsigned int i = max_arity + predicates.size(); i < predicates.size() + predicates.size() + max_arity; ++i)
+			for (unsigned int i = max_arity + predicates.size() + 2; i < predicates.size() + predicates.size() + max_arity; ++i)
 			{
 				float confidence = ::atof(tokens[i].c_str());
-				const Predicate* p = predicates[i - max_arity - predicates.size()];
+				const Predicate* p = predicates[i - max_arity - predicates.size() - 2];
 				std::vector<const Object*> o;
 				for (unsigned int j = 0; j < p->getArity(); ++j)
 				{
@@ -670,7 +687,8 @@ namespace KCL_rosplan {
 		rr.request.data_path = data_path;
 		rr.request.input_file = input_file;
 		rr.request.output_file = output_file;
-		rr.request.number_of_columns = predicates.size();
+		rr.request.number_of_columns = predicates.size() + 2;
+		
 		
 		if (!recommender_client.call(rr))
 		{
@@ -726,33 +744,55 @@ namespace KCL_rosplan {
 	
 	std::vector<const Fact*> RecommenderSystem::getBestSensingActions(const std::vector<const Object*>& objects, const std::vector<const Predicate*>& predicates, const std::map<const Fact*, float>& weighted_facts, const std::vector<const Fact*>& interesting_facts, unsigned int max_depth)
 	{
-		ROS_INFO("KCL: (RecommenderSystem) Get best sensing actions.");
+		ROS_INFO("KCL: (RecommenderSystem) Get best sensing actions %zd.", interesting_facts.size());
 		std::vector<const Fact*> best_facts_to_sense;
 		
 		std::map<const Fact*, float> results = runRecommender(objects, predicates, weighted_facts);
 		
 		float knowledge_value = calculateKnowledge(results, interesting_facts);
 		
+		std::cout << "[RecommenderSystem::getBestSensingActions] Baseline: " << knowledge_value << std::endl;
+		
 		// Given the baseline, we now check all facts we can observe and pick the one that increases it the most.
 		float max_gain = 0;
 		std::priority_queue<const UtilityFact*> queue;
-		for (std::map<const Fact*, float>::const_iterator ci = weighted_facts.begin(); ci != weighted_facts.end(); ++ci)
+		
+		std::set<const Fact*> processed_facts;
+		int sample_size = 3;
+		for (unsigned int i = 0; i < sample_size; ++i)
 		{
-			if (ci->second != 0)
+			int index;
+			do
+			{
+				index = rand() % interesting_facts.size();
+			} while (processed_facts.find(interesting_facts[index]) != processed_facts.end());
+			processed_facts.insert(interesting_facts[index]);
+			
+			const Fact* fact_to_sense = interesting_facts[index];
+			
+			// Ignore this fact if we know whether it is true or false.
+			std::map<const Fact*, float>::const_iterator map_ci = weighted_facts.find(fact_to_sense);
+			if (map_ci == weighted_facts.end() || map_ci->second != 0)
 			{
 				continue;
 			}
+			std::cout << "[RecommenderSystem::getBestSensingActions] (" << i << "/" << sample_size << ") Check: " << *fact_to_sense << std::endl;
 			
-			std::pair<float, float> knowledge_gain = calculateKnowledgeIncrease(objects, predicates, weighted_facts, interesting_facts, *ci->first);
+			std::pair<float, float> knowledge_gain = calculateKnowledgeIncrease(objects, predicates, weighted_facts, interesting_facts, *fact_to_sense);
+			
 			float d = (knowledge_gain.first + knowledge_gain.second) / 2.0f;
 			if (d > max_gain)
 			{
 				best_facts_to_sense.clear();
-				best_facts_to_sense.push_back(ci->first);
+				best_facts_to_sense.push_back(fact_to_sense);
 				max_gain = d;
-				std::cout << "Sensing " << *ci->first << " gives us <" << knowledge_gain.first << ", " << knowledge_gain.second << ")" << std::endl;
+				std::cout << "Sensing " << *fact_to_sense << " gives us <" << knowledge_gain.first << ", " << knowledge_gain.second << ")" << std::endl;
 			}
-			queue.push(new UtilityFact(*ci->first, d));
+			else
+			{
+				std::cout << "Sensing " << *fact_to_sense << " gives us <" << knowledge_gain.first << ", " << knowledge_gain.second << ") -- IGNORE" << std::endl;
+			}
+			queue.push(new UtilityFact(*fact_to_sense, d));
 		}
 		
 		ROS_INFO("KCL: (RecommenderSystem) Baseline results:");
@@ -824,7 +864,7 @@ namespace KCL_rosplan {
 			std::cout << "Interesting fact: " << **ci << " = " << weighted_facts_copy[*ci] << std::endl;
 			
 			if ((*ci)->getPredicate().getName() == last_sensed_fact.getPredicate().getName() &&
-			    weighted_facts_copy[*ci] == 0)
+			    weighted_facts_copy[*ci] != 1)
 			{
 				std::vector<const Fact*>* domain = NULL;
 				
@@ -861,7 +901,7 @@ namespace KCL_rosplan {
 			}
 		}
 		
-		// If a single entry is alraedy true, make the rest false.
+		// If a single entry is already true, make the rest false.
 		for (std::map<const Object*, std::vector<const Fact*>* >::const_iterator ci = variable_domains.begin(); ci != variable_domains.end(); ++ci)
 		{
 			const Object* object = ci->first;
@@ -1078,6 +1118,105 @@ namespace KCL_rosplan {
 	
 }; // close namespace
 
+void tokenise(const std::string& s, std::vector<std::string>& tokens)
+{
+	size_t current;
+	size_t next = -1;
+
+	do
+	{
+		current = next + 1;
+		next = s.find_first_of(" ", current);
+		tokens.push_back(s.substr(current, next - current));
+	} 
+	while (next != std::string::npos);
+}
+
+/** 
+ * Read in db file
+ */
+void readDBFile(const std::string& file_name, std::vector<const KCL_rosplan::Type*>& types, std::vector<const KCL_rosplan::Object*>& objects, std::vector<const KCL_rosplan::Predicate*>& predicates, std::set<const KCL_rosplan::Fact*>& facts)
+{
+	ROS_INFO("KCL: (RecommenderSystem) Load scenarion from file: %s.\n", file_name.c_str());
+	std::ifstream f(file_name.c_str());
+	std::string line;
+
+	rosplan_knowledge_msgs::KnowledgeUpdateService knowledge_update_service;
+
+	if (f.is_open())
+	{
+		while (getline(f, line))
+		{
+
+			std::cout << line << std::endl;
+			if (line.size() == 0 || line[0] == '#') continue;
+
+			std::vector<std::string> tokens;
+			tokenise(line, tokens);
+
+			// Types.
+			if (line[0] == 't')
+			{
+				if (tokens.size() != 2)
+				{
+					ROS_ERROR("KCL (RecommenderSystem) Malformed line, expected t type. Read %s\n", line.c_str());
+					exit(0);
+				}
+				const std::string& type_name = tokens[1];
+				
+				const KCL_rosplan::Type& type = KCL_rosplan::Type::createType(type_name, NULL);
+				types.push_back(&type);
+			}
+			else if (line[0] == 'o')
+			{
+				if (tokens.size() != 3)
+				{
+					ROS_ERROR("KCL (RecommenderSystem) Malformed line, expected o object type. Read %s\n", line.c_str());
+					exit(0);
+				}
+				const std::string& object_name = tokens[1];
+				const std::string& type_name = tokens[2];
+				objects.push_back(&KCL_rosplan::Object::createObject(object_name, KCL_rosplan::Type::getType(type_name)));
+			}
+			else if (line[0] == 'p')
+			{
+				if (tokens.size() < 2)
+				{
+					ROS_ERROR("KCL (RecommenderSystem) Malformed line, expected p predicate [type]. Read %s\n", line.c_str());
+					exit(0);
+				}
+				
+				const std::string& predicate_name = tokens[1];
+				
+				std::vector<const KCL_rosplan::Type*> predicate_types;
+				for (unsigned int i = 2; i < tokens.size(); ++i)
+				{
+					predicate_types.push_back(&KCL_rosplan::Type::getType(tokens[i]));
+				}
+				predicates.push_back(&KCL_rosplan::Predicate::getPredicate(predicate_name, predicate_types));
+			}
+			else if (line[0] == 'f')
+			{
+				if (tokens.size() < 2)
+				{
+					ROS_ERROR("KCL (RecommenderSystem) Malformed line, expected f fact [object]. Read %s\n", line.c_str());
+					exit(0);
+				}
+				
+				const std::string& predicate_name = tokens[1];
+				
+				std::vector<const KCL_rosplan::Object*> fact_objects;
+				for (unsigned int i = 2; i < tokens.size(); ++i)
+				{
+					fact_objects.push_back(KCL_rosplan::Object::getObject(tokens[i]));
+				}
+				
+				facts.insert(&KCL_rosplan::Fact::getFact(*KCL_rosplan::Predicate::getPredicate(predicate_name), fact_objects));
+			}
+		}
+	}
+}
+
 /**
  * Dummy PDDL problem generator.
  */
@@ -1089,8 +1228,45 @@ int main(int argc, char** argv)
 {
 	ROS_INFO("KCL: (RecommenderSystem) Started!\n");
 	
+	ros::init(argc, argv, "rosplan_RecommanderSystem");
+	ros::NodeHandle nh;
 	
-	/* Types */
+	std::string domain_path;
+	nh.getParam("/rosplan/domain", domain_path);
+	
+	std::string data_path;
+	nh.getParam("/rosplan/data_path", data_path);
+	
+	std::string config_file;
+	nh.getParam("/facts_db", config_file);
+	
+	std::vector<const KCL_rosplan::Type*> types;
+	std::vector<const KCL_rosplan::Object*> objects;
+	std::vector<const KCL_rosplan::Predicate*> predicates;
+	std::set<const KCL_rosplan::Fact*> true_facts;
+	readDBFile(config_file, types, objects, predicates, true_facts);
+	
+	std::vector<const KCL_rosplan::Predicate*> relevant_predicates;
+	for (std::vector<const KCL_rosplan::Predicate*>::const_iterator ci = predicates.begin(); ci != predicates.end(); ++ci)
+	{
+		if ((*ci)->getName() == "object_at" || 
+		    (*ci)->getName() == "robot_at" || 
+		    (*ci)->getName() == "box_at")
+		{
+			continue;
+		}
+		relevant_predicates.push_back(*ci);
+	}
+	
+	std::vector<const KCL_rosplan::Object*> relevant_objects;
+	for (std::vector<const KCL_rosplan::Object*>::const_iterator ci = objects.begin(); ci != objects.end(); ++ci)
+	{
+		if ((*ci)->getType().getName() == "box" ||
+		    (*ci)->getType().getName() == "object")
+		relevant_objects.push_back(*ci);
+	}
+	
+	/* Types 
 	const KCL_rosplan::Type object = KCL_rosplan::Type::createType("object", NULL);
 	const KCL_rosplan::Type catagory = KCL_rosplan::Type::createType("catagory", NULL);
 	const KCL_rosplan::Type robot = KCL_rosplan::Type::createType("robot", NULL);
@@ -1099,7 +1275,7 @@ int main(int argc, char** argv)
 	
 	ROS_INFO("KCL: (RecommenderSystem) Types created.\n");
 	
-	/* Objects */
+	 Objects 
 	std::vector<const KCL_rosplan::Object*> objects;
 	objects.push_back(&KCL_rosplan::Object::createObject("toy1", object));
 	objects.push_back(&KCL_rosplan::Object::createObject("toy2", object));
@@ -1117,7 +1293,7 @@ int main(int argc, char** argv)
 	objects.push_back(&KCL_rosplan::Object::createObject("end_follow_wp", location));
 	ROS_INFO("KCL: (RecommenderSystem) Objects created %zd.\n", objects.size());
 	
-	/* Predicates */
+	 Predicates 
 	std::vector<const KCL_rosplan::Predicate*> predicates;
 	std::vector<const KCL_rosplan::Type*> robot_at_types;
 	robot_at_types.push_back(&robot);
@@ -1149,8 +1325,9 @@ int main(int argc, char** argv)
 	belongs_in_types.push_back(&box);
 	predicates.push_back(&KCL_rosplan::Predicate::getPredicate("belongs_in", belongs_in_types));
 	ROS_INFO("KCL: (RecommenderSystem) Predicates created %zd.\n", predicates.size());
+	*/
 	
-	/* Facts */
+	// Ground all Facts .
 	std::vector<const KCL_rosplan::Fact*> all_facts;
 	for (std::vector<const KCL_rosplan::Predicate*>::const_iterator ci = predicates.begin(); ci != predicates.end(); ++ci)
 	{
@@ -1169,13 +1346,21 @@ int main(int argc, char** argv)
 	std::vector<const KCL_rosplan::Fact*> interesting_facts;
 	for (std::vector<const KCL_rosplan::Fact*>::const_iterator ci = all_facts.begin(); ci != all_facts.end(); ++ci)
 	{
-		// All facts that are certain are set true.
-		if ((*ci)->getPredicate().getName() != "belongs_in")
+		const KCL_rosplan::Fact* fact = *ci;
+		
+		// Check if this fact is known to be true.
+		if (true_facts.find(fact) != true_facts.end())
 		{
 			weighted_facts[*ci] = 2.0;
 		}
-		// Others are set to unsure.
+		// Otherwise we set it to false.
 		else
+		{
+			weighted_facts[*ci] = 1.0;
+		}
+		
+		// All facts that are certain are set true.
+		if ((*ci)->getPredicate().getName() == "belongs_in")
 		{
 			interesting_facts.push_back(*ci);
 			weighted_facts[*ci] = 0.0;
@@ -1183,18 +1368,8 @@ int main(int argc, char** argv)
 	}
 	ROS_INFO("KCL: (RecommenderSystem) Weighted facts created.\n");
 	
-	ros::init(argc, argv, "rosplan_RecommanderSystem");
-	ros::NodeHandle nh;
-	
 	// Start the listen to feedback action.
 	KCL_rosplan::ListenToFeedbackPDDLAction listener(nh);
-	
-	std::string domain_path;
-	nh.getParam("/rosplan/domain", domain_path);
-	
-	std::string data_path;
-	nh.getParam("/rosplan/data_path", data_path);
-	std::cout << "Data path: " << data_path << std::endl;
 	
 	ros::ServiceServer pddl_generation_service = nh.advertiseService("/kcl_rosplan/generate_planning_problem", &generatePDDLProblemFile);
 	
@@ -1203,7 +1378,7 @@ int main(int argc, char** argv)
 	ROS_INFO("KCL: (RecommenderSystem) Recommender System started.\n");
 
 	// Fetch all objects, predicates, etc. and start the recommender.
-	std::vector<const KCL_rosplan::Fact*> facts_to_sense = rs.getBestSensingActions(objects, predicates, weighted_facts, interesting_facts, 3);
+	std::vector<const KCL_rosplan::Fact*> facts_to_sense = rs.getBestSensingActions(relevant_objects, relevant_predicates, weighted_facts, interesting_facts, 3);
 	
 	ROS_INFO("KCL: (RecommenderSystem) Find %zd possible facts to sense.\n", facts_to_sense.size());
 	
@@ -1214,18 +1389,43 @@ int main(int argc, char** argv)
 	}
 	
 	KCL_rosplan::FactObserveTree root(*previous_fact);
-	rs.callRecogniser(root, *previous_fact, 0, 3, objects, predicates, weighted_facts, interesting_facts);
+	rs.callRecogniser(root, *previous_fact, 0, 1, relevant_objects, relevant_predicates, weighted_facts, interesting_facts);
 	
 	ROS_INFO("KCL: (RecommenderSystem) Recogniser is finished, create the planning problem.");
 	
-	// TEST.
+	// Create waypoints for all the toys and boxes.
+	std::vector<const KCL_rosplan::Object*> toys;
+	KCL_rosplan::Object::getObjects(KCL_rosplan::Type::getType("object"), toys);
+	
+	// Only include those objects that we need to sense.
 	std::map<std::string, std::string> object_to_location_mapping;
-	object_to_location_mapping["toy1"] = "toy1_wp";
-	object_to_location_mapping["toy2"] = "toy2_wp";
+	for (std::vector<const KCL_rosplan::Object*>::const_iterator ci = toys.begin(); ci != toys.end(); ++ci)
+	{
+		const KCL_rosplan::Object* object = *ci;
+		if (!root.contains(*object))
+		{
+			continue;
+		}
+		
+		std::stringstream ss;
+		ss << object->getName() << "_wp";
+		
+		object_to_location_mapping[object->getName()] = ss.str();
+	}
+	
+	std::vector<const KCL_rosplan::Object*> boxes;
+	KCL_rosplan::Object::getObjects(KCL_rosplan::Type::getType("box"), boxes);
 	
 	std::map<std::string, std::string> box_to_location_mapping;
-	box_to_location_mapping["box1"] = "box1_wp";
-	box_to_location_mapping["box2"] = "box2_wp";
+	for (std::vector<const KCL_rosplan::Object*>::const_iterator ci = boxes.begin(); ci != boxes.end(); ++ci)
+	{
+		const KCL_rosplan::Object* object = *ci;
+		
+		std::stringstream ss;
+		ss << object->getName() << "_wp";
+		
+		box_to_location_mapping[object->getName()] = ss.str();
+	}
 	
 	KCL_rosplan::PlanToAskPDDLGenerator pta;
 	pta.createPDDL(root, data_path, "domain.pddl", "problem.pddl", "kenny_wp", object_to_location_mapping, box_to_location_mapping);
