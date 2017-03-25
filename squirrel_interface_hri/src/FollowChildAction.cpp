@@ -68,6 +68,7 @@ void FollowChildAction::dispatchCallback(const rosplan_dispatch_msgs::ActionDisp
 				squirrel_hri_msgs::FollowChildResultConstPtr result = action_client.getResult();
 				geometry_msgs::PoseStamped child_location = result->final_location;
 				message_store.insertNamed("child_location", child_location);
+				ROS_INFO("KCL: (FollowChildAction) Child is at (%f,%f,%f,)", child_location.pose.position.x, child_location.pose.position.y, child_location.pose.position.z);
 			}
 		} else {
 			// timed out (failed)

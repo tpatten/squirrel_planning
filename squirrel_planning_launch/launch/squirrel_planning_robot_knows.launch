@@ -52,7 +52,7 @@
 	<!-- RPSquirrelRecursion actions -->
 	<node name="squirrel_planning_execution" pkg="squirrel_planning_execution" type="robotKnowsGame" output="screen">
 		<param name="simulated" value="false" />
-		<param name="planner_command" value="cat $(find squirrel_planning_launch)/common/robot_knows_phase3.pddl" /> 
+		<param name="planner_command" value="cat $(find squirrel_planning_launch)/common/robot_knows_phase1.pddl" /> 
 		<param name="planner_command_phase3" value="cat $(find squirrel_planning_launch)/common/robot_knows_phase3.pddl" /> 
 	</node>
 

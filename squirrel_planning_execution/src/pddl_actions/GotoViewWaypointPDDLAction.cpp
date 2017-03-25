@@ -71,6 +71,7 @@ void GotoViewWaypointPDDLAction::dispatchCallback(const rosplan_dispatch_msgs::A
 		exit(1);
 	}
 	geometry_msgs::PoseStamped child_location = *child_results[0];
+	ROS_INFO("KCL: (SimulatedObservePDDLAction) Child is at (%f,%f,%f,)", child_location.pose.position.x, child_location.pose.position.y, child_location.pose.position.z);
 
 /*
 	// Locate the location of the robot.

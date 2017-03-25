@@ -57,7 +57,7 @@ geometry_msgs::Pose transformToPose(const std::string& s)
 	return p;
 }
 
-void sendMarker(const geometry_msgs::Pose& pose, const std::string& name, ros::Publisher& vis_pub)
+void sendMarker(const geometry_msgs::Pose& pose, const std::string& name, ros::Publisher& vis_pub, float size)
 {
 	static int id = 0;
 	visualization_msgs::Marker marker;
@@ -65,16 +65,16 @@ void sendMarker(const geometry_msgs::Pose& pose, const std::string& name, ros::P
 	marker.header.stamp = ros::Time();
 	marker.ns = name;
 	marker.id = id++;
-	marker.type = visualization_msgs::Marker::SPHERE;
+	marker.type = visualization_msgs::Marker::CYLINDER;
 	marker.action = visualization_msgs::Marker::ADD;
 	marker.pose = pose;
-	marker.scale.x = 1;
-	marker.scale.y = 1;
-	marker.scale.z = 1;
+	marker.scale.x = size;
+	marker.scale.y = size;
+	marker.scale.z = size;
 	marker.color.a = 1.0; // Don't forget to set the alpha!
-	marker.color.r = 0.0;
-	marker.color.g = 1.0;
-	marker.color.b = 0.0;
+	marker.color.r = 0.75;
+	marker.color.g = 0.0;
+	marker.color.b = 0.75;
 	//only if using a MESH_RESOURCE marker type:
 	vis_pub.publish( marker );
 }
@@ -110,11 +110,11 @@ void setupSimulation(const std::string& config_file, ros::ServiceClient& update_
 				std::string box_predicate = tokens[1];
 				geometry_msgs::Pose box_location = transformToPose(tokens[2]);
 				geometry_msgs::Pose near_box = transformToPose(tokens[3]);
-				sendMarker(box_location, box_predicate, vis_pub);
+				sendMarker(box_location, box_predicate, vis_pub, 0.25f);
 				{
 					std::stringstream ss;
 					ss << "near_" << box_predicate;
-					sendMarker(near_box, ss.str(), vis_pub);
+					sendMarker(near_box, ss.str(), vis_pub, 0.1f);
 				}
 				
 

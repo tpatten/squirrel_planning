@@ -195,7 +195,7 @@ namespace KCL_rosplan {
 			// request manipulation waypoints for object
 			geometry_msgs::PoseStamped &box_pose = *results[0];
 			float distance = (box_pose.pose.position.x - transform.getOrigin().getX()) * (box_pose.pose.position.x - transform.getOrigin().getX()) +
-			                 (box_pose.pose.position.x - transform.getOrigin().getX()) * (box_pose.pose.position.x - transform.getOrigin().getX());
+			                 (boy_pose.pose.position.y - transform.getOrigin().getY()) * (boy_pose.pose.position.y - transform.getOrigin().getY());
 			
 			if (distance < min_distance_from_robot)
 			{
