@@ -127,7 +127,8 @@ set(recommenderTester_SOURCES
   src/RecommenderSystem.cpp
   src/PlanToSensePDDLGenerator.cpp
   src/PlanToAskPDDLGenerator.cpp
-  src/pddl_actions/ListenToFeedbackPDDLAction.cpp)
+  src/pddl_actions/ListenToFeedbackPDDLAction.cpp
+  src/pddl_actions/InspectObjectPDDLAction.cpp)
   
 ## planning simulation
 #set(planSim_SOURCES
