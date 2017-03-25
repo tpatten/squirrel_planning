@@ -76,7 +76,7 @@ void SimulatedObservePDDLAction::dispatchCallback(const rosplan_dispatch_msgs::A
 //		float p = (float)rand() / (float)RAND_MAX;
 //		ROS_INFO("KCL: (SimulatedObservePDDLAction) Done sorting? %f >= %f.", p, 0.5f);
 //		knowledge_item.is_negative = p >= 0.5f;
-		knowledge_item.is_negative = call_counter < 1;
+		knowledge_item.is_negative = call_counter < 3;
 		
 		knowledge_update_service.request.knowledge = knowledge_item;
 		if (!update_knowledge_client_.call(knowledge_update_service)) {
@@ -162,7 +162,7 @@ void SimulatedObservePDDLAction::dispatchCallback(const rosplan_dispatch_msgs::A
 			// request manipulation waypoints for object
 			geometry_msgs::PoseStamped &box_pose = *results[0];
 			float distance = (box_pose.pose.position.x - transform.getOrigin().getX()) * (box_pose.pose.position.x - transform.getOrigin().getX()) +
-			                 (box_pose.pose.position.x - transform.getOrigin().getX()) * (box_pose.pose.position.x - transform.getOrigin().getX());
+			                 (box_pose.pose.position.y - transform.getOrigin().getY()) * (box_pose.pose.position.y - transform.getOrigin().getY());
 			
 			if (distance < min_distance_from_robot)
 			{

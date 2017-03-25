@@ -8,6 +8,8 @@
 #include <tf/LinearMath/Vector3.h>
 #include <tf/LinearMath/Quaternion.h>
 #include <actionlib/client/simple_action_client.h>
+
+#include <std_msgs/Float64MultiArray.h>
 #include "rosplan_dispatch_msgs/ActionDispatch.h"
 #include "rosplan_dispatch_msgs/ActionFeedback.h"
 #include "squirrel_object_perception_msgs/LookForObjectsAction.h"
@@ -28,7 +30,7 @@ namespace KCL_rosplan {
 
 	/* constructor */
 	RPPerceptionAction::RPPerceptionAction(ros::NodeHandle &nh, const std::string &actionserver, const std::string& recogniseserver)
-	 : message_store(nh), examine_action_client(actionserver, true), recognise_action_client(recogniseserver, true)
+	 : message_store(nh), examine_action_client(actionserver, true), recognise_action_client(recogniseserver, true), ptpActionClient("/joint_ptp", true)
 	{
 
 		// create the action clients
@@ -39,6 +41,11 @@ namespace KCL_rosplan {
 		ROS_INFO("KCL: (PerceptionAction) waiting for recognision server to start on %s", recogniseserver.c_str());
 		recognise_action_client.waitForServer();
 		ROS_INFO("KCL: (PerceptionAction) action server found!");
+
+
+		ROS_INFO("KCL: (PerceptionAction) waiting for ptp server to start...");
+		ptpActionClient.waitForServer();
+		ROS_INFO("KCL: (PerceptionAction) ptp server found!");
 		
 		// create the action feedback publisher
 		action_feedback_pub = nh.advertise<rosplan_dispatch_msgs::ActionFeedback>("/kcl_rosplan/action_feedback", 10, true);
@@ -48,6 +55,8 @@ namespace KCL_rosplan {
 
 		examine_action_service = nh.serviceClient<squirrel_object_perception_msgs::Recognize>("/squirrel_recognizer/squirrel_recognize_objects");
 		knowledge_query_client = nh.serviceClient<rosplan_knowledge_msgs::KnowledgeQueryService>("/kcl_rosplan/query_knowledge_base");
+
+		joint_state_sub = nh.subscribe("/real/robotino/joint_control/get_state", 10, &RPPerceptionAction::jointCallback, this);
 	}
 
 	/* action dispatch callback; parameters (?v - robot ?wp - waypoint) */
@@ -195,7 +204,7 @@ namespace KCL_rosplan {
 			// request manipulation waypoints for object
 			geometry_msgs::PoseStamped &box_pose = *results[0];
 			float distance = (box_pose.pose.position.x - transform.getOrigin().getX()) * (box_pose.pose.position.x - transform.getOrigin().getX()) +
-			                 (boy_pose.pose.position.y - transform.getOrigin().getY()) * (boy_pose.pose.position.y - transform.getOrigin().getY());
+			                 (box_pose.pose.position.y - transform.getOrigin().getY()) * (box_pose.pose.position.y - transform.getOrigin().getY());
 			
 			if (distance < min_distance_from_robot)
 			{
@@ -227,17 +236,12 @@ namespace KCL_rosplan {
 				so.id = so.category;
 				addObject(so);
 			}
-
-/*
-			// add all new objects
-			std::vector<squirrel_object_perception_msgs::SceneObject>::const_iterator ci = recognise_action_client.getResult()->objects_added.begin();
-			for (; ci != recognise_action_client.getResult()->objects_added.end(); ++ci) {
-				squirrel_object_perception_msgs::SceneObject so = (*ci);
-				addObject(so);
-			}
-*/
 		} else if (state != actionlib::SimpleClientGoalState::SUCCEEDED)  {
 			ROS_INFO("KCL: (PerceptionAction) action failed");
+			publishFeedback(msg->action_id, "action failed");
+			return;
+		} else {
+			ROS_ERROR("KCL: (PerceptionAction) No objects returned!");
 			publishFeedback(msg->action_id, "action failed");
 			return;
 		}
@@ -406,6 +410,13 @@ namespace KCL_rosplan {
 		examine_action_client.waitForServer();
 		ROS_INFO("KCL: (PerceptionAction) action server started!");
 
+		if (!extendArm())
+		{
+			ROS_ERROR("KCL: (PerceptionAction) failed to extends the arm.");
+			publishFeedback(msg->action_id,"action failed");
+			return;
+		}
+
 		squirrel_object_perception_msgs::LookForObjectsGoal perceptionGoal;
 		perceptionGoal.look_for_object = squirrel_object_perception_msgs::LookForObjectsGoal::EXPLORE;
 		perceptionGoal.id = objectID;
@@ -442,6 +453,13 @@ namespace KCL_rosplan {
 		} else if (state != actionlib::SimpleClientGoalState::SUCCEEDED)  {
 			ROS_INFO("KCL: (PerceptionAction) action failed");
 			publishFeedback(msg->action_id, "action failed");
+			return;
+		}
+
+		if (!retractArm())
+		{
+			ROS_ERROR("KCL: (PerceptionAction) failed to retract the arm.");
+			publishFeedback(msg->action_id,"action failed");
 			return;
 		}
 		// publish feedback
@@ -630,6 +648,103 @@ namespace KCL_rosplan {
 			message_store.deleteID(db_name_map[object.id]);
 	}
 
+	void RPPerceptionAction::waitForArm(const std_msgs::Float64MultiArray& goal_state, float error)
+	{
+		ros::Rate loop_rate(1);
+		while (ros::ok())
+		{
+			ros::spinOnce();
+			loop_rate.sleep();
+
+			// Check whether we have reached the goal location yet.
+			bool done = true;
+			for (unsigned int i = 0; i < goal_state.data.size(); ++i)
+			{
+				if (std::abs(goal_state.data[i] - last_joint_state.position[i]) > error)
+				{
+					ROS_INFO("KCL (RPPerceptionAction) Joint #%zd is %f off target, not done yet!", i, std::abs(goal_state.data[i] - last_joint_state.position[i]));
+					done = false;
+					break;
+				}
+			}
+			if (done) break;
+		}
+	}
+
+	/**
+	 * Arm manipulation.
+	 */
+	bool RPPerceptionAction::extendArm()
+	{
+		ROS_INFO("KCL: (RPPerceptionAction) Extend arm\n");
+		std_msgs::Float64MultiArray data_arm;
+		data_arm.data = last_joint_state.position;
+		data_arm.data[3] = 1.5;
+		data_arm.data[4] = 0.86;
+		data_arm.data[5] = 0;
+		data_arm.data[6] = -1.6;
+		data_arm.data[7] = -1.8;
+
+		squirrel_manipulation_msgs::JointPtpActionGoal armEndGoal;
+		armEndGoal.goal.joints = data_arm;
+
+		ptpActionClient.sendGoal(armEndGoal.goal);
+		ROS_INFO("KCL: (RPPerceptionAction) Goal sent\n");
+		ptpActionClient.waitForResult(ros::Duration(30.0));
+		ROS_INFO("KCL: (RPPerceptionAction) Waiting form arm to finish moving...\n");
+		sleep(1.0);
+		ptpActionClient.sendGoal(armEndGoal.goal);
+
+		waitForArm(data_arm, 0.01f);
+		return true;
+
+		if (ptpActionClient.getState() == actionlib::SimpleClientGoalState::SUCCEEDED) {
+			ROS_INFO("KCL: (RPPerceptionAction) Arm moved \n");
+			return true;
+		}else{
+			ROS_ERROR("KCL: (RPPerceptionAction) Arm FAILED to move! \n");
+			return false;
+		}
+	}
+
+	bool RPPerceptionAction::retractArm()
+	{
+		ROS_INFO("KCL: (RPPerceptionAction) Retract arm\n");
+		std_msgs::Float64MultiArray data_arm;
+		data_arm.data = last_joint_state.position;
+		data_arm.data[3] = 0.7;
+		data_arm.data[4] = 1.6;
+		data_arm.data[5] = 0;
+		data_arm.data[6] = -1.7;
+		data_arm.data[7] = -1.8;
+
+		squirrel_manipulation_msgs::JointPtpActionGoal armEndGoal;
+		armEndGoal.goal.joints = data_arm;
+
+
+		ptpActionClient.sendGoal(armEndGoal.goal);
+		ROS_INFO("KCL: (RPPerceptionAction) Goal sent\n");
+		ptpActionClient.waitForResult(ros::Duration(30.0));
+		ROS_INFO("KCL: (RPPerceptionAction) Waiting form arm to finish moving...\n");
+		sleep(1.0);
+		ptpActionClient.sendGoal(armEndGoal.goal);
+
+		waitForArm(data_arm, 0.01f);
+		return true;
+
+		if (ptpActionClient.getState() == actionlib::SimpleClientGoalState::SUCCEEDED) {
+			ROS_INFO("KCL: (RPPerceptionAction) Arm moved \n");
+			return true;
+		}else{
+			ROS_ERROR("KCL: (RPPerceptionAction) Arm FAILED to move! \n");
+			return false;
+		}
+	}
+
+	void RPPerceptionAction::jointCallback(const sensor_msgs::JointStateConstPtr& msg)
+	{
+		last_joint_state = *msg;
+	}
 } // close namespace
 
 	/*-------------*/

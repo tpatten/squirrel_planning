@@ -8,6 +8,10 @@
 #include <tf/transform_listener.h>
 #include <tf/tf.h>
 
+#include <std_msgs/Float64MultiArray.h>
+#include <sensor_msgs/JointState.h>
+
+#include <squirrel_manipulation_msgs/JointPtpAction.h>
 #include <actionlib/client/simple_action_client.h>
 #include "rosplan_dispatch_msgs/ActionDispatch.h"
 #include "rosplan_dispatch_msgs/ActionFeedback.h"
@@ -42,10 +46,12 @@ namespace KCL_rosplan {
 
 		mongodb_store::MessageStoreProxy message_store;
 		actionlib::SimpleActionClient<squirrel_manipulation_msgs::BlindGraspAction> blind_grasp_action_client;
+		actionlib::SimpleActionClient<squirrel_manipulation_msgs::PutDownAction> putDownActionClient;
+		actionlib::SimpleActionClient<kclhand_control::ActuateHandAction> kclhandGraspActionClient;
+		actionlib::SimpleActionClient<squirrel_manipulation_msgs::JointPtpAction> ptpActionClient;
 		ros::Publisher action_feedback_pub;
-        //ros::ServiceClient drop_client;
-        //actionlib::SimpleActionClient<kclhand_control::ActuateHandAction> drop_action_client;
 		ros::ServiceClient update_knowledge_client;
+		ros::Subscriber joint_state_sub;
         bool do_placement;
 
 		/* execute pushing actions */
@@ -60,6 +66,12 @@ namespace KCL_rosplan {
 			fb.status = feedback;
 			action_feedback_pub.publish(fb);
 		}
+
+		bool retractArm();
+		void waitForArm(const std_msgs::Float64MultiArray& goal_state, float error);
+
+		void jointCallback(const sensor_msgs::JointStateConstPtr& msg);
+		sensor_msgs::JointState last_joint_state;
 
 	public:
 
