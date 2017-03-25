@@ -21,6 +21,7 @@
 #include <rosplan_knowledge_msgs/GenerateProblemService.h>
 
 #include "pddl_actions/ListenToFeedbackPDDLAction.h"
+#include "pddl_actions/InspectObjectPDDLAction.h"
 #include "squirrel_prediction_msgs/RecommendRelations.h"
 #include "squirrel_planning_execution/PlanToSensePDDLGenerator.h"
 #include "squirrel_planning_execution/PlanToAskPDDLGenerator.h"
@@ -649,9 +650,9 @@ namespace KCL_rosplan {
 	
 	float RecommenderSystem::calculateKnowledge(const std::map<const Fact*, float>& results, const std::vector<const Fact*>& interesting_facts) const
 	{
-#ifdef RECOMMENDER_SYSTEM_DEBUG
-		ROS_INFO("KCL: (RecommenderSystem) Run recommender.");
-#endif
+//#ifdef RECOMMENDER_SYSTEM_DEBUG
+		ROS_INFO("KCL: (RecommenderSystem) RecommenderSystem::calculateKnowledge");
+//#endif
 		// Check the current values of the interesting facts. This forms the baseline for determining which observation
 		// actions are best to improve these.
 		float value = 0;
@@ -667,9 +668,9 @@ namespace KCL_rosplan {
 				if (interesting_facts[i] == fact)
 				{
 					value += p;
-#ifdef RECOMMENDER_SYSTEM_DEBUG
-					std::cout << *fact << " -- Increase knowledge gain by " << p << " total value: " << value << std::endl;
-#endif
+//#ifdef RECOMMENDER_SYSTEM_DEBUG
+					std::cout << "\t" << *fact << " -- Increase knowledge gain by " << p << " total value: " << value << std::endl;
+//#endif
 				}
 			}
 		}
@@ -942,10 +943,10 @@ namespace KCL_rosplan {
 		if (current_depth == max_depth) return;
 		
 		std::map<const Fact*, float> weighted_facts_copy(weighted_facts);
-		processMutualExclusive(last_sensed_fact, weighted_facts_copy, interesting_facts);
 		
 		// Make the best sensing action true and run the system again.
 		weighted_facts_copy[&last_sensed_fact] = 2.0;
+		processMutualExclusive(last_sensed_fact, weighted_facts_copy, interesting_facts);
 		
 		std::cout << "Get sensing actions for TRUE branch: " << std::endl;
 		for (std::vector<const Fact*>::const_iterator ci = interesting_facts.begin(); ci != interesting_facts.end(); ++ci)
@@ -966,14 +967,13 @@ namespace KCL_rosplan {
 		{
 			FactObserveTree* true_branch = new FactObserveTree(*facts_to_sense[0]);
 			node.true_branch_ = true_branch;
-			//updateKnowledgeBase(last_sensed_fact, *facts_to_sense[0], true);
 			callRecogniser(*true_branch, *facts_to_sense[0], current_depth + 1, max_depth, objects, predicates, weighted_facts_copy, interesting_facts);
 		}
 		
 		// Make the best sensing action false and run the system again.
 		weighted_facts_copy = weighted_facts;
-		processMutualExclusive(last_sensed_fact, weighted_facts_copy, interesting_facts);
 		weighted_facts_copy[&last_sensed_fact] = 1.0;
+		processMutualExclusive(last_sensed_fact, weighted_facts_copy, interesting_facts);
 		
 		std::cout << "Get sensing actions for FALSE branch: " << std::endl;
 		for (std::vector<const Fact*>::const_iterator ci = interesting_facts.begin(); ci != interesting_facts.end(); ++ci)
@@ -993,7 +993,6 @@ namespace KCL_rosplan {
 		{
 			FactObserveTree* false_branch = new FactObserveTree(*facts_to_sense[0]);
 			node.false_branch_ = false_branch;
-			//updateKnowledgeBase(last_sensed_fact, *facts_to_sense[0], false);
 			callRecogniser(*false_branch, *facts_to_sense[0], current_depth + 1, max_depth, objects, predicates, weighted_facts_copy, interesting_facts);
 		}
 	}
@@ -1035,7 +1034,7 @@ namespace KCL_rosplan {
 				knowledge_item.values.push_back(kv);
 				
 				knowledge_query.request.knowledge.push_back(knowledge_item);
-				ROS_INFO("KCL: (RecommenderSystem) Check if (belongs_in %s %s) is true.", fact->getObjects()[0]->getName().c_str(), fact->getObjects()[1]->getName().c_str());
+				//ROS_INFO("KCL: (RecommenderSystem) Check if (belongs_in %s %s) is true.", fact->getObjects()[0]->getName().c_str(), fact->getObjects()[1]->getName().c_str());
 				
 				// Check if any of these facts are true.
 				if (!query_knowledge_client.call(knowledge_query))
@@ -1055,7 +1054,7 @@ namespace KCL_rosplan {
 					// Check if the fact is negative.
 					knowledge_item.is_negative = false;
 					
-					ROS_INFO("KCL: (RecommenderSystem) Check if (not (belongs_in %s %s)) is true.", fact->getObjects()[0]->getName().c_str(), fact->getObjects()[1]->getName().c_str());
+					//ROS_INFO("KCL: (RecommenderSystem) Check if (not (belongs_in %s %s)) is true.", fact->getObjects()[0]->getName().c_str(), fact->getObjects()[1]->getName().c_str());
 				
 					// Check if any of these facts are true.
 					if (!query_knowledge_client.call(knowledge_query))
@@ -1266,67 +1265,6 @@ int main(int argc, char** argv)
 		relevant_objects.push_back(*ci);
 	}
 	
-	/* Types 
-	const KCL_rosplan::Type object = KCL_rosplan::Type::createType("object", NULL);
-	const KCL_rosplan::Type catagory = KCL_rosplan::Type::createType("catagory", NULL);
-	const KCL_rosplan::Type robot = KCL_rosplan::Type::createType("robot", NULL);
-	const KCL_rosplan::Type box = KCL_rosplan::Type::createType("box", NULL);
-	const KCL_rosplan::Type location = KCL_rosplan::Type::createType("location", NULL);
-	
-	ROS_INFO("KCL: (RecommenderSystem) Types created.\n");
-	
-	 Objects 
-	std::vector<const KCL_rosplan::Object*> objects;
-	objects.push_back(&KCL_rosplan::Object::createObject("toy1", object));
-	objects.push_back(&KCL_rosplan::Object::createObject("toy2", object));
-	objects.push_back(&KCL_rosplan::Object::createObject("kenny", robot));
-	objects.push_back(&KCL_rosplan::Object::createObject("car", catagory));
-	objects.push_back(&KCL_rosplan::Object::createObject("dinosaur", catagory));
-	objects.push_back(&KCL_rosplan::Object::createObject("box1", box));
-	objects.push_back(&KCL_rosplan::Object::createObject("box2", box));
-	objects.push_back(&KCL_rosplan::Object::createObject("wp1", location));
-	objects.push_back(&KCL_rosplan::Object::createObject("wp2", location));
-	objects.push_back(&KCL_rosplan::Object::createObject("box1_wp", location));
-	objects.push_back(&KCL_rosplan::Object::createObject("box2_wp", location));
-	objects.push_back(&KCL_rosplan::Object::createObject("toy1_wp", location));
-	objects.push_back(&KCL_rosplan::Object::createObject("toy2_wp", location));
-	objects.push_back(&KCL_rosplan::Object::createObject("end_follow_wp", location));
-	ROS_INFO("KCL: (RecommenderSystem) Objects created %zd.\n", objects.size());
-	
-	 Predicates 
-	std::vector<const KCL_rosplan::Predicate*> predicates;
-	std::vector<const KCL_rosplan::Type*> robot_at_types;
-	robot_at_types.push_back(&robot);
-	robot_at_types.push_back(&location);
-	predicates.push_back(&KCL_rosplan::Predicate::getPredicate("robot_at", robot_at_types));
-	
-	std::vector<const KCL_rosplan::Type*> object_at_types;
-	object_at_types.push_back(&object);
-	object_at_types.push_back(&location);
-	predicates.push_back(&KCL_rosplan::Predicate::getPredicate("object_at", object_at_types));
-	
-	std::vector<const KCL_rosplan::Type*> box_at_types;
-	box_at_types.push_back(&box);
-	box_at_types.push_back(&location);
-	predicates.push_back(&KCL_rosplan::Predicate::getPredicate("box_at", box_at_types));
-	
-	std::vector<const KCL_rosplan::Type*> connected_types;
-	connected_types.push_back(&location);
-	connected_types.push_back(&location);
-	predicates.push_back(&KCL_rosplan::Predicate::getPredicate("connected", connected_types));
-	
-	std::vector<const KCL_rosplan::Type*> in_types;
-	in_types.push_back(&object);
-	in_types.push_back(&box);
-	predicates.push_back(&KCL_rosplan::Predicate::getPredicate("in", in_types));
-	
-	std::vector<const KCL_rosplan::Type*> belongs_in_types;
-	belongs_in_types.push_back(&object);
-	belongs_in_types.push_back(&box);
-	predicates.push_back(&KCL_rosplan::Predicate::getPredicate("belongs_in", belongs_in_types));
-	ROS_INFO("KCL: (RecommenderSystem) Predicates created %zd.\n", predicates.size());
-	*/
-	
 	// Ground all Facts .
 	std::vector<const KCL_rosplan::Fact*> all_facts;
 	for (std::vector<const KCL_rosplan::Predicate*>::const_iterator ci = predicates.begin(); ci != predicates.end(); ++ci)
@@ -1370,6 +1308,9 @@ int main(int argc, char** argv)
 	
 	// Start the listen to feedback action.
 	KCL_rosplan::ListenToFeedbackPDDLAction listener(nh);
+	
+	// Start inspection action.
+	KCL_rosplan::InspectObjectPDDLAction inspection_action(nh);
 	
 	ros::ServiceServer pddl_generation_service = nh.advertiseService("/kcl_rosplan/generate_planning_problem", &generatePDDLProblemFile);
 	
