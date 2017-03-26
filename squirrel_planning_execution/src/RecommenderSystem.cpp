@@ -3,6 +3,10 @@
 #include <queue>
 #include <set>
 #include <vector>
+#include <tf/tf.h>
+
+#include <geometry_msgs/Pose.h>
+#include <geometry_msgs/PoseStamped.h>
 
 #include <actionlib/client/simple_action_client.h>
 #include <rosplan_planning_system/PlanningEnvironment.h>
@@ -806,48 +810,6 @@ namespace KCL_rosplan {
 		
 		return best_facts_to_sense;
 	}
-	/*
-	void RecommenderSystem::updateKnowledgeBase(const Fact& last_observed_fact, const Fact& new_observed_fact, bool true_branch)
-	{
-		rosplan_knowledge_msgs::KnowledgeUpdateService knowledge_update_service;
-		knowledge_update_service.request.update_type = rosplan_knowledge_msgs::KnowledgeUpdateService::Request::ADD_KNOWLEDGE;
-		
-		// Set kenny at it's starting waypoint.
-		rosplan_knowledge_msgs::KnowledgeItem knowledge_item;
-		knowledge_item.knowledge_type = rosplan_knowledge_msgs::KnowledgeItem::FACT;
-		knowledge_item.attribute_name = "dependency";
-		knowledge_item.is_negative = false;
-		
-		diagnostic_msgs::KeyValue kv;
-		kv.key = "o1";
-		kv.value = last_observed_fact.getObjects()[0]->getName();
-		knowledge_item.values.push_back(kv);
-		
-		kv.key = "b1";
-		kv.value = last_observed_fact.getObjects()[1]->getName();
-		knowledge_item.values.push_back(kv);
-		
-		kv.key = "o2";
-		kv.value = new_observed_fact.getObjects()[0]->getName();
-		knowledge_item.values.push_back(kv);
-		
-		kv.key = "b2";
-		kv.value = new_observed_fact.getObjects()[1]->getName();
-		knowledge_item.values.push_back(kv);
-		
-		kv.key = "is_true";
-		kv.value = true_branch ? "TRUE" : "FALSE";
-		knowledge_item.values.push_back(kv);
-		
-		knowledge_update_service.request.knowledge = knowledge_item;
-		if (!update_knowledge_client.call(knowledge_update_service)) {
-			ROS_ERROR("KCL: (RPSquirrelRecursion) Could not add the fact (dependency %s %s %s %s %s) to the knowledge base.", last_observed_fact.getObjects()[0]->getName().c_str(), last_observed_fact.getObjects()[1]->getName().c_str(), new_observed_fact.getObjects()[0]->getName().c_str(), new_observed_fact.getObjects()[1]->getName().c_str(), true_branch ? "TRUE" : "FALSE");
-			exit(-1);
-		}
-		ROS_INFO("KCL: (RPSquirrelRecursion) Added the fact (dependency %s %s %s %s %s) to the knowledge base.", last_observed_fact.getObjects()[0]->getName().c_str(), last_observed_fact.getObjects()[1]->getName().c_str(), new_observed_fact.getObjects()[0]->getName().c_str(), new_observed_fact.getObjects()[1]->getName().c_str(), true_branch ? "TRUE" : "FALSE");
-		knowledge_item.values.clear();
-	}
-	*/
 	
 	void RecommenderSystem::processMutualExclusive(const Fact& last_sensed_fact, std::map<const Fact*, float>& weighted_facts_copy, const std::vector<const Fact*>& interesting_facts)
 	{
@@ -1131,10 +1093,24 @@ void tokenise(const std::string& s, std::vector<std::string>& tokens)
 	while (next != std::string::npos);
 }
 
+geometry_msgs::Pose transformToPose(const std::string& s)
+{
+	std::cout << "Tranform to pose: " << s << std::endl;
+	geometry_msgs::Pose p;
+	int first_break = s.find(',');
+	int second_break = s.find(',', first_break + 1);
+
+	p.position.x = ::atof(s.substr(1, first_break - 1).c_str());
+	p.position.y = ::atof(s.substr(first_break + 1, second_break - (first_break + 1)).c_str());
+	p.position.z = ::atof(s.substr(second_break + 1, s.size() - (second_break + 2)).c_str());
+
+	return p;
+}
+
 /** 
  * Read in db file
  */
-void readDBFile(const std::string& file_name, std::vector<const KCL_rosplan::Type*>& types, std::vector<const KCL_rosplan::Object*>& objects, std::vector<const KCL_rosplan::Predicate*>& predicates, std::set<const KCL_rosplan::Fact*>& facts)
+void readDBFile(mongodb_store::MessageStoreProxy& message_store, const std::string& file_name, std::vector<const KCL_rosplan::Type*>& types, std::vector<const KCL_rosplan::Object*>& objects, std::vector<const KCL_rosplan::Predicate*>& predicates, std::set<const KCL_rosplan::Fact*>& facts)
 {
 	ROS_INFO("KCL: (RecommenderSystem) Load scenarion from file: %s.\n", file_name.c_str());
 	std::ifstream f(file_name.c_str());
@@ -1212,6 +1188,30 @@ void readDBFile(const std::string& file_name, std::vector<const KCL_rosplan::Typ
 				
 				facts.insert(&KCL_rosplan::Fact::getFact(*KCL_rosplan::Predicate::getPredicate(predicate_name), fact_objects));
 			}
+			else if (line[0] == 'r')
+			{
+				if (tokens.size() < 3)
+				{
+					ROS_ERROR("KCL (RecommenderSystem) Malformed line, expected r waypoint (f,f,f). Read %s\n", line.c_str());
+					exit(0);
+				}
+				std::string waypoint_predicate = tokens[1];
+				geometry_msgs::Pose waypoint_location = transformToPose(tokens[2]);
+				
+				geometry_msgs::PoseStamped pose;
+				pose.header.seq = 0;
+				pose.header.stamp = ros::Time::now();
+				pose.header.frame_id = "/map";
+				pose.pose = waypoint_location;
+				
+				if (tokens.size() == 4)
+				{
+					geometry_msgs::Pose reference_waypoint_location = transformToPose(tokens[3]);
+					float angle = atan2(waypoint_location.position.y - reference_waypoint_location.position.y, waypoint_location.position.x - reference_waypoint_location.position.x);
+					pose.pose.orientation = tf::createQuaternionMsgFromYaw(angle);
+				}
+				std::string near_waypoint_mongodb_id3(message_store.insertNamed(waypoint_predicate, pose));
+			}
 		}
 	}
 }
@@ -1230,6 +1230,8 @@ int main(int argc, char** argv)
 	ros::init(argc, argv, "rosplan_RecommanderSystem");
 	ros::NodeHandle nh;
 	
+	mongodb_store::MessageStoreProxy ms(nh);
+	
 	std::string domain_path;
 	nh.getParam("/rosplan/domain", domain_path);
 	
@@ -1243,7 +1245,7 @@ int main(int argc, char** argv)
 	std::vector<const KCL_rosplan::Object*> objects;
 	std::vector<const KCL_rosplan::Predicate*> predicates;
 	std::set<const KCL_rosplan::Fact*> true_facts;
-	readDBFile(config_file, types, objects, predicates, true_facts);
+	readDBFile(ms, config_file, types, objects, predicates, true_facts);
 	
 	std::vector<const KCL_rosplan::Predicate*> relevant_predicates;
 	for (std::vector<const KCL_rosplan::Predicate*>::const_iterator ci = predicates.begin(); ci != predicates.end(); ++ci)

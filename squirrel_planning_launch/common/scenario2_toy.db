@@ -219,3 +219,28 @@ f has_pattern giraffe
 f is_animal giraffe
 f is_soft giraffe
 f object_at giraffe giraffe_wp
+
+###
+# r waypoint (f,f,f) (f,f,f)[last is optional]
+###
+r kenny_wp (0.54,1.23,0.0)
+#r end_follow_wp waypoint
+r box1_wp (1.0,2.32,0.0) (1.2,2.8,0.0)
+#o box2_wp waypoint
+#o box3_wp waypoint
+#o blue_dinosaur_wp waypoint
+#o yellow_dinosaur_wp waypoint
+#o lama_wp waypoint
+#o donkey_wp waypoint
+#o calf_wp waypoint
+#o lego_firetruck_wp waypoint
+#o lego_garbage_wp waypoint
+#o blue_car_soft_wp waypoint
+#o red_car_soft_wp waypoint
+#o winnie_pooh_wp waypoint
+#o brown_bear_wp waypoint
+#o turtle_wp waypoint
+#o hedgehog_wp waypoint
+#o green_dinosaur_wp waypoint
+#o triceratops_wp waypoint
+#o giraffe_wp waypoint
