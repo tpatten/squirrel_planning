@@ -57,6 +57,7 @@ namespace KCL_rosplan {
 		bool addObjects(squirrel_planning_knowledge_msgs::AddObjectService::Request &req, squirrel_planning_knowledge_msgs::AddObjectService::Response &res);
 		bool removeObjects(squirrel_planning_knowledge_msgs::RemoveObjectService::Request &req, squirrel_planning_knowledge_msgs::RemoveObjectService::Response &res);
 		bool updateObjects(squirrel_planning_knowledge_msgs::UpdateObjectService::Request &req, squirrel_planning_knowledge_msgs::UpdateObjectService::Response &res);
+		bool lookAtObject(squirrel_planning_knowledge_msgs::UpdateObjectService::Request &req, squirrel_planning_knowledge_msgs::UpdateObjectService::Response &res);
 
 	};
 }

@@ -182,6 +182,46 @@ namespace KCL_rosplan {
 		 */
 		static void cleanup();
 	};
+
+	/**
+	 * Fact prototype.
+	 */
+	struct FactProto : public std::binary_function<FactProto, FactProto, bool>
+	{
+		FactProto()
+			: p_(NULL), is_false_(true)
+		{
+
+		}
+
+		FactProto(const Predicate& p, const std::vector<const Object*>& objects, bool is_false)
+			: p_(&p), objects_(objects), is_false_(is_false)
+		{
+
+		}
+
+		const Predicate* p_;
+		std::vector<const Object*> objects_;
+		bool is_false_;
+
+		std::string toString() const
+		{
+			std::stringstream ss;
+			if (p_ != NULL)
+				ss << p_->getName() << " ";
+			for (std::vector<const Object*>::const_iterator ci = objects_.begin(); ci != objects_.end(); ++ci)
+			{
+				ss << (*ci)->getName() << " ";
+			}
+			ss << is_false_;
+			return ss.str();
+		}
+
+		bool operator()(const FactProto& a, const FactProto& b) const
+		{
+			return a.toString() < b.toString();
+		}
+	};
 	
 	/**
 	 * A fact.
@@ -198,7 +238,7 @@ namespace KCL_rosplan {
 		const Predicate* predicate_;
 		std::vector<const Object*> objects_;
 		bool is_negative_;
-		static std::map<std::pair<const Predicate*, std::vector<const Object*> >, const Fact*> generated_facts_;
+		static std::map<FactProto, const Fact*, FactProto> generated_facts_;
 	public:
 		
 		/**
@@ -211,7 +251,7 @@ namespace KCL_rosplan {
 		 * @predicate The predicate.
 		 * @objects The set of objects.
 		 */
-		static const Fact& getFact(const Predicate& predicate, const std::vector<const Object*>& objects);
+		static const Fact& getFact(const Predicate& predicate, const std::vector<const Object*>& objects, bool is_negative = false);
 		
 		/** @return The predicate. */
 		inline const Predicate& getPredicate() const { return *predicate_; }

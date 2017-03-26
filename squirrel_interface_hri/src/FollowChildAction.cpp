@@ -8,6 +8,10 @@ FollowChildAction::FollowChildAction(ros::NodeHandle &nh, const std::string& fol
 {
 	knowledgeInterface = nh.serviceClient<rosplan_knowledge_msgs::KnowledgeUpdateService>("/kcl_rosplan/update_knowledge_base");
 	action_feedback_pub = nh.advertise<rosplan_dispatch_msgs::ActionFeedback>("/kcl_rosplan/action_feedback", 10, true);
+
+	ROS_INFO("KCL: (FollowChildAction) waiting for follow_child_action action server to start on");
+	action_client.waitForServer();
+	ROS_INFO("KCL: (FollowChildAction) action server started.");
 }
 
 void FollowChildAction::dispatchCallback(const rosplan_dispatch_msgs::ActionDispatch::ConstPtr& msg)
@@ -17,8 +21,6 @@ void FollowChildAction::dispatchCallback(const rosplan_dispatch_msgs::ActionDisp
 
 		ROS_INFO("KCL: (FollowChildAction) action recieved");
 		
-		ROS_INFO("KCL: (FollowChildAction) waiting for follow_child_action action server to start");
-		action_client.waitForServer();
 
 		// publish feedback (enabled)
 		rosplan_dispatch_msgs::ActionFeedback fb;

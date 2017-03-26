@@ -241,7 +241,7 @@ namespace KCL_rosplan {
 		actionlib::SimpleClientGoalState state_put_down = putDownActionClient.getState();
 		ROS_INFO("KCL: (DropActionCorrect) action finished: %s", state_put_down.toString().c_str());
 
-		retractArm();
+		//retractArm(); // moved to after open hand (for failure case)
 
 		if (state_put_down != actionlib::SimpleClientGoalState::SUCCEEDED) {
 			ROS_WARN("KCL (DropActionCorrect) failed to put down, but that is not catastrophic so proceeding with opening hand");
@@ -259,6 +259,8 @@ namespace KCL_rosplan {
 			if (state != actionlib::SimpleClientGoalState::SUCCEEDED)
 				success = false;
 		}
+
+		retractArm();
 
 		if (success){
 			// gripper_empty fact
@@ -318,8 +320,14 @@ namespace KCL_rosplan {
 
 			// Check whether we have reached the goal location yet.
 			bool done = true;
-			for (unsigned int i = 0; i < goal_state.data.size(); ++i)
+			if (goal_state.data.size() != last_joint_state.position.size())
 			{
+				ROS_ERROR("KCL (RPGraspAction) Goal state and last_joint_state don't have the same sized array! %zd %zd", goal_state.data.size(), last_joint_state.position.size());
+			}
+			ROS_INFO("KCL (RPGraspAction) Goal state and last_joint_state the same sized array! %zd %zd", goal_state.data.size(), last_joint_state.position.size());
+			for (unsigned int i = 3; i < std::min(goal_state.data.size(), last_joint_state.position.size()); ++i)
+			{
+				if (i > goal_state.data.size()) continue;
 				if (std::abs(goal_state.data[i] - last_joint_state.position[i]) > error)
 				{
 					ROS_INFO("KCL (RPGraspAction) Joint #%zd is %f off target, not done yet!", i, std::abs(goal_state.data[i] - last_joint_state.position[i]));
@@ -352,7 +360,7 @@ namespace KCL_rosplan {
 		sleep(1.0);
 		ptpActionClient.sendGoal(armEndGoal.goal);
 
-		waitForArm(data_arm, 0.01f);
+		waitForArm(data_arm, 0.05f);
 		return true;
 
 		if (ptpActionClient.getState() == actionlib::SimpleClientGoalState::SUCCEEDED) {
@@ -382,9 +390,9 @@ namespace KCL_rosplan {
 		std::string objectID;
 		bool foundObject = false;
 		for(size_t i=0; i<msg->parameters.size(); i++) {
-			if(0==msg->parameters[i].key.compare("r"))
+			if(0==msg->parameters[i].key.compare("v"))
 				robotID = msg->parameters[i].value;
-			if(0==msg->parameters[i].key.compare("ob")) {
+			if(0==msg->parameters[i].key.compare("o")) {
 				objectID = msg->parameters[i].value;
 				foundObject = true;
 			}
@@ -423,6 +431,7 @@ namespace KCL_rosplan {
 			goal.heap_bounding_cylinder = results[0]->bounding_cylinder;
 			goal.heap_point_cloud = results[0]->cloud;
 			blind_grasp_action_client.sendGoal(goal);
+			ROS_INFO("KCL: (GraspAction) goal sent, waiting for result");
 			
 			// bool finished_before_timeout = false;
 			blind_grasp_action_client.waitForResult();

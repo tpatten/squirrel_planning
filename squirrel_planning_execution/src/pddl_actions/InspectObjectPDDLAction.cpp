@@ -152,11 +152,12 @@ void InspectObjectPDDLAction::dispatchCallback(const rosplan_dispatch_msgs::Acti
 		knowledge_item.values.push_back(kv);
 		knowledge_item.is_negative = box_name != closest_box;
 		
+		knowledge_update_service.request.knowledge = knowledge_item;
 		if (!update_knowledge_client_.call(knowledge_update_service)) {
 			ROS_ERROR("KCL: (SimulatedObservePDDLAction) Could not remove the belongs_in predicate to the knowledge base.");
 			exit(-1);
 		}
-		ROS_INFO("KCL: (SimulatedObservePDDLAction) Removed %s (belongs_in %s %s) to the knowledge base.", knowledge_item.is_negative ? "NOT" : "", object.c_str(), box_name.c_str());
+		ROS_INFO("KCL: (SimulatedObservePDDLAction) Add %s (belongs_in %s %s) to the knowledge base.", knowledge_item.is_negative ? "NOT" : "", object.c_str(), box_name.c_str());
 		
 		// Remove the opposite option from the knowledge base.
 		knowledge_update_service.request.update_type = rosplan_knowledge_msgs::KnowledgeUpdateService::Request::REMOVE_KNOWLEDGE;

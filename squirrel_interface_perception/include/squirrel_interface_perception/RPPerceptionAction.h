@@ -50,6 +50,7 @@ namespace KCL_rosplan {
 		void examineObject(const rosplan_dispatch_msgs::ActionDispatch::ConstPtr& msg);
 		void examineObjectInHandAction(const rosplan_dispatch_msgs::ActionDispatch::ConstPtr& msg);
 		void exploreAction(const rosplan_dispatch_msgs::ActionDispatch::ConstPtr& msg);
+		void lookAtObject(const rosplan_dispatch_msgs::ActionDispatch::ConstPtr& msg);
 
 		/* objects to database */
 		void updateType(const std::string& object_id, const std::string& object_rec_id);

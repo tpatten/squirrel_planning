@@ -65,6 +65,7 @@ namespace KCL_rosplan {
 		// ignore non-perception actions
 		if(msg->name == "explore_waypoint") exploreAction(msg);
 		if(msg->name == "observe-classifiable_from") examineAction(msg);
+		if(msg->name == "look_at_object") lookAtObject(msg);
 		if(msg->name == "examine_object") examineObject(msg);
 		if(msg->name == "examine_object_in_hand") examineObjectInHandAction(msg);
 	}
@@ -137,6 +138,102 @@ namespace KCL_rosplan {
 
 		// report this action is achieved
 		publishFeedback(msg->action_id,"action achieved");
+	}
+
+	/**
+	 * examine action dispatch callback;
+	 * parameters ()
+	 */
+	void RPPerceptionAction::lookAtObject(const rosplan_dispatch_msgs::ActionDispatch::ConstPtr& msg)
+	{
+		ROS_INFO("KCL: (PerceptionAction) explore action recieved");
+
+		// get object ID from action dispatch
+		std::string object_id;
+		bool foundObject = false;
+		for(size_t i=0; i<msg->parameters.size(); i++) {
+			if(0==msg->parameters[i].key.compare("o")) {
+				object_id = msg->parameters[i].value;
+				foundObject = true;
+			}
+		}
+		if(!foundObject) {
+			ROS_INFO("KCL: (PerceptionAction) aborting action dispatch; malformed parameters");
+			return;
+		}
+
+		// publish feedback (enabled)
+		publishFeedback(msg->action_id,"action enabled");
+
+		// Get the object pose.
+		std::stringstream ss;
+		ss << object_id << "_wp";
+		std::vector< boost::shared_ptr<geometry_msgs::PoseStamped> > results;
+		if(message_store.queryNamed<geometry_msgs::PoseStamped>(ss.str(), results)) {
+			if(results.size()<1) {
+				ROS_ERROR("KCL: (PerceptionAction) aborting waypoint request; no matching object wp %s", ss.str().c_str());
+				publishFeedback(msg->action_id, "action failed");
+				return;
+			}
+		} else {
+			ROS_ERROR("KCL: (PerceptionAction) could not query message store to fetch object wp %s", ss.str().c_str());
+			publishFeedback(msg->action_id, "action failed");
+			return;
+		}
+
+		// request manipulation waypoints for object
+		geometry_msgs::PoseStamped &object_wp = *results[0];
+
+		ROS_INFO("KCL: (PerceptionAction) waiting for recognizer action server to start");
+		recognise_action_client.waitForServer();
+		ROS_INFO("KCL: (PerceptionAction) action server started!");
+
+
+		squirrel_object_perception_msgs::RecognizeObjectsGoal perceptionGoal;
+		perceptionGoal.look_for_object = squirrel_object_perception_msgs::RecognizeObjectsGoal::EXPLORE;
+		perceptionGoal.look_at_pose = object_wp;
+		recognise_action_client.sendGoal(perceptionGoal);
+
+		ROS_INFO("KCL: (PerceptionAction) goal sent, waiting for result.");
+
+		recognise_action_client.waitForResult();
+		actionlib::SimpleClientGoalState state = recognise_action_client.getState();
+		bool success =  (state == actionlib::SimpleClientGoalState::SUCCEEDED) && recognise_action_client.getResult()->objects_added.size() + recognise_action_client.getResult()->objects_updated.size() > 0;
+		ROS_INFO("KCL: (PerceptionAction) check object finished: %s", state.toString().c_str());
+
+		if (success) {
+
+			ROS_INFO("KCL: (PerceptionAction) Found %zd objects!", (recognise_action_client.getResult()->objects_added.size() + recognise_action_client.getResult()->objects_updated.size()));
+			for (std::vector<squirrel_object_perception_msgs::SceneObject>::const_iterator ci = recognise_action_client.getResult()->objects_added.begin(); ci != recognise_action_client.getResult()->objects_added.end(); ++ci)
+			{
+				squirrel_object_perception_msgs::SceneObject so = *ci;
+				ROS_INFO("KCL: (PerceptionAction) ADD: %s (%s).", so.id.c_str(), so.category.c_str());
+
+				if (recognise_action_client.getResult()->used_wizard)
+				{
+					// Set the data from what we have stored as default values.
+					ROS_INFO("KCL: (PerceptionAction) Used the wizard, using default pose instead.");
+					so.pose = object_wp.pose;
+					so.bounding_cylinder.height = 0.2;
+				}
+				so.header.frame_id = "/map";
+				so.header.stamp = ros::Time::now();
+				so.id = object_id;
+				so.category = object_id;
+				addObject(so);
+			}
+		} else if (state != actionlib::SimpleClientGoalState::SUCCEEDED)  {
+			ROS_INFO("KCL: (PerceptionAction) action failed");
+			publishFeedback(msg->action_id, "action failed");
+			return;
+		} else {
+			ROS_ERROR("KCL: (PerceptionAction) No objects returned!");
+			publishFeedback(msg->action_id, "action failed");
+			return;
+		}
+		// publish feedback
+		ROS_INFO("KCL: (PerceptionAction) action complete");
+		publishFeedback(msg->action_id, "action achieved");
 	}
 
 	/**
@@ -658,10 +755,19 @@ namespace KCL_rosplan {
 
 			// Check whether we have reached the goal location yet.
 			bool done = true;
-			for (unsigned int i = 0; i < goal_state.data.size(); ++i)
+			if (goal_state.data.size() != last_joint_state.position.size())
 			{
+				ROS_INFO("KCL (RPGraspAction) Goal state and last_joint_state don't have the same sized array! %zd %zd", goal_state.data.size(), last_joint_state.position.size());
+			}
+			ROS_INFO("KCL (RPGraspAction) Goal state and last_joint_state have the same sized array! %zd %zd", goal_state.data.size(), last_joint_state.position.size());
+			for (unsigned int i = 3; i < std::min(goal_state.data.size(), last_joint_state.position.size()); ++i)
+			{
+
+
+				if (i > goal_state.data.size()) continue;
 				if (std::abs(goal_state.data[i] - last_joint_state.position[i]) > error)
 				{
+					std::cout << i << std::endl;
 					ROS_INFO("KCL (RPPerceptionAction) Joint #%zd is %f off target, not done yet!", i, std::abs(goal_state.data[i] - last_joint_state.position[i]));
 					done = false;
 					break;
@@ -695,7 +801,7 @@ namespace KCL_rosplan {
 		sleep(1.0);
 		ptpActionClient.sendGoal(armEndGoal.goal);
 
-		waitForArm(data_arm, 0.01f);
+		waitForArm(data_arm, 0.05f);
 		return true;
 
 		if (ptpActionClient.getState() == actionlib::SimpleClientGoalState::SUCCEEDED) {
@@ -729,7 +835,7 @@ namespace KCL_rosplan {
 		sleep(1.0);
 		ptpActionClient.sendGoal(armEndGoal.goal);
 
-		waitForArm(data_arm, 0.01f);
+		waitForArm(data_arm, 0.05f);
 		return true;
 
 		if (ptpActionClient.getState() == actionlib::SimpleClientGoalState::SUCCEEDED) {

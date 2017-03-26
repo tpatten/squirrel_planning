@@ -49,7 +49,10 @@ void SimulatedObservePDDLAction::dispatchCallback(const rosplan_dispatch_msgs::A
 	    normalised_action_name != "observe-is_examined" &&
 	    normalised_action_name != "observe-belongs_in" &&
 	    normalised_action_name != "observe-toy_at_right_box" &&
-	    normalised_action_name != "jump")
+	    normalised_action_name != "jump" &&
+	    normalised_action_name != "check_belongs_in" &&
+	    normalised_action_name != "finish" &&
+	    normalised_action_name != "next_observation")        
 	{
 		return;
 	}

@@ -54,29 +54,10 @@ namespace KCL_rosplan {
 		}
 		if("" == robotID || "" == objectID || "" == childID || "" == waypointID)
 		{
-			ROS_ERROR("KCL: (HandoverAction) aborting action dispatch; malformed parameters");
+			ROS_ERROR("KCL: (HandoverAction) Give handover, aborting action dispatch; malformed parameters. robot=%s, object=%o, child=%s, waypoint=%s", robotID.c_str(), objectID.c_str(), childID.c_str(), waypointID.c_str());
 			return;
 		}
 		
-		// get pose from message store
-		std::vector< boost::shared_ptr<geometry_msgs::PoseStamped> > results;
-		if(!message_store.queryNamed<geometry_msgs::PoseStamped>(waypointID, results))
-		{
-			ROS_ERROR("KCL: (HandoverAction) aborting action dispatch; query to sceneDB failed");
-			publishFeedback(msg->action_id, "action failed");
-			return;
-		}
-		if(results.size()<1)
-		{
-			ROS_ERROR("KCL: (HandoverAction) aborting action dispatch; no matching waypoint ID %s", waypointID.c_str());
-			publishFeedback(msg->action_id, "action failed");
-			return;
-		}
-		if(results.size() > 1)
-		{
-			ROS_WARN("KCL: (HandoverAction) multiple waypoints share the same waypointID");
-		}
-
 		// dispatch handover
 		squirrel_manipulation_msgs::HandoverGoal goal;
 		goal.action_type = "give";
@@ -164,29 +145,10 @@ namespace KCL_rosplan {
 		}
 		if("" == robotID || "" == objectID || "" == childID || "" == waypointID)
 		{
-			ROS_ERROR("KCL: (HandoverAction) aborting action dispatch; malformed parameters");
+			ROS_ERROR("KCL: (HandoverAction) Take handover, aborting action dispatch; malformed parameters. robot=%s, object=%o, child=%s, waypoit=%s", robotID.c_str(), objectID.c_str(), childID.c_str(), waypointID.c_str());
 			return;
 		}
 		
-		// get pose from message store
-		std::vector< boost::shared_ptr<geometry_msgs::PoseStamped> > results;
-		if(!message_store.queryNamed<geometry_msgs::PoseStamped>(waypointID, results))
-		{
-			ROS_ERROR("KCL: (HandoverAction) aborting action dispatch; query to sceneDB failed");
-			publishFeedback(msg->action_id, "action failed");
-			return;
-		}
-		if(results.size()<1)
-		{
-			ROS_ERROR("KCL: (HandoverAction) aborting action dispatch; no matching waypoint ID %s", waypointID.c_str());
-			publishFeedback(msg->action_id, "action failed");
-			return;
-		}
-		if(results.size() > 1)
-		{
-			ROS_WARN("KCL: (HandoverAction) multiple waypoints share the same waypointID");
-		}
-
 		// dispatch handover
 		squirrel_manipulation_msgs::HandoverGoal goal;
 		goal.action_type = "take";

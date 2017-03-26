@@ -247,6 +247,16 @@
 		)
 	)
 
+(:action look_at_object
+	:parameters (?v - robot ?view ?from - waypoint ?o - object)
+	:precondition (and
+
+	)
+	:effect (and
+
+	)
+)
+
 (:action push_object
 	:parameters (?v - robot ?ob - object ?t - type ?from ?to ?obw - waypoint)
 	:precondition (and

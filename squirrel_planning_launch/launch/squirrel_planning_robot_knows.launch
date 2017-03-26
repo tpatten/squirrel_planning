@@ -43,8 +43,8 @@
 		<param name="simulate_put_object_in_box" value="false"/>
 		<param name="simulate_pickup_object" value="false"/>
 		<param name="simulate_drop_object" value="false"/>
-		<param name="simulate_give_object" value="false"/>
-		<param name="simulate_take_object" value="false"/>
+		<param name="simulate_give_object" value="true"/>
+		<param name="simulate_take_object" value="true"/>
 		<param name="simulate_examine_object_in_hand" value="false"/>
 		<param name="simulate_follow_child" value="false"/>
 	</node>
@@ -65,9 +65,11 @@
 	<node name="squirrel_planning_interface_emote" pkg="squirrel_interface_emote" type="rpEmoteServer" output="screen">
 	</node>
 
+<!--
 	<node name="squirrel_planning_interface_manipulation" pkg="squirrel_interface_manipulation" type="rphandoverServer" output="screen">
 		<param name="handover_action_server" value="/handover" />
 	</node>
+-->
 
 	<node name="squirrel_interface_manipulation" pkg="squirrel_interface_manipulation" type="rpgraspServer" respawn="false" output="screen">
                 <param name="blind_grasp_action_server" value="/metahand_grasp_server" />

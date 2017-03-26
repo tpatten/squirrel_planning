@@ -12,19 +12,20 @@ t waypoint
 o blue_dinosaur object
 o yellow_dinosaur object
 o lama object
-o donkey object
+#o donkey object
 o calf object
-o lego_firetruck object
-o lego_garbage object
+#o lego_firetruck object
+#o lego_garbage object
 o blue_car_soft object
 o red_car_soft object
 o winnie_pooh object
-o brown_bear object
-o turtle object
-o hedgehog object
+#o brown_bear object
+#o turtle object
+#o hedgehog object
 o green_dinosaur object
 o triceratops object
 o giraffe object
+o dolfin object
 
 o robot robot
 
@@ -34,25 +35,26 @@ o box3 box
 
 o kenny_wp waypoint
 o end_follow_wp waypoint
-o box1_wp waypoint
-o box2_wp waypoint
-o box3_wp waypoint
+o box1_location waypoint
+o box2_location waypoint
+o box3_location waypoint
 o blue_dinosaur_wp waypoint
 o yellow_dinosaur_wp waypoint
 o lama_wp waypoint
-o donkey_wp waypoint
+#o donkey_wp waypoint
 o calf_wp waypoint
-o lego_firetruck_wp waypoint
-o lego_garbage_wp waypoint
+#o lego_firetruck_wp waypoint
+#o lego_garbage_wp waypoint
 o blue_car_soft_wp waypoint
 o red_car_soft_wp waypoint
 o winnie_pooh_wp waypoint
-o brown_bear_wp waypoint
-o turtle_wp waypoint
-o hedgehog_wp waypoint
+#o brown_bear_wp waypoint
+#o turtle_wp waypoint
+#o hedgehog_wp waypoint
 o green_dinosaur_wp waypoint
 o triceratops_wp waypoint
 o giraffe_wp waypoint
+o dolfin_wp waypoint
 
 ###
 # p predicate [type]
@@ -117,12 +119,12 @@ f is_horse lama
 f object_at lama lama_wp
 
 # donkey
-f is_brown donkey
-f is_medium donkey
-f is_soft donkey
-f is_animal donkey
-f is_horse donkey
-f object_at donkey donkey_wp
+#f is_brown donkey
+#f is_medium donkey
+#f is_soft donkey
+#f is_animal donkey
+#f is_horse donkey
+#f object_at donkey donkey_wp
 
 # calf
 f is_white calf
@@ -134,20 +136,20 @@ f has_pattern calf
 f object_at calf calf_wp
 
 # lego_firetruck
-f is_red lego_firetruck
-f is_small lego_firetruck
-f is_hard lego_firetruck
-f is_plastic lego_firetruck
-f is_car lego_firetruck
-f object_at lego_firetruck lego_firetruck_wp
+#f is_red lego_firetruck
+#f is_small lego_firetruck
+#f is_hard lego_firetruck
+#f is_plastic lego_firetruck
+#f is_car lego_firetruck
+#f object_at lego_firetruck lego_firetruck_wp
 
 # lego_garbage
-f is_green lego_garbage
-f is_medium lego_garbage
-f is_hard lego_garbage
-f is_plastic lego_garbage
-f is_car lego_garbage
-f object_at lego_garbage lego_garbage_wp
+#f is_green lego_garbage
+#f is_medium lego_garbage
+#f is_hard lego_garbage
+#f is_plastic lego_garbage
+#f is_car lego_garbage
+#f object_at lego_garbage lego_garbage_wp
 
 # blue_car_soft
 f is_blue blue_car_soft
@@ -173,27 +175,27 @@ f is_medium winnie_pooh
 f object_at winnie_pooh winnie_pooh_wp
 
 # brown_bear
-f is_brown brown_bear
-f is_red brown_bear
-f is_animal brown_bear
-f is_bear brown_bear
-f is_soft brown_bear
-f is_medium brown_bear
-f object_at brown_bear brown_bear_wp
+#f is_brown brown_bear
+#f is_red brown_bear
+#f is_animal brown_bear
+#f is_bear brown_bear
+#f is_soft brown_bear
+#f is_medium brown_bear
+#f object_at brown_bear brown_bear_wp
 
 # turtle
-f is_brown turtle
-f is_animal turtle
-f is_soft turtle
-f is_small turtle
-f object_at turtle turtle_wp
+#f is_brown turtle
+#f is_animal turtle
+#f is_soft turtle
+#f is_small turtle
+#f object_at turtle turtle_wp
 
 # hedgehog
-f is_brown hedgehog
-f is_animal hedgehog
-f is_soft hedgehog
-f is_small hedgehog
-f object_at hedgehog hedgehog_wp
+#f is_brown hedgehog
+#f is_animal hedgehog
+#f is_soft hedgehog
+#f is_small hedgehog
+#f object_at hedgehog hedgehog_wp
 
 # green_dinosaur
 f is_big green_dinosaur
@@ -220,27 +222,34 @@ f is_animal giraffe
 f is_soft giraffe
 f object_at giraffe giraffe_wp
 
+# dolfin
+f is_blue dolfin
+f is_animal dolfin
+f is_soft dolfin
+f is_medium dolfin
+f object_at dolfin dolfin_wp
+
 ###
 # r waypoint (f,f,f) (f,f,f)[last is optional]
 ###
-r kenny_wp (0.54,1.23,0.0)
-#r end_follow_wp waypoint
-r box1_wp (1.0,2.32,0.0) (1.2,2.8,0.0)
-#o box2_wp waypoint
-#o box3_wp waypoint
-#o blue_dinosaur_wp waypoint
-#o yellow_dinosaur_wp waypoint
-#o lama_wp waypoint
+r kenny_wp (0.372,-0.34,0.0)
+r box1_location (-1.03,1.72,0.0) (-0.25,1.26,0.0)
+r box2_location (2.17,-2.06,,0.0) (1.28,-1.52,0.0)
+r box3_location (-1.31,-2.12,0.0) (-1.09,-1.18,0.0)
+r blue_dinosaur_wp (1.91,-0.64,0.0)
+r yellow_dinosaur_wp (1.73,0.141,0.0)
+r lama_wp (0.961,-2.42,0.0)
 #o donkey_wp waypoint
-#o calf_wp waypoint
+r calf_wp (-1.38,0.398,0.0)
 #o lego_firetruck_wp waypoint
 #o lego_garbage_wp waypoint
-#o blue_car_soft_wp waypoint
-#o red_car_soft_wp waypoint
-#o winnie_pooh_wp waypoint
+r blue_car_soft_wp (2.57,-1.25,0.0)
+r red_car_soft_wp (-1.61,-1.16,0.0)
+r winnie_pooh_wp (0.921,0.55,0.0)
 #o brown_bear_wp waypoint
-#o turtle_wp waypoint
+#r turtle_wp (
 #o hedgehog_wp waypoint
-#o green_dinosaur_wp waypoint
-#o triceratops_wp waypoint
-#o giraffe_wp waypoint
+r green_dinosaur_wp (-0.586,1.93,0.0)
+r triceratops_wp (-1.44,-0.261,0.0)
+r giraffe_wp (-0.119,-2.56,0.0)
+r dolfin_wp (0.598,1.94)
