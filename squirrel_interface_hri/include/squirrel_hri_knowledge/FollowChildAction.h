@@ -31,6 +31,7 @@ namespace KCL_rosplan {
 		
 		// Scene database
 		mongodb_store::MessageStoreProxy message_store;
+		std::string last_stored_id;
 
 		// Knowledge base
 		ros::ServiceClient knowledgeInterface;

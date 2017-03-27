@@ -69,8 +69,17 @@ void FollowChildAction::dispatchCallback(const rosplan_dispatch_msgs::ActionDisp
 				// Add the child's location to the knowledge base.
 				squirrel_hri_msgs::FollowChildResultConstPtr result = action_client.getResult();
 				geometry_msgs::PoseStamped child_location = result->final_location;
-				std::string id(message_store.insertNamed("child_location", child_location));
-				message_store.updateID(id, child_location);
+
+				if (last_stored_id != "")
+				{
+					if (message_store.deleteID(last_stored_id))
+					{
+						ROS_INFO("KCL: (FollowChildAction) Deleted previous child pose with id: %s.", last_stored_id.c_str());
+					}
+				}
+
+				last_stored_id = message_store.insertNamed("child_location", child_location);
+				message_store.updateNamed("child_location", child_location);
 				ROS_INFO("KCL: (FollowChildAction) Child is at (%f,%f,%f,)", child_location.pose.position.x, child_location.pose.position.y, child_location.pose.position.z);
 			}
 		} else {
