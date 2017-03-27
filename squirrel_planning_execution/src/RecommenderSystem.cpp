@@ -671,6 +671,7 @@ namespace KCL_rosplan {
 				}
 				
 				const Fact& fact = Fact::getFact(*p, o, value[fact_nr] != 2);
+
 				results[&fact] = confidence;
 #ifdef RECOMMENDER_SYSTEM_DEBUG
 				std::cout << fact << "; p=" << confidence << "; value=" << value[fact_nr] << std::endl;
@@ -693,6 +694,9 @@ namespace KCL_rosplan {
 		for (std::map<const Fact*, float>::const_iterator ci = results.begin(); ci != results.end(); ++ci)
 		{
 			const Fact* fact = (*ci).first;
+			if (fact->getPredicate().getName() != "belongs_in") continue;
+			if (fact->getObjects()[0]->getType().getName() != "object") continue;
+			if (fact->getObjects()[1]->getType().getName() != "box") continue;
 			float p = (*ci).second;
 			
 			for (unsigned int i = 0; i < interesting_facts.size(); ++i)
@@ -757,22 +761,46 @@ namespace KCL_rosplan {
 		
 		float knowledge_value_baseline = calculateKnowledge(weighted_facts, interesting_facts);
 		
-#ifdef RECOMMENDER_SYSTEM_DEBUG
+//#ifdef RECOMMENDER_SYSTEM_DEBUG
 		ROS_INFO("KCL: (RecommenderSystem) Simulate fact to be true.");
-#endif
+//#endif
 		std::map<const Fact*, float> weighted_facts_copy = weighted_facts;
 		weighted_facts_copy[&sensing_action] = 2;
 		processMutualExclusive(sensing_action, weighted_facts_copy, interesting_facts);
+		std::cout << "Pre recog..." << std::endl;
+		for (std::map<const Fact*, float>::const_iterator ci = weighted_facts_copy.begin(); ci != weighted_facts_copy.end(); ++ci)
+		{
+			if (ci->first->getPredicate().getName() == "belongs_in" && ci->first->getObjects()[0]->getType().getName() == "object" && ci->first->getObjects()[1]->getType().getName() == "box")
+				std::cout << *ci->first << " = " << ci->second << std::endl;
+		}
 		std::map<const Fact*, float> results = runRecommender(objects, predicates, weighted_facts_copy);
+		std::cout << "Post recog..." << std::endl;
+		for (std::map<const Fact*, float>::const_iterator ci = results.begin(); ci != results.end(); ++ci)
+		{
+			if (ci->first->getPredicate().getName() == "belongs_in" && ci->first->getObjects()[0]->getType().getName() == "object" && ci->first->getObjects()[1]->getType().getName() == "box")
+				std::cout << *ci->first << " = " << ci->second << std::endl;
+		}
 		
 		float knowledge_value_if_true = calculateKnowledge(results, interesting_facts) - knowledge_value_baseline;
-#ifdef RECOMMENDER_SYSTEM_DEBUG
+//#ifdef RECOMMENDER_SYSTEM_DEBUG
 		ROS_INFO("KCL: (RecommenderSystem) Simulate fact to be false.");
-#endif
+//#endif
 		weighted_facts_copy = weighted_facts;
 		weighted_facts_copy[&sensing_action] = 1;
 		processMutualExclusive(sensing_action, weighted_facts_copy, interesting_facts);
+		std::cout << "Pre recog..." << std::endl;
+		for (std::map<const Fact*, float>::const_iterator ci = weighted_facts_copy.begin(); ci != weighted_facts_copy.end(); ++ci)
+		{
+			if (ci->first->getPredicate().getName() == "belongs_in" && ci->first->getObjects()[0]->getType().getName() == "object" && ci->first->getObjects()[1]->getType().getName() == "box")
+				std::cout << *ci->first << " = " << ci->second << std::endl;
+		}
 		results = runRecommender(objects, predicates, weighted_facts_copy);
+		std::cout << "Post recog..." << std::endl;
+		for (std::map<const Fact*, float>::const_iterator ci = results.begin(); ci != results.end(); ++ci)
+		{
+			if (ci->first->getPredicate().getName() == "belongs_in" && ci->first->getObjects()[0]->getType().getName() == "object" && ci->first->getObjects()[1]->getType().getName() == "box")
+				std::cout << *ci->first << " = " << ci->second << std::endl;
+		}
 		
 		float knowledge_value_if_false = calculateKnowledge(results, interesting_facts) - knowledge_value_baseline;
 		
